@@ -152,7 +152,7 @@ class ServerRequest {
   }
 
   // fetch list and return a formatted Map of active,pending,... chat lists
-  Future<Map<String,dynamic>> getChatLists(Server server) async{
+  Future<Server> getChatLists(Server server) async{
     ParsedResponse response = await _makeRequest(server, "/xml/lists", null);
 
     Map<String,dynamic> allChatLists={};
@@ -162,35 +162,49 @@ class ServerRequest {
       if (activeSize > 0) {
         // activeList = Map.castFrom(activeJson).values.toList();
         Map activeJson = response.body['active_chats']['rows'];
-        allChatLists['active_chats'] =
+  /*      allChatLists['active_chats'] =
             _chatListToMap(server.id, activeJson.values.toList());
-
-
+*/
+        List<dynamic> newActiveList = _chatListToMap(server.id, activeJson.values.toList());
+        if(newActiveList != null && newActiveList.length >0) server.addChatsToList(newActiveList, 'active');
 
      //  await dbHelper.bulkInsertChats(
       //     server, _chatListToMap(server.id, activeJson.values.toList()));
-      }
+      } else server.clearList('active');
 
       int pendingSize = response.body['pending_chats']['size'];
       if (pendingSize > 0) {
         Map pendingJson = response.body['pending_chats']['rows'];
+/*
         allChatLists['pending_chats'] =
             _chatListToMap(server.id, pendingJson.values.toList());
+        */
+        List<dynamic> newPendingList = _chatListToMap(server.id, pendingJson.values.toList());
+        if(newPendingList != null && newPendingList.length >0)
+          server.addChatsToList(newPendingList, 'pending');
 
-      //  await dbHelper.bulkInsertChats(
-      //      server, _chatListToMap(server.id, pendingJson.values.toList()));
       }
+      else server.clearList('pending');
 
       // TODO
       int transferSize = response.body['transfered_chats']['size'];
       if(transferSize >0){
-        List<dynamic> transferredList = response.body['transfered_chats']['rows'];
-        allChatLists['transfered_chats'] =_chatListToMap(server.id, transferredList);
+      List<dynamic> transferredList = response.body['transfered_chats']['rows'];
+
+
+      /*
+        Fetch chatlist andn convert to map
+        then save to server object
+*/
+
+        List<dynamic> newTransferList = _chatListToMap(server.id, transferredList);
+      if(newTransferList != null && newTransferList.length >0) server.addChatsToList(newTransferList, 'transfer');
       }
+      else server.clearList('transfer');
 
       //close database
     }
-    return allChatLists;
+    return server;
   }
 
   Future<bool> postMesssage(Server server,Chat chat,String msg) async{
@@ -211,7 +225,10 @@ class ServerRequest {
   Future<bool> deleteChat(Server server,Chat chat) async{
     ParsedResponse response = await _makeRequest(server, "/xml/deletechat/${chat.id}", null);
 
-    return response.isOk() ?  true : false;
+    if(response.isOk())
+    server.removeChat(chat.id, 'active');
+
+    return  response.isOk() ?  true : false;
   }
 
   Future<Map<String,dynamic>> syncMessages(Server server,Chat chat,int last_msg_id) async{

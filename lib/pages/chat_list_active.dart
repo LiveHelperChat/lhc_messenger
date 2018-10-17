@@ -16,12 +16,14 @@ import 'package:livehelp/utils/routes.dart';
 import 'package:livehelp/utils/enum_menu_options.dart';
 
 class ActiveListWidget extends StatefulWidget {
-  ActiveListWidget({Key key,this.listOfServers,this.listToAdd,this.loadingState}):super(key:key);
+  ActiveListWidget({Key key,this.listOfServers,this.listToAdd,this.loadingState,this.chatRemoved}):super(key:key);
 
   final List<Chat> listToAdd;
   final List<Server> listOfServers;
 
   final ValueChanged<bool> loadingState;
+  final ValueChanged<Map<String,List<Chat>>> chatRemoved;
+
 
   @override
   _ActiveListWidgetState createState() => new _ActiveListWidgetState();
