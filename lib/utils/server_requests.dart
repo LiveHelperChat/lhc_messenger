@@ -155,7 +155,6 @@ class ServerRequest {
   Future<Server> getChatLists(Server server) async{
     ParsedResponse response = await _makeRequest(server, "/xml/lists", null);
 
-    Map<String,dynamic> allChatLists={};
 
     if(response.isOk() && response.body != null ) {
       int activeSize = response.body['active_chats']['size'];

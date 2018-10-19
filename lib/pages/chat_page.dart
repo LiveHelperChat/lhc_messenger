@@ -200,13 +200,17 @@ class ChatPageState extends State<ChatPage>
             new Offstage(
                 offstage: !_isNewChat,
                 child: new MaterialButton(
-                  child: new Text("ACCEPT"),
+                  child: _actionLoading ?  CircularProgressIndicator(valueColor: new AlwaysStoppedAnimation<Color>(Colors.white),) : new Text("ACCEPT"),
                   textColor: Colors.white,
                   onPressed: () {
-                  //  _acceptChat();
-                    // Use timer instead to accept the chat. To handle problematic network connection
-                    _acceptTimer = new Timer.periodic(
-                  new Duration(seconds: 5), (Timer timer) => _acceptChat());
+                    _acceptChat();
+                    // Use timer to accept the chat. To handle problematic network connection
+             /*       _acceptTimer = new Timer.periodic(
+                  new Duration(seconds: 10), (Timer timer){
+                    if (!_isOwnerOfChat)_acceptChat();
+                    else _cancelAccept();
+                  });
+                    */
                   },
                 )),
             new IconButton(
@@ -355,7 +359,10 @@ class ChatPageState extends State<ChatPage>
   void _acceptChat() async {
 
     if(_isNewChat) {
-      _actionLoading = true;
+      setState(() {
+        _actionLoading = true;
+      });
+
       await _serverRequest.chatData(widget.server, _chatCopy)
           .then((chatData) {
         if (chatData != null) {
@@ -374,8 +381,12 @@ class ChatPageState extends State<ChatPage>
             // delete timer since chat is successfully accepted
             _cancelAccept();
           });
+
+
         }
-        _actionLoading = false;
+        setState(() {
+          _actionLoading = false;
+        });
       });
     }
   }
