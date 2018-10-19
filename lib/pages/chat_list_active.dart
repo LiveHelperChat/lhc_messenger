@@ -22,7 +22,7 @@ class ActiveListWidget extends StatefulWidget {
   final List<Server> listOfServers;
 
   final ValueChanged<bool> loadingState;
-  final ValueChanged<Map<String,List<Chat>>> chatRemoved;
+  final ValueChanged<Chat> chatRemoved;
 
 
   @override
@@ -136,6 +136,7 @@ return <PopupMenuEntry<ChatItemMenuOption>>[
 
     await _serverRequest.deleteChat(srv,chat).then((loaded){
       widget.loadingState(false);
+    //  widget.chatRemoved()
         _updateList(chat);
     });
   }
@@ -234,3 +235,5 @@ return <PopupMenuEntry<ChatItemMenuOption>>[
   }
 
 }
+
+

@@ -358,6 +358,7 @@ class _MainPageState extends State<MainPage>
             });  */
             _getChatList();
           },
+
         ),
         bottomNavigationBar: Offstage(
           child: GestureDetector(
@@ -412,10 +413,10 @@ class _MainPageState extends State<MainPage>
 
   Timer myTimer(int seconds) {
     //fetch list first
-    new Timer(const Duration(milliseconds: 3000), () => _getChatList());
+    new Timer(const Duration(milliseconds: 3000), () => _getChatList(istimer: true));
 
     return new Timer.periodic(
-        new Duration(seconds: seconds), (Timer timer) => _getChatList());
+        new Duration(seconds: seconds), (Timer timer) => _getChatList(istimer: true));
   }
 
   void onActionLoading(bool val) {
@@ -424,16 +425,22 @@ class _MainPageState extends State<MainPage>
     });
   }
 
-  void onChatRemoved(Map<String,List<Chat>> list){
-    switch(list[0].toString()){
-      case 'active':
-
+  void onChatRemoved(Chat chat) {
+    assert(chat != null);
+    switch (chat.status.toString()) {
+      case '1':
+        setState(() {
+          this._activeChatList.removeWhere((cht) => cht.id == chat.id);
+        });
+        break;
     }
   }
 
-  Future<Null> _getChatList() async {
+  Future<Null> _getChatList({istimer=false}) async {
     if (!_actionLoading && initialized) {
-      onActionLoading(true);
+
+
+     if(!istimer) onActionLoading(true);
 
       // TODO remove this line
       await _getSavedServers().then((nuul) {});
@@ -443,119 +450,46 @@ class _MainPageState extends State<MainPage>
           //getChatList
           await _serverRequest.getChatLists(server).then((srvr) {
             if (srvr.activeChatList != null && srvr.activeChatList.length > 0) {
-              activeChatStore.addAll(srvr.activeChatList);
-            } else {
-              setState(() {activeChatStore.removeWhere((chat)=> chat.serverid ==server.id); });
-            }
-            if (srvr.pendingChatList != null &&
-                srvr.pendingChatList.length > 0) {
-              pendingChatStore.addAll(srvr.pendingChatList);
-            } else {
-              setState(() {
-                pendingChatStore
-                    .removeWhere((chat) => chat.serverid == server.id);
-              });
-            }
-            if (srvr.transferChatList != null &&
-                srvr.transferChatList.length > 0) {
-              transferChatStore.addAll(srvr.transferChatList);
-            } else {
-              transferChatStore
-                  .removeWhere((chat) => chat.serverid == server.id);
-            }
-
-            if (activeChatStore != null && activeChatStore.length > 0) {
               setState(() {
                 _activeChatList =
-                    cleanUpLists(_activeChatList, activeChatStore);
+                    cleanUpLists(_activeChatList, srvr.activeChatList);
                 _activeChatList
                     .sort((a, b) => a.last_msg_id.compareTo(b.last_msg_id));
               });
             } else {
               setState(() {
-                _activeChatList?.clear();
+                _activeChatList
+                    ?.removeWhere((chat) => chat.serverid == server.id);
               });
             }
 
-            if (pendingChatStore != null && pendingChatStore.length > 0) {
+            if (srvr.pendingChatList != null && srvr.pendingChatList.length > 0) {
               setState(() {
-                _pendingChatList =
-                    cleanUpLists(_pendingChatList, pendingChatStore);
-                _pendingChatList
-                    .sort((a, b) => a.last_msg_id.compareTo(b.last_msg_id));
+                _pendingChatList = cleanUpLists(_pendingChatList, srvr.pendingChatList);
+                _pendingChatList.sort((a, b) => a.last_msg_id.compareTo(b.last_msg_id));
               });
             } else {
               setState(() {
-                _pendingChatList?.clear();
+                _pendingChatList?.removeWhere((chat) => chat.serverid == server.id);
               });
             }
-            if (transferChatStore != null && transferChatStore.length > 0) {
-              setState(() {
-                _transferedChatList =
-                    cleanUpLists(_transferedChatList, transferChatStore);
 
-                _transferedChatList
-                    .sort((a, b) => a.last_msg_id.compareTo(b.last_msg_id));
+            if (srvr.transferChatList != null &&
+                srvr.transferChatList.length > 0) {
+              //transferChatStore.addAll(srvr.transferChatList);
+              setState(() {
+                _transferedChatList = cleanUpLists(_transferedChatList, srvr.transferChatList);
+                _transferedChatList.sort((a, b) => a.last_msg_id.compareTo(b.last_msg_id));
               });
             } else {
-              setState(() {
-                _transferedChatList?.clear();
-              });
+              _transferedChatList?.removeWhere((chat) => chat.serverid == server.id);
             }
-            // TODO
-            // move this to server_request class
-            /*           if (allLists['active_chats'] != null)
-              activeChatStore.addAll(allLists['active_chats']);
-            if (allLists['pending_chats'] != null)
-              pendingChatStore.addAll(allLists['pending_chats']);
-            if (allLists['transfered_chats'] != null)
-              transferChatStore.addAll(allLists['transfered_chats']);
-          */
+
+            onActionLoading(false);
           });
         }
       });
 
-      //print("Active Chats: "+activeChats.toString());
-// TODO remove
-      /*     if (activeChatStore != null && activeChatStore.length > 0) {
-
-      } else {
-        setState(() {
-          _activeChatList?.clear();
-        });
-      }
-
-      if (pendingChatStore != null && pendingChatStore.length > 0) {
-        setState(() {
-          _pendingChatList = cleanUpLists(_pendingChatList, pendingChatStore);
-          _pendingChatList
-              .sort((a, b) => a.last_msg_id.compareTo(b.last_msg_id));
-        });
-      } else {
-        setState(() {
-          _pendingChatList?.clear();
-        });
-      }
-
-      if (transferChatStore != null && transferChatStore.length > 0) {
-        setState(() {
-          _transferedChatList =
-              cleanUpLists(_transferedChatList, transferChatStore);
-          _transferedChatList
-              .sort((a, b) => a.last_msg_id.compareTo(b.last_msg_id));
-        });
-      } else {
-        setState(() {
-          _transferedChatList?.clear();
-        });
-      }
-
-    */
-      //  activeChatStore?.clear();
-      //    pendingChatStore?.clear();
-      //    transferChatStore?.clear();
-
-      onActionLoading(false);
     }
   }
 
@@ -596,7 +530,6 @@ class _MainPageState extends State<MainPage>
         }
       }
     });
-
     return chatToClean;
   }
 

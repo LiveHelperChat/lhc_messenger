@@ -179,6 +179,7 @@ class Server {
             int index = chatToClean.indexOf(chat);
             // print("index: " + index.toString());
             removedIndices.add(index);
+
           }
         });
         //remove the chats
