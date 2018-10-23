@@ -235,8 +235,8 @@ class LoginFormState extends State<LoginForm> {
 
           decoration: new BoxDecoration(
             gradient: new LinearGradient(colors: [Colors.teal,Colors.tealAccent],
-              begin: new FractionalOffset(0.2, 0.0),
-              end: new FractionalOffset(0.2, 0.4),
+              begin: new FractionalOffset(0.0, 0.0),
+              end: new FractionalOffset(0.05, 0.05),
               stops: [0.0,1.0],
               tileMode: TileMode.clamp,
 

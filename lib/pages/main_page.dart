@@ -425,6 +425,7 @@ class _MainPageState extends State<MainPage>
     });
   }
 
+  // TODO Remove
   void onChatRemoved(Chat chat) {
     assert(chat != null);
     switch (chat.status.toString()) {
@@ -578,13 +579,13 @@ class _MainPageState extends State<MainPage>
             child: new Text("Keep Server"),
             onPressed: () async {
               Navigator.of(_context).pop();
-              await _logout().then((_) => _addServer());
+               _logout().then((_) => _addServer());
             }),
         new MaterialButton(
             child: new Text("Remove Server"),
             onPressed: () async {
-              await _deleteServer().then((_) => _addServer());
-              Navigator.of(_context).pop();
+               _deleteServer().then((_) => _addServer());
+            //  Navigator.of(_context).pop();
             }),
       ],
     );
