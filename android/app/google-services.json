@@ -1,0 +1,73 @@
+{
+  "project_info": {
+    "project_number": "476621064612",
+    "firebase_url": "https://lhcmessenger.firebaseio.com",
+    "project_id": "lhcmessenger",
+    "storage_bucket": "lhcmessenger.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:476621064612:android:b948c64e9fa79177",
+        "android_client_info": {
+          "package_name": "gh.tbsapps.lhcmessenger"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "476621064612-cqf5jvj7oo5vmla6i7j5olm8deqs0emg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDbYF7cZRn6iU4CO23ZcU3pGC3UELdfZf8"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:476621064612:android:152a211adc2d3b03",
+        "android_client_info": {
+          "package_name": "gh.tbsapps.livehelp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "476621064612-cqf5jvj7oo5vmla6i7j5olm8deqs0emg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDbYF7cZRn6iU4CO23ZcU3pGC3UELdfZf8"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
