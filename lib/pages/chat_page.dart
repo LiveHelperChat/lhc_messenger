@@ -121,7 +121,7 @@ class ChatPageState extends State<ChatPage>
 
   @override
   Widget build(BuildContext context) {
-    TextStyle styling = new TextStyle(fontFamily: 'Roboto', fontSize: 10.0);
+
     TextStyle headerbottom = new TextStyle(
         fontSize: 12.0,
         color: Colors.white,
@@ -203,6 +203,9 @@ class ChatPageState extends State<ChatPage>
                   child: _actionLoading ?  CircularProgressIndicator(valueColor: new AlwaysStoppedAnimation<Color>(Colors.white),) : new Text("ACCEPT"),
                   textColor: Colors.white,
                   onPressed: () {
+                      setState(() {
+                     _actionLoading = true;
+                       });
                     _acceptChat();
                     // Use timer to accept the chat. To handle problematic network connection
              /*       _acceptTimer = new Timer.periodic(
@@ -214,48 +217,8 @@ class ChatPageState extends State<ChatPage>
                   },
                 )),
             new IconButton(
-                icon: new Icon(Icons.info_outline),
-                onPressed: () {
-                  showModalBottomSheet<void>(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return new SingleChildScrollView(
-                            child: new Column(
-                              children: <Widget>[
-                                new ListTile(
-                                  leading: new Text("ID", style: styling),
-                                  title: new Text(_chatCopy.id.toString() ?? ""),
-                                  onTap: () {},
-                                ),
-                                new ListTile(
-                                  leading: new Text("Email", style: styling),
-                                  title: new Text(_chatCopy.email ?? ""),
-                                  onTap: () {},
-                                ),
-                                new ListTile(
-                                  leading: new Text("IP", style: styling),
-                                  title: new Text(_chatCopy.ip ?? ""),
-                                  onTap: () {},
-                                ),
-                                new ListTile(
-                                  leading: new Text("Country", style: styling),
-                                  title: new Text(_chatCopy.country_name ?? ""),
-                                  onTap: () {},
-                                ),
-                                new ListTile(
-                                  leading: new Text("From", style: styling),
-                                  title: new Text(_chatCopy.referrer ?? ""),
-                                  onTap: () {},
-                                ),
-                                new ListTile(
-                                  leading: new Text("User Agent", style: styling),
-                                  title: new Text(_chatCopy.uagent ?? ""),
-                                  onTap: () {},
-                                ),
-                              ],
-                            ));
-                      });
-                })
+                icon:  Icon(Icons.info_outline),
+                onPressed: ()=>this._showChatInfo(context))
           ]),
       body: Stack(children: <Widget>[
          Column(
@@ -283,6 +246,51 @@ class ChatPageState extends State<ChatPage>
 
     return mainScaffold;
   }
+
+  void _showChatInfo(context){
+    TextStyle styling = new TextStyle(fontFamily: 'Roboto', fontSize: 10.0);
+      showModalBottomSheet<void>(
+          context: context,
+          builder: (BuildContext context) {
+            return new SingleChildScrollView(
+                child: new Column(
+                  children: <Widget>[
+                    new ListTile(
+                      leading: new Text("ID", style: styling),
+                      title: new Text(_chatCopy.id.toString() ?? ""),
+                      onTap: () {},
+                    ),
+                    new ListTile(
+                      leading: new Text("Email", style: styling),
+                      title: new Text(_chatCopy.email ?? ""),
+                      onTap: () {},
+                    ),
+                    new ListTile(
+                      leading: new Text("IP", style: styling),
+                      title: new Text(_chatCopy.ip ?? ""),
+                      onTap: () {},
+                    ),
+                    new ListTile(
+                      leading: new Text("Country", style: styling),
+                      title: new Text(_chatCopy.country_name ?? ""),
+                      onTap: () {},
+                    ),
+                    new ListTile(
+                      leading: new Text("From", style: styling),
+                      title: new Text(_chatCopy.referrer ?? ""),
+                      onTap: () {},
+                    ),
+                    new ListTile(
+                      leading: new Text("User Agent", style: styling),
+                      title: new Text(_chatCopy.uagent ?? ""),
+                      onTap: () {},
+                    ),
+                  ],
+                ));
+          });
+
+  }
+
 
   Widget _buildComposer() {
     var cupertinoButton = new CupertinoButton(
@@ -334,6 +342,10 @@ class ChatPageState extends State<ChatPage>
               new Flexible(
                   child: new TextField(
                 controller: _textController,
+                keyboardType: TextInputType.multiline,
+                    textInputAction: TextInputAction.newline,
+                    maxLines: null,
+                    enableInteractiveSelection: true,
                 onChanged: (txt) => (subject.add(txt)),
                 onSubmitted: _submitMsg,
                 decoration: _isOwnerOfChat
@@ -358,12 +370,7 @@ class ChatPageState extends State<ChatPage>
 
   void _acceptChat() async {
 
-    if(_isNewChat) {
-      setState(() {
-        _actionLoading = true;
-      });
-
-      await _serverRequest.chatData(widget.server, _chatCopy)
+         await _serverRequest.chatData(widget.server, _chatCopy)
           .then((chatData) {
         if (chatData != null) {
           setState(() {
@@ -388,8 +395,9 @@ class ChatPageState extends State<ChatPage>
           _actionLoading = false;
         });
       });
-    }
   }
+
+
 
   void _submitMsg(String msg) {
     _textController.clear();

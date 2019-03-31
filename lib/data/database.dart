@@ -3,7 +3,8 @@ import 'dart:io';
 
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:sqflite/src/exception.dart';
+import 'package:synchronized/synchronized.dart';
+
 import 'package:path_provider/path_provider.dart';
 
 import 'package:livehelp/model/server.dart';
@@ -12,13 +13,16 @@ import 'package:livehelp/model/chat.dart';
 class DatabaseHelper {
   static DatabaseHelper _livehelpDatabase;
 
-  final int dbVersion = 1;
+  final int dbVersion = 2; // previous 1
   final String configTable = "app_config";
   final String tokenColumn = "fcm_token";
+  final String extVersionColumn="ext_version";
+
 
   bool didInit = false;
 
-  Database db;
+  Database _db;
+  final _lock = new Lock();
 
   factory DatabaseHelper() {
     if (_livehelpDatabase != null) return _livehelpDatabase;
@@ -30,7 +34,6 @@ class DatabaseHelper {
   static DatabaseHelper get(){
     return _livehelpDatabase;
   }
-
 
   DatabaseHelper._internal();
 
@@ -83,51 +86,52 @@ class DatabaseHelper {
     await db.execute(
         "CREATE TABLE $configTable ("
             "'id' INTEGER PRIMARY KEY AUTOINCREMENT,"
-            "$tokenColumn TEXT"
+            "$tokenColumn TEXT,"
+            "$extVersionColumn TEXT"
+
             ")");
 
     didInit = true;
-
   }
 
-  Future init() async {
-    return await _init();
+  void debug() async{
+    var db = await getDb();
+    print(await db.query(configTable));
   }
 
-  Future _init() async {
+  Future<Database> getDb() async {
 
     // Get a location using path_provider
     Directory documentsDirectory = await getApplicationDocumentsDirectory();
     String path = join(documentsDirectory.path, "lhcmessenger.db");
 
-    //await deleteDatabase(path);
-
-    db = await openDatabase(path, version: dbVersion,
-        onCreate:this._create);
-  }
-
-
-  Future<Database> _getDb() async {
-    if(!didInit) await _init();
-    return db;
-   // return db;
-
-    /* // make sure the folder exists
-    if (FileSystemEntity.typeSync(path) != FileSystemEntityType.NOT_FOUND) {
-    } else {
-      try {
-        await new Directory(dirname(path)).create(recursive: true);
-      } catch (e) {
-        print(e);
-      }
+    if(_db == null){
+      await _lock.synchronized(() async {
+        // Check again once entering the synchronized block
+        if (_db == null) {
+          _db = await openDatabase(path,
+            version: dbVersion,
+            onCreate:this._create,
+            onUpgrade:this._upgradeDB,
+          );
+        }
+      });
     }
-    */
 
+    return _db;
   }
+
+  Future _upgradeDB (Database db, int oldVersion,int newVersion) async{
+    print("oLD "+oldVersion.toString() +" new "+newVersion.toString());
+    if(oldVersion < newVersion){
+      db.execute("ALTER TABLE $configTable ADD COLUMN $extVersionColumn TEXT;");
+    }
+  }
+
 
   /// Get an item by its id, if there is not entry for that ID, returns null.
   Future<Map<String,dynamic>> fetchItem(String tableName, String condition,List arguments) async {
-    var db = await _getDb();
+    var db = await getDb();
     var result= await db.query(tableName,
         where: condition,
         whereArgs: arguments
@@ -140,7 +144,7 @@ class DatabaseHelper {
 
   /// Get all books with ids, will return a list with all the books found
   Future<List<dynamic>> fetchAll(String tableName,String orderBy,String condition,List arguments) async {
-    var db = await _getDb();
+    var db = await getDb();
     // Building SELECT * FROM TABLE WHERE ID IN (id1, id2, ..., idn)
     //var results =
     return await db.query(tableName,
@@ -157,7 +161,7 @@ class DatabaseHelper {
 
   Future<Null> upsertFCMToken(String token)async{
     // print("Token: $token");
-    var db = await _getDb();
+    var db = await getDb();
     Map<String,dynamic> tkn ={};
     tkn[tokenColumn]=token;
 
@@ -177,7 +181,7 @@ class DatabaseHelper {
 
 
   Future upsertChat(Chat chat) async {
-    var db = await _getDb();
+    var db = await getDb();
     var count = Sqflite.firstIntValue(await db.rawQuery("SELECT COUNT(*) FROM ${Chat.tableName}"
         " WHERE id = ? and status= ? and serverid= ?", [chat.id,chat.status,chat.serverid]));
     if (count == 0) {
@@ -189,7 +193,7 @@ class DatabaseHelper {
   }
 
   Future countRecords(String tableName,String condition,List whereArg)async{
-    var db = await _getDb();
+    var db = await getDb();
     var count = Sqflite.firstIntValue( await db.rawQuery("SELECT COUNT(*) FROM $tableName"
         " WHERE $condition", whereArg
     ));
@@ -197,7 +201,7 @@ class DatabaseHelper {
   }
 
   Future<Null> bulkInsertChats(Server srvr,List<Map<dynamic,dynamic>> bulkRecords) async{
-    var db = await _getDb();
+    var db = await getDb();
 
     bulkRecords.forEach((row) async {
       //Add server id to row
@@ -217,7 +221,7 @@ class DatabaseHelper {
 
   Future<Server> upsertServer(Server server,String condition,List whereArg) async {
 
-    var db = await _getDb();
+    var db = await getDb();
     List<Map<String,dynamic>> listMap = await db.rawQuery("SELECT COUNT(*) FROM ${Server.tableName}"
         " WHERE $condition", whereArg
     );
@@ -239,6 +243,18 @@ class DatabaseHelper {
   }
 
 
+  Future upsertGeneral(String tableName,Map<String,dynamic> values) async {
+    var db = await getDb();
+    var count = Sqflite.firstIntValue(await db.rawQuery("SELECT COUNT(*) FROM ${tableName}"));
+    int id;
+    if (count == 0) {
+      id = await db.insert(tableName, values);
+    } else {
+     id = await db.update(tableName, values);
+    }
+    return id;
+  }
+
 
 /*
   Future bulkInsert(Server srvr,String tableName,List<Map> bulkRecords) async{
@@ -254,9 +270,13 @@ class DatabaseHelper {
   }
   */
 
+  update(String tableName,Map<String,dynamic> valueMap) async{
+    var db = await getDb();
+    await db.update(tableName,valueMap);
+  }
 
   Future deleteAll(String tableName) async{
-    var db = await _getDb();
+    var db = await getDb();
     await db.delete(tableName);
   }
 
@@ -265,7 +285,7 @@ class DatabaseHelper {
   }
 
   Future<bool> deleteItem(String tableName, String condition,List whereArg)async{
-    var db = await _getDb();
+    var db = await getDb();
     return  db.delete(tableName,where: "id=?",whereArgs: whereArg)
         .then((rows){
       return rows > 0 ? true : false;

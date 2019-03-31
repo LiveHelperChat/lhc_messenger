@@ -13,13 +13,10 @@ import 'package:livehelp/model/server.dart';
 import 'package:livehelp/data/database.dart';
 import 'package:livehelp/utils/server_requests.dart';
 import 'package:livehelp/pages/loginForm.dart';
-import 'package:livehelp/pages/chat_list_page.dart';
 import 'package:livehelp/pages/chat_list_active.dart';
 import 'package:livehelp/pages/chat_list_pending.dart';
 import 'package:livehelp/pages/chat_list_transferred.dart';
 import 'package:livehelp/pages/server_details.dart';
-import 'package:livehelp/pages/server_settings.dart';
-import 'package:livehelp/widget/circularWithBackground.dart';
 import 'package:livehelp/widget/chat_number_indicator.dart';
 import 'package:livehelp/widget/expansion_panel.dart';
 
@@ -42,7 +39,7 @@ class _MainPageState extends State<MainPage>
 
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
 
-  final int extensionVersion = 12;
+  final int extensionVersion = 12; //(0.1.2)
 
   TabController tabBarController;
 
@@ -126,6 +123,9 @@ class _MainPageState extends State<MainPage>
   //final String token;
   @override
   Widget build(BuildContext context) {
+
+   // dbHelper.debug();
+
     _context = context;
     final tokenInherited = TokenInheritedWidget.of(_context);
     _fcmToken = tokenInherited.token;
@@ -319,7 +319,7 @@ class _MainPageState extends State<MainPage>
                 },
               ),
 
-// TODO move versio number to main and inherit it
+// TODO move version number to main and inherit it
               /*           Expanded(
                 child:Align(
                   alignment: FractionalOffset.bottomCenter,
@@ -639,27 +639,47 @@ class _MainPageState extends State<MainPage>
     if (_selectedServer != null) showUpdateMsg();
   }
 
-  showUpdateMsg() {
-    _serverRequest.fetchVersionExt(_selectedServer).then((version) {
-      if (version != null) {
-        //    print('Version: '+version);
-        // returned format is 0.1.2
-        // remove the . and parse to int and compare
-        String vs = version.replaceAll(new RegExp(r'\.'), '');
-        //      print("V2: "+vs);
-        num vss = num.tryParse(vs);
+  showUpdateMsg() async {
+    // fetch extension version from Database
+   Map<String,dynamic> configs = await  dbHelper.fetchItem(dbHelper.configTable, null, null);
 
-        if (vss != null && vss >= extensionVersion) {
-          // print(vss.toString());
-          _showUpdateNotice = false;
-        } else {
-          _showUpdateNotice = true;
-          //_showBottomSheet(version);
-        }
-      } else {
-        _showUpdateNotice = true;
-      }
-    });
+   String storedVS = configs !=null ? configs[dbHelper.extVersionColumn] : null;
+
+   _serverRequest.fetchVersionExt(_selectedServer).then((version) {
+     if (version != null) {
+
+       if(storedVS != null ){
+     if(storedVS.isNotEmpty){
+       // returned format is 0.1.2
+       // remove the . and parse to int and compare
+       num installVersion = num.tryParse(_parseVersion(version));
+       //      print("V2: "+vs);
+       num oldVersion  = num.tryParse(_parseVersion(storedVS));
+
+       if (installVersion != null && installVersion >= oldVersion) {
+         // print(vss.toString());
+         _showUpdateNotice = false;
+       } else {
+         _showUpdateNotice = true;
+         //_showBottomSheet(version);
+       }
+     }
+
+       }
+       else {
+         var vsMap = {dbHelper.extVersionColumn:version};
+         // Upsert config table
+         dbHelper.upsertGeneral(dbHelper.configTable, vsMap); }
+
+     } else {
+       // _showUpdateNotice = true;
+     }
+   });
+
+  }
+
+  String _parseVersion(String vs){
+   return vs.replaceAll(new RegExp(r'\.'), '');
   }
 
   _showBottomSheet(BuildContext ctx) {
