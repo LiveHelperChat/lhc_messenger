@@ -9,3 +9,4 @@ ios/.generated/
 packages
 .flutter-plugins
 RELEASE FILES/
+android/key.properties
