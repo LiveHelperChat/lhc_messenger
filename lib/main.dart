@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:after_layout/after_layout.dart';
 
+import 'package:sqflite/sqflite.dart';
+
 import 'package:livehelp/pages/loginForm.dart';
 import 'package:livehelp/pages/token_inherited_widget.dart';
 import 'package:livehelp/model/server.dart';
@@ -14,8 +16,8 @@ import 'package:livehelp/data/database.dart';
 import 'package:livehelp/utils/notification_helper.dart';
 
 void main() async {
-  final int helloAlarmID = 0;
-    runApp(new MyApp());
+  
+      runApp(new MyApp());
   //await AndroidAlarmManager.cancel(helloAlarmID);
   /*  await AndroidAlarmManager.periodic(const Duration(minutes: 1), helloAlarmID, printHello,wakeup:
     true);  */
@@ -88,7 +90,7 @@ class _MyHomePageState extends State<MyHomePage> with AfterLayoutMixin<MyHomePag
     super.initState();
 
   //  DatabaseHelper.get().init();
-
+   // Sqflite.devSetDebugModeOn(true);
    _dbHelper = new DatabaseHelper();
 
     _firebaseMessaging.configure(
