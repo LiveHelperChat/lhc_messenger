@@ -137,6 +137,7 @@ class _MainPageState extends State<MainPage>
         _actionLoading ? new CircularProgressIndicator() : new Container();
 
     var mainScaffold = new Scaffold(
+      backgroundColor: Colors.black26,
         appBar: new AppBar(
           title: new Text("Chat Lists"),
           bottom: new TabBar(controller: tabBarController, tabs: <Tab>[
@@ -331,12 +332,19 @@ class _MainPageState extends State<MainPage>
           ),
         )),
         body: new Stack(children: <Widget>[
-          new TabBarView(controller: tabBarController, children: <Widget>[
-            new ActiveListWidget(
-              listOfServers: listServers,
-              listToAdd: _activeChatList,
-              loadingState: onActionLoading,
+          new TabBarView(
+              controller: tabBarController,
+              children: <Widget>[
+            Container(
+              color: Colors.black26,
+              child: new ActiveListWidget(
+                listOfServers: listServers,
+                listToAdd: _activeChatList,
+                loadingState: onActionLoading,
+                refreshList: _getChatList,
+              ),
             ),
+
             new PendingListWidget(
               listOfServers: listServers,
               listToAdd: _pendingChatList,
@@ -444,12 +452,12 @@ class _MainPageState extends State<MainPage>
      if(!istimer) onActionLoading(true);
 
       // TODO remove this line
-      await _getSavedServers().then((nuul) {});
+      await _getSavedServers();
 
       listServers.forEach((server) async {
         if (server.isloggedin == 1) {
           //getChatList
-          await _serverRequest.getChatLists(server).then((srvr) {
+           _serverRequest.getChatLists(server).then((srvr) {
             if (srvr.activeChatList != null && srvr.activeChatList.length > 0) {
               setState(() {
                 _activeChatList =
@@ -653,7 +661,6 @@ class _MainPageState extends State<MainPage>
        // returned format is 0.1.2
        // remove the . and parse to int and compare
        num installVersion = num.tryParse(_parseVersion(version));
-       //      print("V2: "+vs);
        num oldVersion  = num.tryParse(_parseVersion(storedVS));
 
        if (installVersion != null && installVersion >= oldVersion) {

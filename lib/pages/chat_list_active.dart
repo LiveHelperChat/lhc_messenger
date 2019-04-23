@@ -16,13 +16,14 @@ import 'package:livehelp/utils/routes.dart';
 import 'package:livehelp/utils/enum_menu_options.dart';
 
 class ActiveListWidget extends StatefulWidget {
-  ActiveListWidget({Key key,this.listOfServers,this.listToAdd,this.loadingState,this.chatRemoved}):super(key:key);
+  ActiveListWidget({Key key,this.listOfServers,this.listToAdd,this.loadingState,this.chatRemoved,this.refreshList}):super(key:key);
 
   final List<Chat> listToAdd;
   final List<Server> listOfServers;
 
   final ValueChanged<bool> loadingState;
   final ValueChanged<Chat> chatRemoved;
+  final VoidCallback refreshList;
 
 
   @override
@@ -74,7 +75,7 @@ class _ActiveListWidgetState extends State<ActiveListWidget> {
         onTap:(){
     var route = new FadeRoute(
       settings: new RouteSettings(name: "/chats/chat"),
-      builder: (BuildContext context) => new ChatPage(server:server,chat: chat,isNewChat: false,),
+      builder: (BuildContext context) => new ChatPage(server:server,chat: chat,isNewChat: false,refreshList: widget.refreshList,),
     );
     Navigator.of(context).push(route);
   } ,
@@ -161,6 +162,7 @@ return <PopupMenuEntry<ChatItemMenuOption>>[
   Future<Null> _onRefresh(){
     Completer<Null> completer = new Completer<Null>();
     Timer timer = new Timer(new Duration(seconds: 3), () {
+
       completer.complete();
     });
     return completer.future;

@@ -102,7 +102,8 @@ class ChatItemWidget extends StatelessWidget {
 
 
                           ],
-                        ),new Text(
+                        ),
+                        new Text(
                             'Department: ${chat.department_name ?? ""}',
                             textAlign: TextAlign.left,
                             style: styling.copyWith(color: Colors.black)),
@@ -112,8 +113,7 @@ class ChatItemWidget extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
                             new Expanded(
-                              child:
-                              new Text(chat.country_name??""),
+                              child: new Text(chat.country_name??""),
                             ),
 
                             new Column(
@@ -157,11 +157,12 @@ class ChatItemWidget extends StatelessWidget {
                           ],
                         )),
                         new Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
                             new Expanded(
                               child: new Text('SERVER: ${server.servername}',
-                                  textAlign: TextAlign.center,
+                                  textAlign: TextAlign.left,
                                   style: styling.copyWith(
                                       color: Colors.black,
                                       fontWeight: FontWeight.bold)),

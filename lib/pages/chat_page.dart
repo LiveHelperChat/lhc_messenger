@@ -12,16 +12,19 @@ import 'package:livehelp/model/chat.dart';
 import 'package:livehelp/model/message.dart';
 import 'package:livehelp/widget/chat_bubble.dart';
 
+import 'package:livehelp/utils/enum_menu_options.dart';
 import 'package:livehelp/utils/server_requests.dart';
 
 /// place: "/chats/chat"
 class ChatPage extends StatefulWidget {
-  ChatPage({Key key, this.server, this.chat, @required this.isNewChat})
+  ChatPage({Key key, this.server, this.chat,this.refreshList, @required this.isNewChat})
       : super(key: key);
 
   final Chat chat; // not final because we will update it
   final Server server;
   final bool isNewChat; // used to determine pending or other chats
+
+  final VoidCallback refreshList;
 
   @override
   ChatPageState createState() => new ChatPageState();
@@ -54,9 +57,13 @@ class ChatPageState extends State<ChatPage>
   List<MsgHandler> _msgsHandlerList = <MsgHandler>[];
   TextEditingController _textController = new TextEditingController();
   ServerRequest _serverRequest;
+  
+   List<PopupMenuEntry<ChatItemMenuOption>> menuBuilder;
 
   Timer _msgsTimer;
   Timer _acceptTimer;
+
+  BuildContext _context;
 
   @override
   initState() {
@@ -119,8 +126,11 @@ class ChatPageState extends State<ChatPage>
     if (_acceptTimer != null && _acceptTimer.isActive) _acceptTimer.cancel();
   }
 
+
   @override
   Widget build(BuildContext context) {
+
+    _context = context;
 
     TextStyle headerbottom = new TextStyle(
         fontSize: 12.0,
@@ -145,8 +155,19 @@ class ChatPageState extends State<ChatPage>
         );
       },
     );
+    
+        var popupMenuBtn = PopupMenuButton<ChatItemMenuOption>(
+              onSelected: (ChatItemMenuOption result) {
+                onMenuOptionChanged(result);
+              }, itemBuilder: (BuildContext context) {
+            return _itemMenuBuilder();
+          });
+
+
+
     Widget loadingIndicator =
     _actionLoading ? new CircularProgressIndicator() : new Container();
+
 
     var mainScaffold = new Scaffold(
       backgroundColor: Colors.blueGrey.shade50,
@@ -154,7 +175,7 @@ class ChatPageState extends State<ChatPage>
           title: new Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
+           // mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               new Text(
                 '${_chatCopy.nick}',
@@ -175,27 +196,6 @@ class ChatPageState extends State<ChatPage>
           ),
           elevation:
           Theme.of(context).platform == TargetPlatform.android ? 6.0 : 0.0,
-          bottom: new PreferredSize(
-              preferredSize: const Size.fromHeight(48.0),
-              child: new Container(
-                height: 48.0,
-                padding:
-                const EdgeInsets.only(top: 8.0, left: 64.0, right: 8.0),
-                alignment: Alignment.centerLeft,
-                child: new Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    new Text(
-                      'Owner: ${_chatOwner ??""}',
-                      style: headerbottom,
-                    ),
-                    new Text(
-                      'Server: ${widget.server.servername ??""}',
-                      style: headerbottom,
-                    ),
-                  ],
-                ),
-              )),
           actions: <Widget>[
             new Offstage(
                 offstage: !_isNewChat,
@@ -218,8 +218,33 @@ class ChatPageState extends State<ChatPage>
                 )),
             new IconButton(
                 icon:  Icon(Icons.info_outline),
-                onPressed: ()=>this._showChatInfo(context))
-          ]),
+                onPressed: ()=>this._showChatInfo(context)),
+                popupMenuBtn
+                
+          ],
+        bottom: new PreferredSize(
+            preferredSize: const Size.fromHeight(48.0),
+            child: new Container(
+              height: 48.0,
+              padding:
+              const EdgeInsets.only(top: 8.0, left: 64.0, right: 8.0),
+              alignment: Alignment.centerLeft,
+              child: new Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  new Text(
+                    'Owner: ${_chatOwner ??""}',
+                    style: headerbottom,
+                  ),
+                  new Text(
+                    'Server: ${widget.server.servername ??""}',
+                    style: headerbottom,
+                  ),
+                ],
+              ),
+            )),
+      ),
+
       body: Stack(children: <Widget>[
          Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -242,10 +267,85 @@ class ChatPageState extends State<ChatPage>
 
     );
 
-
-
     return mainScaffold;
   }
+
+    // Generate Chat Menu options
+    List<PopupMenuEntry<ChatItemMenuOption>> _itemMenuBuilder(){
+
+     List<PopupMenuEntry<ChatItemMenuOption>> menuItems =[];
+
+    if(_chatCopy.status == 1){
+
+      menuItems.add(const PopupMenuItem<ChatItemMenuOption>(
+        value: ChatItemMenuOption.TRANSFER,
+        child: const Text('Transfer'),
+      ));
+
+      menuItems.add( const PopupMenuItem<ChatItemMenuOption>(
+      value: ChatItemMenuOption.CLOSE,
+      child: const Text('Close'),
+      ));
+
+    }
+
+    menuItems.add(
+        const PopupMenuItem<ChatItemMenuOption>(
+          value: ChatItemMenuOption.REJECT,
+          child: const Text('Delete'),
+        ));
+
+
+return menuItems;
+}
+
+ void onMenuOptionChanged(ChatItemMenuOption result){
+    switch(result){
+    case ChatItemMenuOption.CLOSE:
+ //     widget.loadingState(true);
+      _closeChat();
+    break;
+    case ChatItemMenuOption.REJECT:
+   //   widget.loadingState(true);
+      _deleteChat();
+      break;
+   /*   case ChatItemMenuOption.TRANSFER:
+       // widget.loadingState(true);
+ //       _showOperatorList(context,srv,chat);
+        //_getOperatorList(ctx,srv,chat);
+        break;
+        */
+    default:
+      break;
+    }
+  }
+
+   void _closeChat() async{
+
+    _isLoading(true);
+   var closed = await  _serverRequest.closeChat(widget.server,_chatCopy);
+
+   //   widget.loadingState(false);
+       if(closed){
+         widget.refreshList();
+         Navigator.pop(_context);
+         //TODO: redirect to main page
+       }
+       _isLoading(false);
+
+  }
+
+  
+  void _deleteChat(){
+
+     _serverRequest.deleteChat(widget.server,_chatCopy).then((loaded){
+    //  widget.loadingState(false);
+    //  widget.chatRemoved()
+        
+      //TODO: redirect to main page 
+    });
+  }
+
 
   void _showChatInfo(context){
     TextStyle styling = new TextStyle(fontFamily: 'Roboto', fontSize: 10.0);
@@ -293,37 +393,37 @@ class ChatPageState extends State<ChatPage>
 
 
   Widget _buildComposer() {
-    var cupertinoButton = new CupertinoButton(
-        child: new Text("Send"),
+    var cupertinoButton = CupertinoButton(
+        child:  Text("Send"),
         onPressed: _isWriting ? () => _submitMsg(_textController.text) : null);
 
-    var iconButton = new IconButton(
+    var iconButton = IconButton(
       icon: new Icon(Icons.message),
       onPressed: _isWriting ? () => _submitMsg(_textController.text) : null,
     );
 
-    return new IconTheme(
-      data: new IconThemeData(color: Theme.of(context).accentColor),
-      child: new Container(
+    return  IconTheme(
+      data: IconThemeData(color: Theme.of(context).accentColor),
+      child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 9.0),
           child: new Row(
             children: <Widget>[
-              new IconButton(
+               IconButton(
                   icon: new Icon(Icons.list),
                   onPressed: () {
                     showModalBottomSheet<void>(
                         context: context,
                         builder: (BuildContext context) {
-                          return new Container(
-                              child: new Padding(
+                          return Container(
+                              child:  Padding(
                                   padding: const EdgeInsets.all(4.0),
-                                  child: new ListView.builder(
+                                  child: ListView.builder(
                                     reverse: false,
-                                    padding: new EdgeInsets.all(6.0),
+                                    padding: EdgeInsets.all(6.0),
                                     itemCount: _cannedMsgs.length,
                                     itemBuilder: (_, int index) {
                                       Map canMsg = _cannedMsgs[index];
-                                      return new Container(
+                                      return Container(
                                           child: new ListTile(
                                         title: new Text(canMsg["title"]),
                                         isThreeLine: true,
@@ -339,7 +439,7 @@ class ChatPageState extends State<ChatPage>
                                   )));
                         });
                   }),
-              new Flexible(
+               Flexible(
                   child: new TextField(
                 controller: _textController,
                 keyboardType: TextInputType.multiline,
@@ -370,7 +470,7 @@ class ChatPageState extends State<ChatPage>
 
   void _acceptChat() async {
 
-         await _serverRequest.chatData(widget.server, _chatCopy)
+      _serverRequest.chatData(widget.server, _chatCopy)
           .then((chatData) {
         if (chatData != null) {
           setState(() {
@@ -391,13 +491,15 @@ class ChatPageState extends State<ChatPage>
 
 
         }
-        setState(() {
-          _actionLoading = false;
-        });
+        _isLoading(false);
       });
   }
 
-
+  void _isLoading(bool loading){
+    setState(() {
+      _actionLoading = loading;
+    });
+  }
 
   void _submitMsg(String msg) {
     _textController.clear();
@@ -428,7 +530,7 @@ class ChatPageState extends State<ChatPage>
     int lastMsgId =
         _msgsHandlerList.length > 0 ? _msgsHandlerList.first.msg.id : 0;
 
-    await _serverRequest
+     _serverRequest
         .syncMessages(widget.server, _chatCopy, lastMsgId)
         .then((msgsStatusMap) {
       if (msgsStatusMap['messages'] != null) {
