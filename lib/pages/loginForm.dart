@@ -75,15 +75,7 @@ class LoginFormState extends State<LoginForm> {
     super.initState();
    // _resetControllers();
     dbHelper = new DatabaseHelper();
-
-    //TODO Remove
-    /*   _nameController.text = "UHG";
-    _urlController.text = "https://ultrahostghana.com/livehelp";
-    _userNameController.text = "2014livehelper";
-    _passwordController.text = "2016livesupport";
-    */
-    //dbHelper.init();
-
+   
     _isNewServer = widget?.isNew ?? false;
 
   }
