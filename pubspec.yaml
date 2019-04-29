@@ -6,6 +6,7 @@ dependencies:
     sdk: flutter
 
   sqflite: any #sqlite support
+<<<<<<< HEAD
   path_provider: ^0.4.1
   async_loader: ^0.1.1
   intl: ^0.15.3
@@ -14,6 +15,15 @@ dependencies:
   rxdart: ^0.18.1
   after_layout: ^1.0.4
   http: ^0.12.0+1
+=======
+  path_provider: "^0.4.1"
+  async_loader: "^0.1.1"
+  intl: "^0.15.3"
+  firebase_messaging: "^2.0.0"
+  flutter_local_notifications: "^0.3.8"
+  rxdart: "^0.18.1"
+  after_layout: "^1.0.4"
+>>>>>>> d4f4935ed4db3a8f8a1f1f1dfdd9e04685d0ae76
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
