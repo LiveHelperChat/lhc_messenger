@@ -55,6 +55,9 @@
                    -->
         <!-- This section prevents collection of Advertising ID-->
         <meta-data android:name="google_analytics_adid_collection_enabled" android:value="false" />
+<<<<<<< HEAD
         <meta-data android:name="com.google.firebase.messaging.default_notification_channel_id" android:value="@string/default_notification_channel_id"/>
+=======
+>>>>>>> d4f4935ed4db3a8f8a1f1f1dfdd9e04685d0ae76
     </application>
 </manifest>
