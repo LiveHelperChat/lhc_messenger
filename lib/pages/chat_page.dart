@@ -136,7 +136,7 @@ class ChatPageState extends State<ChatPage>
         fontSize: 12.0,
         color: Colors.white,
         fontWeight: FontWeight.bold,
-        fontStyle: FontStyle.italic);
+        );
 
     var _asyncLoader = new AsyncLoader(
       key: _mainAsyncLoaderState,
@@ -190,7 +190,7 @@ class ChatPageState extends State<ChatPage>
                 style: new TextStyle(
                     fontStyle: FontStyle.italic,
                     fontSize: 12.0,
-                    fontWeight: FontWeight.w400),
+                    fontWeight: FontWeight.w300),
               )
             ],
           ),
@@ -227,7 +227,7 @@ class ChatPageState extends State<ChatPage>
             child: new Container(
               height: 48.0,
               padding:
-              const EdgeInsets.only(top: 8.0, left: 64.0, right: 8.0),
+              const EdgeInsets.only(top: 8.0, left: 8.0, right: 8.0),
               alignment: Alignment.centerLeft,
               child: new Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -276,12 +276,12 @@ class ChatPageState extends State<ChatPage>
      List<PopupMenuEntry<ChatItemMenuOption>> menuItems =[];
 
     if(_chatCopy.status == 1){
-
+/*
       menuItems.add(const PopupMenuItem<ChatItemMenuOption>(
         value: ChatItemMenuOption.TRANSFER,
         child: const Text('Transfer'),
       ));
-
+*/
       menuItems.add( const PopupMenuItem<ChatItemMenuOption>(
       value: ChatItemMenuOption.CLOSE,
       child: const Text('Close'),
@@ -327,23 +327,23 @@ return menuItems;
 
    //   widget.loadingState(false);
        if(closed){
+         _isLoading(false);
          widget.refreshList();
          Navigator.pop(_context);
-         //TODO: redirect to main page
        }
-       _isLoading(false);
 
   }
 
   
-  void _deleteChat(){
+  void _deleteChat()async{
+    _isLoading(true);
+     var deleted = await _serverRequest.deleteChat(widget.server,_chatCopy);
 
-     _serverRequest.deleteChat(widget.server,_chatCopy).then((loaded){
-    //  widget.loadingState(false);
-    //  widget.chatRemoved()
-        
-      //TODO: redirect to main page 
-    });
+       if(deleted){
+         _isLoading(false);
+         widget.refreshList();
+         Navigator.pop(_context);
+       }
   }
 
 
@@ -555,9 +555,11 @@ return menuItems;
         });
       }
 
-      setState(() {
-        _chatStatus = msgsStatusMap['chat_status'] ?? "";
-      });
+      if(mounted){
+        setState(() {
+          _chatStatus = msgsStatusMap['chat_status'] ?? "";
+        });
+      }
 
       /* check if chat has been accepted
     * not a very good way to check but

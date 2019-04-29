@@ -12,12 +12,13 @@ import 'package:livehelp/utils/server_requests.dart';
 import 'package:livehelp/utils/enum_menu_options.dart';
 
 class PendingListWidget extends StatefulWidget {
-  PendingListWidget({Key key,this.listOfServers,this.listToAdd,this.loadingState}):super(key:key);
+  PendingListWidget({Key key,this.listOfServers,this.listToAdd,this.loadingState,this.refreshList}):super(key:key);
 
   final List<Chat> listToAdd;
   final List<Server> listOfServers;
 
   final ValueChanged<bool> loadingState;
+  final VoidCallback refreshList;
 
   @override
   _PendingListWidgetState createState() => new _PendingListWidgetState();
@@ -72,7 +73,7 @@ return <PopupMenuEntry<ChatItemMenuOption>>[
         onTap:() {
     var route = new FadeRoute(
       settings: new RouteSettings(name: "/chats/chat"),
-      builder: (BuildContext context) => new ChatPage(server:server,chat: chat,isNewChat: true,),
+      builder: (BuildContext context) => new ChatPage(server:server,chat: chat,isNewChat: true,refreshList: widget.refreshList,),
     );
     Navigator.of(context).push(route);
   } ,
@@ -88,7 +89,7 @@ return <PopupMenuEntry<ChatItemMenuOption>>[
         widget.loadingState(true);
         var route = new FadeRoute(
           settings: new RouteSettings(name: "/chats/chat"),
-          builder: (BuildContext context) => new ChatPage(server:srvr,chat: chat,isNewChat: true,),
+          builder: (BuildContext context) => new ChatPage(server:srvr,chat: chat,isNewChat: true,refreshList: widget.refreshList,),
         );
         Navigator.of(context).push(route);
         break;

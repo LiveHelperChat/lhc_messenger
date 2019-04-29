@@ -22,14 +22,13 @@ class ChatItemWidget extends StatelessWidget {
 
   final ValueChanged<ChatItemMenuOption> onMenuSelected;
 
-
   final List<PopupMenuEntry<ChatItemMenuOption>>
       menuBuilder; // for populating the menu
 
   @override
   Widget build(BuildContext context) {
     var dateFormatter = new DateFormat("dd/MM/yy");
-    var timeFormatter =  new DateFormat("HH:mm");
+    var timeFormatter = new DateFormat("HH:mm");
     TextStyle styling = new TextStyle(
       fontFamily: 'Roboto',
     );
@@ -44,22 +43,23 @@ class ChatItemWidget extends StatelessWidget {
     });
 
     return new SizedBox(
-        height: 200.0,
+        height: 180.0,
         child: new Container(
-
             padding: const EdgeInsets.all(4.0),
             child: new Card(
                 color: Theme.of(context).cardColor,
                 child: new Container(
                     decoration: new BoxDecoration(
-                      color:chat.has_unread_messages == 1 ? Theme.of(context).primaryColorLight : Theme.of(context).cardColor,
+                      color: chat.has_unread_messages == 1
+                          ? Theme.of(context).primaryColorLight
+                          : Theme.of(context).cardColor,
                     ),
                     padding: const EdgeInsets.all(8.0),
-                    child: new Column(
+                    child:  Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         new Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: <Widget>[
                             new Container(
                               margin:
@@ -70,7 +70,7 @@ class ChatItemWidget extends StatelessWidget {
                                 color: Theme.of(context).primaryColor,
                               ),
                             ),
-                            new Expanded(
+                             Expanded(
                                 child: new Column(
                                     mainAxisSize: MainAxisSize.min,
                                     crossAxisAlignment:
@@ -87,86 +87,107 @@ class ChatItemWidget extends StatelessWidget {
                                             fontWeight: FontWeight.bold)),
                                   ),
                                   new AnimatedDefaultTextStyle(
-                                    style: styling,
-                                    duration: kThemeChangeDuration,
-                                    child: new Text(chat.ip??"",
-                                        textAlign: TextAlign.left,
-                                        style: styling.copyWith(
-                                          color: Colors.grey,
-                                          fontSize: 14.0,
-                                        )),
-                                  )
+                                      duration: kThemeChangeDuration,
+                                      child: Text(chat.country_name ?? ""),
+                                      textAlign: TextAlign.left,
+                                      style: styling.copyWith(
+                                        color: Colors.grey,
+                                        fontSize: 14.0,
+                                      )),
                                 ])),
-
-                            popupMenuBtn,
-
-
+                            Align(
+                              alignment: Alignment.topRight,
+                              child: popupMenuBtn,
+                            ),
                           ],
                         ),
-                        new Text(
-                            'Department: ${chat.department_name ?? ""}',
-                            textAlign: TextAlign.left,
-                            style: styling.copyWith(color: Colors.black)),
                         new Divider(),
-                        new Expanded(
-                            child: new Row(
+                         Expanded(
+                            child:  Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
-                            new Expanded(
-                              child: new Text(chat.country_name??""),
-                            ),
+                             Expanded(
+                              child: new AnimatedDefaultTextStyle(
+                                style: styling,
+                                duration: kThemeChangeDuration,
+                                child: new Text(chat.ip ?? "",
+                                    textAlign: TextAlign.left,
+                                    style: styling.copyWith(
+                                      color: Colors.black54,
+                                      fontSize: 14.0,
+                                    )),
 
-                            new Column(
+                              ),
+                            ),
+                             Text(
+                               "ID: ${chat.id}",
+                               textAlign: TextAlign.end,
+                               style: styling.copyWith(
+                                 color: Colors.black87,
+                                 fontSize: 12.0,
+                               ),
+                             )
+                          ],
+                        )),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: <Widget>[
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                Text(
+                                    'Dept.: ${chat.department_name ?? ""}',
+                                    textAlign: TextAlign.left,
+                                    style:
+                                        styling.copyWith(color: Colors.black)),
+                               Align(
+                                 alignment: Alignment.bottomLeft,
+                                 child:Row(
+                                   mainAxisAlignment: MainAxisAlignment.start,
+                                   children: <Widget>[
+                                     Text('Server: ',
+                                         textAlign: TextAlign.left,
+                                         style: styling.copyWith(
+                                           color: Colors.black,
+                                         )),
+                                     Text('${server.servername}',
+                                         textAlign: TextAlign.left,
+                                         style: styling.copyWith(
+                                             color: Colors.black,
+                                             fontWeight: FontWeight.bold)),
+                                   ],
+                                 ),
+                               )
+                              ],
+                            ),
+                            Spacer(),
+                            Column(
                                 mainAxisSize: MainAxisSize.min,
-                                mainAxisAlignment:
-                                MainAxisAlignment.spaceEvenly,
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: <Widget>[
-                                  new Text(
-                                  timeFormatter.format(
-                                      new DateTime.fromMillisecondsSinceEpoch(
-                                          chat.time * 1000)),
-                                  textAlign: TextAlign.end,
-                                  style: styling.copyWith(
-                                    color: Colors.grey,
-                                    fontSize: 12.0,
-                                  ),
-                                ),
                                   new Text(
                                     dateFormatter.format(
                                         new DateTime.fromMillisecondsSinceEpoch(
                                             chat.time * 1000)),
                                     textAlign: TextAlign.end,
                                     style: styling.copyWith(
-                                      color: Colors.grey,
+                                      color: Colors.black87,
                                       fontSize: 12.0,
                                     ),
                                   ),
-                                  new Align(
-                                      alignment: Alignment.bottomLeft,
-                                      child: new Text(
-                                        "ID: ${chat.id}",
-                                        textAlign: TextAlign.end,
-                                        style: styling.copyWith(
-                                          color: Colors.grey,
-                                          fontSize: 12.0,
-                                        ),
-                                      ))
+                                  new Text(
+                                    timeFormatter.format(
+                                        new DateTime.fromMillisecondsSinceEpoch(
+                                            chat.time * 1000)),
+                                    textAlign: TextAlign.end,
+                                    style: styling.copyWith(
+                                      color: Colors.black87,
+                                      fontSize: 12.0,
+                                    ),
+                                  ),
                                 ]),
-
-                          ],
-                        )),
-                        new Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            new Expanded(
-                              child: new Text('SERVER: ${server.servername}',
-                                  textAlign: TextAlign.left,
-                                  style: styling.copyWith(
-                                      color: Colors.black,
-                                      fontWeight: FontWeight.bold)),
-                            ),
                           ],
                         ),
                       ],

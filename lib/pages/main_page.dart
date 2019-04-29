@@ -349,6 +349,7 @@ class _MainPageState extends State<MainPage>
               listOfServers: listServers,
               listToAdd: _pendingChatList,
               loadingState: onActionLoading,
+              refreshList: _getChatList,
             ),
             new TransferredListWidget(
               listOfServers: listServers,
@@ -475,7 +476,7 @@ class _MainPageState extends State<MainPage>
             if (srvr.pendingChatList != null && srvr.pendingChatList.length > 0) {
               setState(() {
                 _pendingChatList = cleanUpLists(_pendingChatList, srvr.pendingChatList);
-                _pendingChatList.sort((a, b) => a.last_msg_id.compareTo(b.last_msg_id));
+               // _pendingChatList.sort((a, b) => a.last_msg_id.compareTo(b.last_msg_id));
               });
             } else {
               setState(() {
