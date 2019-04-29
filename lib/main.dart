@@ -124,12 +124,7 @@ class _MyHomePageState extends State<MyHomePage> with AfterLayoutMixin<MyHomePag
       token = fcmtoken;
       });
 
-
-
     });
-
-
-
     //if(mounted)
     //if(fcm_token.isNotEmpty)
     //print("Main Token: $token");
