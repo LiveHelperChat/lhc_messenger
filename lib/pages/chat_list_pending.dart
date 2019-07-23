@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 
-import 'package:livehelp/pages/token_inherited_widget.dart';
 import 'package:livehelp/model/server.dart';
 import 'package:livehelp/model/chat.dart';
 import 'package:livehelp/widget/chat_item_widget.dart';
@@ -64,7 +63,10 @@ return <PopupMenuEntry<ChatItemMenuOption>>[
 }
 
  Widget _itemBuilder(BuildContext context,int index){
-   Chat chat = _listToAdd[index];
+
+   List<Chat> reversedList = _listToAdd.reversed.toList();
+
+   Chat chat = reversedList[index];
    Server server = widget.listOfServers.firstWhere((srvr)=>srvr.id == chat.serverid);
     return new GestureDetector(
         child:  new ChatItemWidget(

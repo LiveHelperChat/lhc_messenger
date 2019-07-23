@@ -375,7 +375,7 @@ class LoginFormState extends State<LoginForm> {
 
       if (_isNewServer) {}
       // fetch user data
-      await srvrRequest.getUserFromServer(_currentServer).then((user) {
+      var user = await srvrRequest.getUserFromServer(_currentServer);
         if (user != null) {
           setState(() {
             _currentServer.userid = user['id'];
@@ -387,9 +387,8 @@ class LoginFormState extends State<LoginForm> {
             _currentServer.departments_ids = user['departments_ids'];
           });
         }
-      });
 
-      await dbHelper.upsertServer(
+       dbHelper.upsertServer(
           _currentServer, "id=?", [_currentServer.id]).then((srvv) {
         Navigator.of(_context).pushReplacement(new FadeRoute(
               builder: (BuildContext context) => new TokenInheritedWidget(
