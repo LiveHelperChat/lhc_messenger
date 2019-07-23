@@ -10,3 +10,4 @@ packages
 .flutter-plugins
 RELEASE FILES/
 android/key.properties
+pubspec.lock

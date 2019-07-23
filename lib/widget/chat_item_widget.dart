@@ -53,6 +53,7 @@ class ChatItemWidget extends StatelessWidget {
                       color: chat.has_unread_messages == 1
                           ? Theme.of(context).primaryColorLight
                           : Theme.of(context).cardColor,
+                          borderRadius: BorderRadius.circular(4.0)
                     ),
                     padding: const EdgeInsets.all(8.0),
                     child:  Column(
@@ -191,6 +192,10 @@ class ChatItemWidget extends StatelessWidget {
                           ],
                         ),
                       ],
-                    )))));
+                    )
+                  )
+                )
+              )
+            );
   }
 }

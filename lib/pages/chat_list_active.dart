@@ -36,14 +36,12 @@ class _ActiveListWidgetState extends State<ActiveListWidget> {
 
   ServerRequest _serverRequest;
   List<Chat> _listToAdd;
-  List<dynamic> _listForTransfer;
 
   @override
   void initState() {
     super.initState();
 
     _serverRequest = new ServerRequest();
-    _listForTransfer =new List();
     _listToAdd = widget.listToAdd;
   }
 

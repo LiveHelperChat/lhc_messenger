@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:core';
 
 import 'package:flutter/material.dart';
@@ -81,7 +82,7 @@ class _MainPageState extends State<MainPage>
 
     _user_online = false;
 
-    // _getChatList();
+      _getSavedServers();
   }
 
   @override
@@ -109,7 +110,6 @@ class _MainPageState extends State<MainPage>
     switch (_lastLifecyleState) {
       case AppLifecycleState.resumed:
         _timer = myTimer(15);
-        //  showUpdateMsg();
         break;
       case AppLifecycleState.paused:
       case AppLifecycleState.inactive:
@@ -124,8 +124,6 @@ class _MainPageState extends State<MainPage>
   @override
   Widget build(BuildContext context) {
 
-   // dbHelper.debug();
-
     _context = context;
     final tokenInherited = TokenInheritedWidget.of(_context);
     _fcmToken = tokenInherited.token;
@@ -137,7 +135,6 @@ class _MainPageState extends State<MainPage>
         _actionLoading ? new CircularProgressIndicator() : new Container();
 
     var mainScaffold = new Scaffold(
-      backgroundColor: Colors.black26,
         appBar: new AppBar(
           title: new Text("Chat Lists"),
           bottom: new TabBar(controller: tabBarController, tabs: <Tab>[
@@ -218,7 +215,8 @@ class _MainPageState extends State<MainPage>
                               onTap: () {
                                 setState(() {
                                   _selectedServer = ssrvr;
-                                  showUpdateMsg();
+                                 /**Enable when extension version changes */
+                                 // showUpdateMsg();
                                 });
                               },
                             ),
@@ -336,7 +334,6 @@ class _MainPageState extends State<MainPage>
               controller: tabBarController,
               children: <Widget>[
             Container(
-              color: Colors.black26,
               child: new ActiveListWidget(
                 listOfServers: listServers,
                 listToAdd: _activeChatList,
@@ -396,7 +393,7 @@ class _MainPageState extends State<MainPage>
       initState: () async {
         //TODO added return (might not be needed)
         // await _getSavedServers();
-        return _getChatList();
+        return _getChatList(); 
       },
       renderLoad: () => new Scaffold(
             body: new Center(child: new CircularProgressIndicator()),
@@ -404,6 +401,7 @@ class _MainPageState extends State<MainPage>
       renderError: ([error]) =>
           new Scaffold(body: new Center(child: new Text('Something is wrong'))),
       renderSuccess: ({data}) {
+        
         return mainScaffold;
       },
     );
@@ -449,11 +447,12 @@ class _MainPageState extends State<MainPage>
   Future<Null> _getChatList({istimer=false}) async {
     if (!_actionLoading && initialized) {
 
-
      if(!istimer) onActionLoading(true);
-
       // TODO remove this line
-      await _getSavedServers();
+     // await _getSavedServers();
+     List<Chat> activeChats = new List<Chat>();
+     List<Chat> pendingChats = new List<Chat>();
+     List<Chat> transferChats = new List<Chat>();
 
       listServers.forEach((server) async {
         if (server.isloggedin == 1) {
@@ -463,20 +462,22 @@ class _MainPageState extends State<MainPage>
               setState(() {
                 _activeChatList =
                     cleanUpLists(_activeChatList, srvr.activeChatList);
-                _activeChatList
+                   _activeChatList
                     .sort((a, b) => a.last_msg_id.compareTo(b.last_msg_id));
               });
             } else {
-              setState(() {
-                _activeChatList
-                    ?.removeWhere((chat) => chat.serverid == server.id);
-              });
+              if(mounted){
+               setState(() {
+                _activeChatList?.removeWhere((chat) => chat.serverid == server.id);
+              }); 
+              }
+              
             }
 
             if (srvr.pendingChatList != null && srvr.pendingChatList.length > 0) {
               setState(() {
                 _pendingChatList = cleanUpLists(_pendingChatList, srvr.pendingChatList);
-               // _pendingChatList.sort((a, b) => a.last_msg_id.compareTo(b.last_msg_id));
+                _pendingChatList.sort((a, b) => a.id.compareTo(b.id));
               });
             } else {
               setState(() {
@@ -495,33 +496,34 @@ class _MainPageState extends State<MainPage>
               _transferedChatList?.removeWhere((chat) => chat.serverid == server.id);
             }
 
+     // _activeChatList.addAll(activeChats);
+      
+             
             onActionLoading(false);
           });
         }
       });
 
+
     }
   }
 
-  List<Chat> cleanUpLists(
-      List<Chat> chatToClean, List<dynamic> listFromServer) {
+  List<Chat> cleanUpLists(List<Chat> chatToClean, List<dynamic> listFromServer) {
     listFromServer.map((map) => new Chat.fromMap(map));
     listFromServer.forEach((map) {
-      // Chat tempChat = new Chat.fromMap(map);
 
       // print("ListMessage: " + message.toMap().toString());
-      if (chatToClean
-          .any((chat) => chat.id == map.id && chat.serverid == map.serverid)) {
+      if (chatToClean.any((chat) => chat.id == map.id && chat.serverid == map.serverid)) {
         int index = chatToClean.indexWhere(
             (chat) => chat.id == map.id && chat.serverid == map.serverid);
         chatToClean[index] = map;
-        // print("Active_ " + map.toString());
+
       } else {
         chatToClean.add(map);
       }
 
       // cleanup  list
-
+/*
       if (chatToClean.length > 0 && listFromServer.length > 0) {
         List<int> removedIndices = new List();
         chatToClean.forEach((chat) {
@@ -535,10 +537,10 @@ class _MainPageState extends State<MainPage>
         //remove the chats
         if (removedIndices != null && removedIndices.length > 0) {
           removedIndices.sort();
-          removedIndices.reversed.toList().forEach(chatToClean.removeAt);
+       //   removedIndices.reversed.toList().forEach(chatToClean.removeAt);
           removedIndices.clear();
         }
-      }
+      }  */
     });
     return chatToClean;
   }
@@ -546,6 +548,7 @@ class _MainPageState extends State<MainPage>
   Future<Null> _getSavedServers() async {
     List<Map> savedRecs = await dbHelper.fetchAll(
         Server.tableName, "${Server.columns['db_id']}  ASC", null, null);
+        
     if (savedRecs != null && savedRecs.length > 0) {
       savedRecs.forEach((item) {
         if (!(listServers.any((serv) =>
@@ -564,7 +567,7 @@ class _MainPageState extends State<MainPage>
 
           //TODO Remove in future updates
           // check extension update
-          showUpdateMsg();
+          //showUpdateMsg();
         }
       });
     } else {}
@@ -645,7 +648,8 @@ class _MainPageState extends State<MainPage>
     setState(() {
       initialized = true;
     });
-    if (_selectedServer != null) showUpdateMsg();
+
+   // if (_selectedServer != null) showUpdateMsg();
   }
 
   showUpdateMsg() async {

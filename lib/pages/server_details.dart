@@ -5,13 +5,11 @@ import 'package:async_loader/async_loader.dart';
 
 import 'package:livehelp/data/database.dart';
 import 'package:livehelp/model/server.dart';
-import 'package:livehelp/model/user.dart';
 import 'package:livehelp/model/department.dart';
 import 'package:livehelp/utils/server_requests.dart';
 import 'package:livehelp/utils/widget_utils.dart';
 import 'package:livehelp/widget/office_time_picker.dart';
 import 'package:livehelp/pages/token_inherited_widget.dart';
-import 'package:livehelp/widget/circularWithBackground.dart';
 
 class ServerDetails extends StatefulWidget {
   ServerDetails({this.server});
@@ -57,13 +55,7 @@ class _ServerDetailsState extends State<ServerDetails> {
     _serverRequest = new ServerRequest();
     _localServer = widget.server;
 
-    /*
-    if(widget.server == null)
-      ()async=>await  _syncServerData();
-    else {
-
-      listServers.add(_localServer);
-    }*/
+     _syncServerData();
   }
 
   /*
@@ -140,24 +132,43 @@ class _ServerDetailsState extends State<ServerDetails> {
           children:<Widget>[
             new SingleChildScrollView(
           child: new Container(
-            margin: EdgeInsets.only(top: 16.0, left: 8.0, right: 8.0),
+            decoration: BoxDecoration(color: Colors.white),
             child: new Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
         new Card(
                   child: new Column(
                       mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         new Padding(
                             padding: EdgeInsets.all(8.0),
                             child: new Text(
                               "SERVER INFO",
-                              textAlign: TextAlign.center,
+                              textAlign: TextAlign.left,
                               style: new TextStyle(fontWeight: FontWeight.bold),
                             )),
-                        new Divider(),
-                        new ListTile(
-                          title: new Text('${_localServer?.url}'),
+                         Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: new Text('${_localServer?.url}'),
+                        ),
+                         Divider(),
+                            Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: new Text(
+                            "OPERATOR INFO",
+                            textAlign: TextAlign.left,
+                            style: new TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                         Padding(
+                          padding: EdgeInsets.all(5.0),
+                          child:Text(
+                              '${_localServer?.firstname} ${_localServer?.surname}'),
+                         ),
+                         Padding(
+                          padding: EdgeInsets.all(5.0),
+                          child:  Text('${_localServer?.operatoremail}'),
                         ),
                       ]),
                 ),
@@ -167,22 +178,7 @@ class _ServerDetailsState extends State<ServerDetails> {
                   mainAxisSize: MainAxisSize.min,
                       // crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
-                        new Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: new Text(
-                            "OPERATOR INFO",
-                            textAlign: TextAlign.center,
-                            style: new TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                        new Divider(),
-                        new ListTile(
-                          title: new Text(
-                              '${_localServer?.firstname} ${_localServer?.surname}'),
-                        ),
-                        new ListTile(
-                          title: new Text('${_localServer?.operatoremail}'),
-                        ),
+                     
                       ]),
                 ),
              new Divider(),
@@ -201,7 +197,7 @@ class _ServerDetailsState extends State<ServerDetails> {
                               }) ,) ,
                           title: new Text("Department Work hours/day active",
                           style: new TextStyle(fontSize: 12.0),),
-                          subtitle:_department ==null ? new Text("Could not load department hours from server.", style: new TextStyle(fontSize: 14.0,fontWeight: FontWeight.bold),)
+                          subtitle:_department ==null ? new Text("Could not load department hours from server.\nCheck your network connection. ", style: new TextStyle(fontSize: 14.0,fontWeight: FontWeight.bold),)
                               : new Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: <Widget>[
@@ -585,7 +581,7 @@ class _ServerDetailsState extends State<ServerDetails> {
   }  */
 
   Future<Null> _syncServerData() async {
-//    print("Localserver: " + _localServer?.toMap().toString());
+  //  print("Localserver: " + _localServer?.toMap().toString());
 
     if (_localServer != null) {
       //TODO
@@ -594,7 +590,8 @@ class _ServerDetailsState extends State<ServerDetails> {
     //      .then((srvr)=>_localServer = srvr);
       
       // fetch user data
-      await _serverRequest.getUserFromServer(_localServer).then((user) {
+     var user = await _serverRequest.getUserFromServer(_localServer);
+
         if (user != null) {
           setState(() {
             _localServer.userid = user['id'];
@@ -606,21 +603,21 @@ class _ServerDetailsState extends State<ServerDetails> {
             _localServer.departments_ids = user['departments_ids'];
           });
         }
-      });
+
       await _dbHelper.upsertServer(_localServer, "id=?", [_localServer.id]);
 
       // fetch departments
-      await _serverRequest.getUserDepartments(_localServer).then((list) {
-        if (list is List) {
+     List<Department> listDepts = await _serverRequest.getUserDepartments(_localServer);
+     
+        if (listDepts is List) {
           setState(() {
-            userDepartments = list;
+            userDepartments = listDepts;
             if(userDepartments.length >0) {
               _department = userDepartments.elementAt(0);
               _checkActiveHours();
             }
           });
         }
-      });
     }
   }
 

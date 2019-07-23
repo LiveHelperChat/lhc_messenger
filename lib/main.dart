@@ -6,8 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:after_layout/after_layout.dart';
 
-import 'package:sqflite/sqflite.dart';
-
 import 'package:livehelp/pages/loginForm.dart';
 import 'package:livehelp/pages/token_inherited_widget.dart';
 import 'package:livehelp/model/server.dart';
@@ -16,21 +14,10 @@ import 'package:livehelp/data/database.dart';
 import 'package:livehelp/utils/notification_helper.dart';
 
 void main() async {
-  
       runApp(new MyApp());
-  //await AndroidAlarmManager.cancel(helloAlarmID);
-  /*  await AndroidAlarmManager.periodic(const Duration(minutes: 1), helloAlarmID, printHello,wakeup:
-    true);  */
-}
-
-void printHello() {
-  final DateTime now = new DateTime.now();
-  final int isolateId = Isolate.current.hashCode;
- // print("[$now] Hello, world! isolate=${isolateId} function='$printHello'");
 }
 
 class MyApp extends StatelessWidget {
-
 
   @override
   Widget build(BuildContext context) {
@@ -39,25 +26,15 @@ class MyApp extends StatelessWidget {
       title: 'LiveHelp',
       theme: new ThemeData(
         primarySwatch:  Colors.teal,
+        scaffoldBackgroundColor: Colors.white70,
       ),
        home: new MyHomePage(title: "Login",)
-       //new PushMessagingExample()
      );
   }
 }
 
 class MyHomePage extends StatefulWidget {
   MyHomePage({Key key, this.title}) : super(key: key);
-
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
 
   final String title;
 
@@ -79,9 +56,7 @@ class _MyHomePageState extends State<MyHomePage> with AfterLayoutMixin<MyHomePag
   bool isInitialised =false;
 
   _MyHomePageState(){
-    //Initialaise database helper
-    //DatabaseHelper dbHelper=new DatabaseHelper();
-   // dbHelper.init();
+
   }
 
 
@@ -89,7 +64,6 @@ class _MyHomePageState extends State<MyHomePage> with AfterLayoutMixin<MyHomePag
   void initState() {
     super.initState();
 
-  //  DatabaseHelper.get().init();
    // Sqflite.devSetDebugModeOn(true);
    _dbHelper = new DatabaseHelper();
 
@@ -103,8 +77,7 @@ class _MyHomePageState extends State<MyHomePage> with AfterLayoutMixin<MyHomePag
 
       },
       onLaunch: (Map<String, dynamic> message) {
-        // print("onLaunch: $message");
-       // print(message);
+
       },
       onResume: (Map<String, dynamic> message) {
         // print("onResume: $message");
@@ -124,15 +97,7 @@ class _MyHomePageState extends State<MyHomePage> with AfterLayoutMixin<MyHomePag
       token = fcmtoken;
       });
 
-
-
     });
-
-
-
-    //if(mounted)
-    //if(fcm_token.isNotEmpty)
-    //print("Main Token: $token");
 
   }
 
@@ -158,7 +123,7 @@ class _MyHomePageState extends State<MyHomePage> with AfterLayoutMixin<MyHomePag
 
     if (data.containsKey("chat_type")) {
      // check if server exists on this device
-      await _dbHelper.fetchItem(Server.tableName, "installationid=? and isloggedin=?",[data['server_id'],1])
+     _dbHelper.fetchItem(Server.tableName, "installationid=? and isloggedin=?",[data['server_id'],1])
       .then((server){
         if(server != null){
             Server srv = new Server.fromMap(server);
@@ -180,14 +145,12 @@ class _MyHomePageState extends State<MyHomePage> with AfterLayoutMixin<MyHomePag
 
             if (data["chat_type"].toString() == "unread")
             {
-              NotificationHelper.showNotification(srv,'pending',"Unread message from "+chat['nick'].toString(), data['msg'].toString());
+              NotificationHelper.showNotification(srv,'pending',"Unread message from "+chat['nick'].toString(),"");
               }
 
           }
       });
   }
-    else { }
-
 
   }
 
