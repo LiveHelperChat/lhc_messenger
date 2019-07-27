@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 
 class MyRoutes{
-  static final String list ="/list";
+  static final String login = "/login";
+  static final String server = "/server";
+  static final String chatPage = "/chats/chat";
+  static final String main  = "/main";
+  static final String serverDetails  = "/servers/server";
+  static final String serversManage  = "/servers/manage";
 }
 
 class FadeRoute<T> extends MaterialPageRoute<T> {

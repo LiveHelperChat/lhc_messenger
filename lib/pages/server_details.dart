@@ -102,10 +102,21 @@ class _ServerDetailsState extends State<ServerDetails> {
                     icon: new CircularProgressIndicator(
                       backgroundColor: Colors.white,
                       ),onPressed: null,)),  */
-            new Offstage(
+           
+               FlatButton(
+              shape: CircleBorder(side: BorderSide(color: Colors.transparent)),
+                textColor: Colors.white,
+                child: new Text("Re-Sync"),
+                onPressed: () {
+                  _isLoading = true;
+                  _refreshServerData();
+                  _initAsyncloader();
+                }),
+                 new Offstage(
               offstage: _department == null,
-              child: new MaterialButton(
-                  child:  new Text("Save Data"),
+              child:  FlatButton(
+                 shape: CircleBorder(side: BorderSide(color: Colors.transparent)),
+                  child:  Icon(Icons.save),
                 textColor: Colors.white,
                 onPressed: () {
                   _department.online_hours_active = _onlineHoursActive;
@@ -118,14 +129,6 @@ class _ServerDetailsState extends State<ServerDetails> {
                     _isLoading = false;
                   });
                 }), ),
-            new MaterialButton(
-                child: new Text("Sync Server"),
-                textColor: Colors.white,
-                onPressed: () {
-                  _isLoading = true;
-                  _refreshServerData();
-                  _initAsyncloader();
-                }),
           ],
         ),
         body:new Stack(
@@ -134,27 +137,24 @@ class _ServerDetailsState extends State<ServerDetails> {
           child: new Container(
             decoration: BoxDecoration(color: Colors.white),
             child: new Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-        new Card(
-                  child: new Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        new Padding(
-                            padding: EdgeInsets.all(8.0),
+                        
+                         Padding(
+                            padding: EdgeInsets.only(left:16.00,top: 16.00),
                             child: new Text(
                               "SERVER INFO",
                               textAlign: TextAlign.left,
                               style: new TextStyle(fontWeight: FontWeight.bold),
                             )),
                          Padding(
-                          padding: EdgeInsets.all(8.0),
+                          padding: EdgeInsets.only(left:16.00,top: 8.00),
                           child: new Text('${_localServer?.url}'),
                         ),
                          Divider(),
                             Padding(
-                          padding: EdgeInsets.all(8.0),
+                          padding:  EdgeInsets.only(left:16.00,top: 8.00),
                           child: new Text(
                             "OPERATOR INFO",
                             textAlign: TextAlign.left,
@@ -162,31 +162,19 @@ class _ServerDetailsState extends State<ServerDetails> {
                           ),
                         ),
                          Padding(
-                          padding: EdgeInsets.all(5.0),
+                          padding:  EdgeInsets.only(left:16.00,top: 8.00),
                           child:Text(
                               '${_localServer?.firstname} ${_localServer?.surname}'),
                          ),
                          Padding(
-                          padding: EdgeInsets.all(5.0),
+                          padding: EdgeInsets.only(left:16.00,top: 8.00),
                           child:  Text('${_localServer?.operatoremail}'),
-                        ),
-                      ]),
-                ),
-
-               new Card(
-                  child: new Column(
-                  mainAxisSize: MainAxisSize.min,
-                      // crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                     
-                      ]),
-                ),
-             new Divider(),
-
-                      new Container(
+                          ),
+                  Divider(),
+                 Container(
                         margin: const EdgeInsets.only(bottom: 4.0),
                         child: new ListTile(
-                          leading:new Offstage(
+                          trailing: new Offstage(
                             offstage: _department == null,
                             child:new Checkbox(
                               value: _onlineHoursActive,
@@ -194,16 +182,11 @@ class _ServerDetailsState extends State<ServerDetails> {
                                 setState(() {
                                   _onlineHoursActive = val;
                                 });
-                              }) ,) ,
-                          title: new Text("Department Work hours/day active",
-                          style: new TextStyle(fontSize: 12.0),),
-                          subtitle:_department ==null ? new Text("Could not load department hours from server.\nCheck your network connection. ", style: new TextStyle(fontSize: 14.0,fontWeight: FontWeight.bold),)
-                              : new Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: <Widget>[
-
-                         new Expanded(
-                                child: new DropdownButton(
+                              }) ,),
+                          title: _department ==null ? new Text("Could not load department hours from server.\nCheck your network connection. ", 
+                          style: new TextStyle(fontSize: 14.0,fontWeight: FontWeight.bold),)
+                              :  DropdownButton(
+                                  isExpanded: true,
                                     value: _department,
                                     items: userDepartments.map((dept) {
                                       return new DropdownMenuItem(
@@ -212,12 +195,11 @@ class _ServerDetailsState extends State<ServerDetails> {
                                       );
                                     }).toList(),
                                     onChanged: _onDeptListChanged),
-                              )
-
-
-                            ],
-                          ),
-                        ) ,
+                              
+                     
+                         subtitle: Text("Department Work hours/day active",
+                          style: new TextStyle(fontSize: 12.0),),
+                        ),
                       ),
 
                       new Divider(),
@@ -510,7 +492,7 @@ class _ServerDetailsState extends State<ServerDetails> {
                             onTap: () {
                               _selectTime(context);
                             },
-                            trailing: new Checkbox(
+                            trailing: Checkbox(
                               value: _saturdayHoursActive || _department != null
                                   ? _department.saturdayActive
                                   : false,

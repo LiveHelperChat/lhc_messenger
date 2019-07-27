@@ -67,12 +67,19 @@ class _ActiveListWidgetState extends State<ActiveListWidget> {
 
     List<Chat> reversedList = listToReverse.reversed.toList();
    Chat chat = reversedList[index];
-   Server server = widget.listOfServers.firstWhere((srvr)=>srvr.id == chat.serverid);
-    return new GestureDetector(
-        child:  new ChatItemWidget(server:server,chat: chat,menuBuilder:_itemMenuBuilder(), onMenuSelected: (selectedOption){onItemSelected(context,server,chat,selectedOption);},),
+   Server server = widget.listOfServers.firstWhere((srvr)=>srvr.id == chat.serverid,
+   orElse: ()=> null);
+
+    return server == null ?  Text("No server found") : new GestureDetector(
+        child:  new ChatItemWidget(
+          server:server,chat: chat,
+          menuBuilder:_itemMenuBuilder(), 
+          onMenuSelected: (selectedOption){
+            onItemSelected(context,server,chat,selectedOption);},
+          ),
         onTap:(){
     var route = new FadeRoute(
-      settings: new RouteSettings(name: "/chats/chat"),
+      settings: new RouteSettings(name: MyRoutes.chatPage),
       builder: (BuildContext context) => new ChatPage(server:server,chat: chat,isNewChat: false,refreshList: widget.refreshList,),
     );
     Navigator.of(context).push(route);

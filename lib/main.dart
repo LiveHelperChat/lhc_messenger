@@ -7,6 +7,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:after_layout/after_layout.dart';
 
 import 'package:livehelp/pages/loginForm.dart';
+import 'package:livehelp/pages/servers_manage.dart';
 import 'package:livehelp/pages/token_inherited_widget.dart';
 import 'package:livehelp/model/server.dart';
 import 'package:livehelp/data/database.dart';
@@ -107,7 +108,7 @@ class _MyHomePageState extends State<MyHomePage> with AfterLayoutMixin<MyHomePag
     return new Center(
       child: new TokenInheritedWidget(
     token: token,
-    child:  new LoginForm() ),
+    child: ServersManage() ),
 
     );
   }
