@@ -7,13 +7,14 @@ import 'package:flutter/material.dart';
 import 'package:async_loader/async_loader.dart';
 import 'package:after_layout/after_layout.dart';
 
-import 'package:livehelp/utils/routes.dart';
-import 'package:livehelp/pages/token_inherited_widget.dart';
+import 'package:livehelp/data/database.dart';
 import 'package:livehelp/model/chat.dart';
 import 'package:livehelp/model/server.dart';
-import 'package:livehelp/data/database.dart';
+import 'package:livehelp/utils/routes.dart';
 import 'package:livehelp/utils/server_requests.dart';
 import 'package:livehelp/pages/loginForm.dart';
+import 'package:livehelp/pages/token_inherited_widget.dart';
+import 'package:livehelp/pages/servers_manage.dart';
 import 'package:livehelp/pages/chat_list_active.dart';
 import 'package:livehelp/pages/chat_list_pending.dart';
 import 'package:livehelp/pages/chat_list_transferred.dart';
@@ -33,7 +34,6 @@ class _MainPageState extends State<MainPage>
         AfterLayoutMixin<MainPage> {
   // used to track application lifecycle
   AppLifecycleState _lastLifecyleState;
-  BuildContext _context;
 
   final GlobalKey<AsyncLoaderState> _mainAsyncLoaderState =
       new GlobalKey<AsyncLoaderState>();
@@ -77,12 +77,19 @@ class _MainPageState extends State<MainPage>
     tabBarController = new TabController(length: 3, vsync: this);
 
     dbHelper = new DatabaseHelper();
-
-    _timer = myTimer(15);
-
     _user_online = false;
+    Future.delayed(const Duration(milliseconds: 300), () async {_initLists();  });      
+    _timer = myTimer(15);
+  }
 
-      _getSavedServers();
+  void _initLists() async {
+    await _getSavedServers();
+    if(listServers.length > 0){
+     await _getChatList();
+    }  
+    else {
+      _loadManageServerPage();
+    }
   }
 
   @override
@@ -109,6 +116,7 @@ class _MainPageState extends State<MainPage>
   void _checkState() {
     switch (_lastLifecyleState) {
       case AppLifecycleState.resumed:
+        _initLists();
         _timer = myTimer(15);
         break;
       case AppLifecycleState.paused:
@@ -124,8 +132,7 @@ class _MainPageState extends State<MainPage>
   @override
   Widget build(BuildContext context) {
 
-    _context = context;
-    final tokenInherited = TokenInheritedWidget.of(_context);
+    final tokenInherited = TokenInheritedWidget.of(context);
     _fcmToken = tokenInherited.token;
 
     // get user online status
@@ -135,6 +142,7 @@ class _MainPageState extends State<MainPage>
         _actionLoading ? new CircularProgressIndicator() : new Container();
 
     var mainScaffold = new Scaffold(
+      key: _scaffoldKey,
         appBar: new AppBar(
           title: new Text("Chat Lists"),
           bottom: new TabBar(controller: tabBarController, tabs: <Tab>[
@@ -163,77 +171,62 @@ class _MainPageState extends State<MainPage>
         drawer: new Drawer(
             child: SingleChildScrollView(
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.max,
             children: <Widget>[
               new UserAccountsDrawerHeader(
-                accountName: new Text(
-                  _selectedServer?.servername ?? "",
-                  style: new TextStyle(color: Colors.deepOrange),
-                ),
-                accountEmail: _selectedServer?.isloggedin == 1 ?? false
-                    ? new Text("Logged In")
-                    : new Text("Logged Out"),
-                currentAccountPicture: new GestureDetector(
+                accountName: Text(""),
+                accountEmail:Container(
+                             
+                              child:DropdownButton(
+                                    isExpanded: true,
+                                    value: _selectedServer,
+                                    icon: Icon(Icons.arrow_drop_down, color: Colors.white ,),
+                                    items: listServers.map((srvr) {
+                                      return new DropdownMenuItem(
+                                        value: srvr,
+                                        child: new Text('${srvr?.servername}', style: TextStyle(color: Colors.teal.shade900),),
+                                      );
+                                    }).toList(),
+                                    onChanged: (srv){
+                                        setState(() {
+                                  _selectedServer = srv;
+                                 /**Enable when extension version changes */
+                                 // showUpdateMsg();
+                                });
+                                    }), ) ,
+                currentAccountPicture: GestureDetector(
                   child: new CircleAvatar(
                     child: new Text(
-                        _selectedServer?.servername?.substring(0, 1) ?? ""),
+                        _selectedServer?.servername?.substring(0, 1) ?? "",
+                        style: TextStyle(fontSize: 18.00, fontWeight: FontWeight.bold), ),
                   ),
                   onTap: () => {},
                 ),
-                /*  otherAccountsPictures: <Widget>[
-                new GestureDetector(
-                  child: new CircleAvatar(
-                    child: new Text(_selectedServer?.servername?.substring(0, 1) ?? ""),
-                  ),
-                  onTap: () {},
-                ),
-              ],  */
+              
                 decoration: new BoxDecoration(
                     image: new DecorationImage(
                         image: new AssetImage('graphics/header.jpg'),
                         fit: BoxFit.fill)),
               ),
-
-              new AnimateExpanded(
-                title: _selectedServer?.servername,
-                subtitle: _selectedServer?.url,
-                contentWidgetList: <Widget>[
-                  new Expanded(
-                    child: new ListView.builder(
-                        itemCount: listServers.length,
-                        itemBuilder: (_, index) {
-                          Server ssrvr = listServers[index];
-                          return new Offstage(
-                            offstage: _selectedServer == ssrvr,
-                            child: new ListTile(
-                              title: new Text(ssrvr.servername ?? ""),
-                              subtitle: new Text(
-                                ssrvr.url ?? "",
-                                style: new TextStyle(fontSize: 10.0),
-                                overflow: TextOverflow.fade,
-                              ),
-                              onTap: () {
-                                setState(() {
-                                  _selectedServer = ssrvr;
-                                 /**Enable when extension version changes */
-                                 // showUpdateMsg();
-                                });
-                              },
-                            ),
-                          );
-                        }),
-                  ),
-                ],
-              ),
-              new Divider(),
               new Card(
                 child: new Container(
-                  height: 65.0,
-                  child: new Row(
+                  height: 150.0,
+                  child: new Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: <Widget>[
-                      new Expanded(
-                        child: new ListTile(
+                      ListTile(
+                          title:_selectedServer == null ? Text("") : Text("${_selectedServer?.url}",
+                                style: TextStyle(fontSize: 11.0),
+                                textAlign: TextAlign.left,
+                                overflow: TextOverflow.fade, 
+                                maxLines: 2,
+                                softWrap: true,),
+                          subtitle: _isServerLoggedIn() ? Text("Logged In", style:TextStyle(color: Colors.green))
+                                   :  Text("Logged Out", style:TextStyle(color: Colors.redAccent)) ,
+                                ),                                 
+                         ListTile(
                           title: new Text(
                               "${_selectedServer?.firstname ?? ""} ${_selectedServer?.surname ?? ""}"),
                           subtitle: _selectedServer?.user_online == 1 ?? false
@@ -248,84 +241,98 @@ class _MainPageState extends State<MainPage>
                               : new IconButton(
                                   icon:
                                       _selectedServer?.user_online == 1 ?? false
-                                          ? new Icon(Icons.flash_on)
-                                          : new Icon(Icons.flash_off),
+                                          ? new Icon(Icons.flash_on,color: Colors.green,)
+                                          : new Icon(Icons.flash_off,color: Colors.red,),
                                   onPressed: () {
-                                    setState(() {
+                                    if(_isServerLoggedIn()){
+                                      setState(() {
                                       _userOnlineLoading = true;
                                     });
                                     _setOnlineStatus();
+                                    }
+                                    else {
+                                      Navigator.of(context).pop();
+                                      _showSnackBar("You are not logged in to the server");
+                                    }
+                                    
                                   },
                                 ),
                         ),
-                      ),
+                   
                     ],
                   ),
                 ),
               ),
+              
+              new Divider(),
               new ListTile(
-                  title: new Text("Server Info"),
+                  title: new Text("Server Details"),
                   leading: new Icon(Icons.web),
                   onTap: () {
-                    Navigator.of(_context).pop();
-                    Navigator.of(_context).push(
+                       if(_isServerLoggedIn()){
+                            Navigator.of(context).pop();
+                    Navigator.of(context).push(
                       new FadeRoute(
                         builder: (BuildContext context) =>
                             new TokenInheritedWidget(
                                 token: _fcmToken,
-                                //TODO
-                                //Should rather go to server details page
-                                // so that user can set the online hours
                                 child: new ServerDetails(
                                   server: _selectedServer,
                                 )),
                         settings: new RouteSettings(
-                            name: "/server", isInitialRoute: false),
+                            name: MyRoutes.serverDetails, isInitialRoute: false),
+                      ),
+                    );        
+                    }
+                    else {
+                         Navigator.of(context).pop();
+                         _showSnackBar("You are not logged in to the server");
+                        }
+                  }),
+            
+             _isServerLoggedIn() ?             
+             ListTile(
+                title: new Text("Logout server"),
+                leading: new Icon(Icons.exit_to_app),
+                onTap: () {
+                     if(_isServerLoggedIn()){
+                  Navigator.pop(context);
+                  _showAlert();
+                     }
+                    else {
+                         Navigator.of(context).pop();
+                         _showSnackBar("You are not logged in to the server");
+                        }
+                },
+              ) 
+              :  ListTile(
+                title: new Text("Login"),
+                leading: new Icon(Icons.exit_to_app),
+                onTap: () {                     
+                  Navigator.pop(context);
+                _addServer(server: _selectedServer);
+                },
+              ) ,
+             
+              new Divider(),
+              ListTile(
+                title: new Text("Manage Servers"),
+                leading: new Icon(Icons.settings),
+                onTap: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).push(
+                      new FadeRoute(
+                        builder: (BuildContext context) =>
+                            new TokenInheritedWidget(
+                                token: _fcmToken,
+                                child: new ServersManage(manage: true,)
+                                ),
+                        settings: RouteSettings(name: MyRoutes.serversManage, isInitialRoute: false),
                       ),
                     );
-                  }),
-              new Divider(),
-              new ListTile(
-                leading: new Icon(Icons.add),
-                title: new Text("Add New Server"),
-                onTap: () => _addServer(),
-              ),
-
-              /*    new ListTile(
-              title: new Text("Settings"),
-              leading: new Icon(Icons.settings),
-              onTap: () {
-                Navigator.of(_context).pop();
-                Navigator.of(_context).push(
-                  new FadeRoute(
-                    builder: (BuildContext context) =>
-                     new ServerSettings(
-                          server: _selectedServer,
-                        ),
-                    settings: new RouteSettings(
-                        name: "/server/settings", isInitialRoute: false),
-                  ),
-                );
-              } ,
-            ),*/
-              new Divider(),
-              new ListTile(
-                title: new Text("Logout"),
-                trailing: new Icon(Icons.cancel),
-                onTap: () {
-                  Navigator.pop(_context);
-                  _showAlert();
                 },
               ),
-
-// TODO move version number to main and inherit it
-              /*           Expanded(
-                child:Align(
-                  alignment: FractionalOffset.bottomCenter,
-                  child: Text("v1.2.3"),
-                )
-            )
-            */
+            
             ],
           ),
         )),
@@ -362,7 +369,7 @@ class _MainPageState extends State<MainPage>
             /*    setState(() {
               _actionLoading = true;
             });  */
-            _getChatList();
+            _initLists();
           },
 
         ),
@@ -393,7 +400,7 @@ class _MainPageState extends State<MainPage>
       initState: () async {
         //TODO added return (might not be needed)
         // await _getSavedServers();
-        return _getChatList(); 
+        return _initLists(); 
       },
       renderLoad: () => new Scaffold(
             body: new Center(child: new CircularProgressIndicator()),
@@ -409,27 +416,24 @@ class _MainPageState extends State<MainPage>
     return _asyncLoader;
   }
 
-  void _addServer() {
-    Navigator.of(_context).pop();
-    Navigator.of(_context).pushReplacement(new FadeRoute(
-      builder: (BuildContext context) => new TokenInheritedWidget(
-          token: _fcmToken, child: new LoginForm(isNew: true)),
-      settings: new RouteSettings(name: MyRoutes.list, isInitialRoute: false),
-    ));
-  }
 
-  Timer myTimer(int seconds) {
-    //fetch list first
-    new Timer(const Duration(milliseconds: 3000), () => _getChatList(istimer: true));
-
+  Timer myTimer(int seconds) {    //fetch list first
+  
     return new Timer.periodic(
         new Duration(seconds: seconds), (Timer timer) => _getChatList(istimer: true));
   }
 
   void onActionLoading(bool val) {
-    setState(() {
+    if(mounted){
+       setState(() {
       _actionLoading = val;
     });
+    }
+   
+  }
+
+  bool _isServerLoggedIn(){
+    return _selectedServer?.loggedIn() ?? false ? true : false;
   }
 
   // TODO Remove
@@ -445,26 +449,34 @@ class _MainPageState extends State<MainPage>
   }
 
   Future<Null> _getChatList({istimer=false}) async {
+  
     if (!_actionLoading && initialized) {
+        // No logged in server
+     if(listServers.length > 0 ){
 
      if(!istimer) onActionLoading(true);
       // TODO remove this line
      // await _getSavedServers();
-     List<Chat> activeChats = new List<Chat>();
-     List<Chat> pendingChats = new List<Chat>();
-     List<Chat> transferChats = new List<Chat>();
+     List<Chat> activeLists =[];
+     List<Chat> pendingLists = [];
+     List<Chat> transferLists = [];
 
-      listServers.forEach((server) async {
+     await Future.forEach(listServers, (server) async {
+
         if (server.isloggedin == 1) {
-          //getChatList
-           _serverRequest.getChatLists(server).then((srvr) {
+      
+          var srvr = await   _serverRequest.getChatLists(server);
+            
             if (srvr.activeChatList != null && srvr.activeChatList.length > 0) {
-              setState(() {
-                _activeChatList =
-                    cleanUpLists(_activeChatList, srvr.activeChatList);
-                   _activeChatList
-                    .sort((a, b) => a.last_msg_id.compareTo(b.last_msg_id));
+            
+              activeLists.addAll(srvr.activeChatList);
+              if(mounted){
+                setState((){
+                _activeChatList = cleanUpLists(_activeChatList, srvr.activeChatList);
+                _activeChatList.sort((a, b) => a.last_msg_id.compareTo(b.last_msg_id));
               });
+              }
+               
             } else {
               if(mounted){
                setState(() {
@@ -475,19 +487,22 @@ class _MainPageState extends State<MainPage>
             }
 
             if (srvr.pendingChatList != null && srvr.pendingChatList.length > 0) {
+              pendingLists.addAll(srvr.pendingChatList);
+               if(mounted){
               setState(() {
                 _pendingChatList = cleanUpLists(_pendingChatList, srvr.pendingChatList);
                 _pendingChatList.sort((a, b) => a.id.compareTo(b.id));
-              });
+              }); }
             } else {
+               if(mounted){
               setState(() {
                 _pendingChatList?.removeWhere((chat) => chat.serverid == server.id);
               });
+               }
             }
 
-            if (srvr.transferChatList != null &&
-                srvr.transferChatList.length > 0) {
-              //transferChatStore.addAll(srvr.transferChatList);
+            if (srvr.transferChatList != null &&srvr.transferChatList.length > 0) {
+              transferLists.addAll(srvr.transferChatList);
               setState(() {
                 _transferedChatList = cleanUpLists(_transferedChatList, srvr.transferChatList);
                 _transferedChatList.sort((a, b) => a.last_msg_id.compareTo(b.last_msg_id));
@@ -496,16 +511,30 @@ class _MainPageState extends State<MainPage>
               _transferedChatList?.removeWhere((chat) => chat.serverid == server.id);
             }
 
-     // _activeChatList.addAll(activeChats);
-      
-             
             onActionLoading(false);
-          });
         }
       });
-
-
+          if(mounted){            
+         _activeChatList = _removeMissing(_activeChatList, activeLists);
+         activeLists.clear();
+        _pendingChatList = _removeMissing(_pendingChatList, pendingLists);
+        pendingLists.clear();
+        _transferedChatList =  _removeMissing(_transferedChatList, transferLists);
+        transferLists.clear();
+          }
+      }
+    else {
+    /*  if(mounted){
+         setState(() {        
+      _activeChatList.clear();
+      _pendingChatList.clear();
+      _transferedChatList.clear();
+      });
+      }
+     */
     }
+    }
+
   }
 
   List<Chat> cleanUpLists(List<Chat> chatToClean, List<dynamic> listFromServer) {
@@ -522,32 +551,38 @@ class _MainPageState extends State<MainPage>
         chatToClean.add(map);
       }
 
-      // cleanup  list
-/*
-      if (chatToClean.length > 0 && listFromServer.length > 0) {
+    });
+    return chatToClean;
+  }
+      /**Remove chats which have been closed from another device */
+      List<Chat> _removeMissing(List<Chat> chatToClean, List<Chat> longList){
+
+      if (chatToClean.length > 0 && longList.length > 0) {  
+           
         List<int> removedIndices = new List();
         chatToClean.forEach((chat) {
-          if (!listFromServer.any(
-              (map) => map.id == chat.id && map.serverid == chat.serverid)) {
+          if (!longList.any((map) => map.id == chat.id && map.serverid == chat.serverid)) {
             int index = chatToClean.indexOf(chat);
             // print("index: " + index.toString());
             removedIndices.add(index);
           }
         });
+        
         //remove the chats
         if (removedIndices != null && removedIndices.length > 0) {
           removedIndices.sort();
-       //   removedIndices.reversed.toList().forEach(chatToClean.removeAt);
+          removedIndices.reversed.toList().forEach(chatToClean.removeAt);
           removedIndices.clear();
         }
-      }  */
-    });
-    return chatToClean;
+      }
+      return chatToClean;  
   }
 
   Future<Null> _getSavedServers() async {
+
+    // get logged in servers
     List<Map> savedRecs = await dbHelper.fetchAll(
-        Server.tableName, "${Server.columns['db_id']}  ASC", null, null);
+        Server.tableName, "${Server.columns['db_id']}  ASC", "isloggedin=?",[1]);
         
     if (savedRecs != null && savedRecs.length > 0) {
       savedRecs.forEach((item) {
@@ -555,9 +590,11 @@ class _MainPageState extends State<MainPage>
             serv.servername == item['servername'] &&
             serv.url == item['url'] &&
             serv.username == item['username']))) {
+          if(mounted){
           setState(() {
             listServers.add(new Server.fromMap(item));
           });
+          }
         }
         if (_selectedServer == null) {
           setState(() {
@@ -570,47 +607,72 @@ class _MainPageState extends State<MainPage>
           //showUpdateMsg();
         }
       });
-    } else {}
+    } else {
+      if(mounted){
+         setState(() {
+       listServers.clear(); 
+      });
+      }     
+
+    }
   }
 
-  Future<Null> _logout() async {
-    _selectedServer.isloggedin = 0;
+  Future<Server> _logout() async {
+    await  _serverRequest.fetchInstallationId(_selectedServer, _fcmToken, "logout");
+        _selectedServer.isloggedin = 0;
+    return await dbHelper.upsertServer(_selectedServer, "id=?", [_selectedServer.id]);
+  }
 
-    await dbHelper.upsertServer(
-        _selectedServer, "id=?", [_selectedServer.id]).then((srv) {});
+  void _loadManageServerPage(){
+      // Go to manage server page
+       Navigator.of(context).pop();
+      Navigator.of(context).pushReplacement(
+                       FadeRoute(
+                        builder: (BuildContext context) =>
+                            new TokenInheritedWidget(
+                                token: _fcmToken,
+                                child: new ServersManage(manage: false,)),
+                        settings: RouteSettings(
+                            name: MyRoutes.server, isInitialRoute: false),
+                      )
+                    );
   }
 
   void _showAlert() {
     AlertDialog dialog = new AlertDialog(
       content: new Text(
-        "Logged out successfully. Do you want to remove the server?",
+        "Do you want to logout of the server? \n\nYou will not receive notifications for chats.",
         style: new TextStyle(fontSize: 14.0),
       ),
       actions: <Widget>[
         new MaterialButton(
-            child: new Text("Keep Server"),
+            child: new Text("Yes"),
             onPressed: () async {
-              Navigator.of(_context).pop();
-               _logout().then((_) => _addServer());
+             var sv = await _logout();
+             setState(() {
+              _selectedServer = sv; 
+             });
+              Navigator.of(context).pop();
+              _initLists();
+             
             }),
-        new MaterialButton(
-            child: new Text("Remove Server"),
-            onPressed: () async {
-               _deleteServer().then((_) => _addServer());
-            //  Navigator.of(_context).pop();
+         MaterialButton(
+            child: new Text("No"),
+            onPressed: ()  {
+              Navigator.of(context).pop();
             }),
       ],
     );
 
-    showDialog(context: _context, builder: (BuildContext context) => dialog);
+    showDialog(context: context, builder: (BuildContext context) => dialog);
   }
 
-  Future<Null> _deleteServer() async {
-    await _serverRequest
-        .fetchInstallationId(_selectedServer, _fcmToken, "logout")
-        .then((srv) {
-      dbHelper.deleteItem(Server.tableName, "id=?", [_selectedServer.id]);
-    });
+  void _showSnackBar(String text) {
+    _scaffoldKey.currentState.showSnackBar(new SnackBar(content: new Text(text)));
+  }
+
+  Future<bool> _deleteServer() async {
+      return dbHelper.deleteItem(Server.tableName, "id=?", [_selectedServer.id]);
   }
 
   Future<Null> _getOnlineStatus() async {
@@ -627,20 +689,19 @@ class _MainPageState extends State<MainPage>
   }
 
   Future<Null> _setOnlineStatus() async {
-    await _serverRequest.setUserOnlineStatus(_selectedServer).then((online) {
+  var online =  await _serverRequest.setUserOnlineStatus(_selectedServer);
+     
       setState(() {
         _selectedServer.user_online = online ? 1 : 0;
       });
-    });
-    await dbHelper
-        .upsertServer(_selectedServer, "id=?", [_selectedServer.id]).then(
-            (ssrv) => setState(() {
-                  _selectedServer = ssrv;
-                }));
+    
 
-    setState(() {
-      _userOnlineLoading = false;
-    });
+
+    var srvr = await dbHelper.upsertServer(_selectedServer, "id=?", [_selectedServer.id]);
+            setState(() {
+                  _selectedServer = srvr;
+                    _userOnlineLoading = false;
+                });
   }
 
   @override
@@ -651,6 +712,15 @@ class _MainPageState extends State<MainPage>
 
    // if (_selectedServer != null) showUpdateMsg();
   }
+
+  void _addServer({Server server}) {
+    Navigator.of(context).push(FadeRoute(
+      builder: (BuildContext context) => new TokenInheritedWidget(
+          token: _fcmToken, child:  LoginForm(isNew: true, server: server,)),
+      settings: new RouteSettings(name: MyRoutes.login, isInitialRoute: false),
+    ));
+  }
+
 
   showUpdateMsg() async {
     // fetch extension version from Database
@@ -711,5 +781,24 @@ class _MainPageState extends State<MainPage>
             ),
           );
         });
+  }
+
+  
+  void _showAlertMsg(String title,String msg) {
+    SimpleDialog
+    dialog =
+
+    new SimpleDialog(
+      title: new Text(title,
+        style: new TextStyle(fontSize: 14.0),
+      ),
+      children: <Widget>[
+        new Text(msg,
+          style: new TextStyle(fontSize: 14.0),
+        )
+      ],
+    );
+
+    showDialog(context: context, builder: (BuildContext context) => dialog );
   }
 }

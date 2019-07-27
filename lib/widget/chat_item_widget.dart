@@ -33,8 +33,6 @@ class ChatItemWidget extends StatelessWidget {
       fontFamily: 'Roboto',
     );
 
-// This menu button widget updates a _selection field (of type WhyFarther,
-// not shown here).
     var popupMenuBtn = new PopupMenuButton<ChatItemMenuOption>(
         onSelected: (ChatItemMenuOption result) {
       onMenuSelected(result);
@@ -92,7 +90,7 @@ class ChatItemWidget extends StatelessWidget {
                                       child: Text(chat.country_name ?? ""),
                                       textAlign: TextAlign.left,
                                       style: styling.copyWith(
-                                        color: Colors.grey,
+                                        color: Colors.teal.shade400,
                                         fontSize: 14.0,
                                       )),
                                 ])),
