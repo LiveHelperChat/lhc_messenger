@@ -369,6 +369,11 @@ return menuItems;
                       onTap: () {},
                     ),
                     new ListTile(
+                      leading: new Text("Phone", style: styling),
+                      title: new Text(_chatCopy.phone ?? ""),
+                      onTap: () {},
+                    ),
+                    new ListTile(
                       leading: new Text("IP", style: styling),
                       title: new Text(_chatCopy.ip ?? ""),
                       onTap: () {},
