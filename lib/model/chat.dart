@@ -10,13 +10,14 @@ class Chat {
   "db_nick":"nick","db_email":"email","db_ip":"ip","db_time":"time","db_last_msg_id":"last_msg_id",
   "db_user_id":"user_id","db_country_code":"country_code","db_country_name":"country_name",
   "db_referrer":"referrer","db_uagent":"uagent","db_department_name":"department_name",
-  "db_owner":"owner","db_has_unread_messages":"has_unread_messages","db_user_typing_txt":"user_typing_txt","db_last_user_msg_time":"last_user_msg_time",
+  "db_owner":"owner","db_has_unread_messages":"has_unread_messages","db_user_typing_txt":"user_typing_txt",
+  "db_last_user_msg_time":"last_user_msg_time","db_phone":"phone",
 };
 
 
     int id, serverid, time, last_msg_id,status,user_id,has_unread_messages,last_user_msg_time,last_op_msg_time;
    String nick,email,ip,country_code,country_name,referrer,
-      uagent,department_name, user_typing_txt,owner;
+      uagent,department_name, user_typing_txt,owner,phone;
 
    int get last_msg_time {
      if(last_op_msg_time != null && last_user_msg_time != null){
@@ -36,7 +37,7 @@ class Chat {
       {this.id,this.serverid,this.status,this.nick,this.email,this.ip,
       this.time,this.last_msg_id,this.user_id,this.country_code,
       this.country_name,this.referrer,this.uagent,this.department_name,
-      this.user_typing_txt,this.owner,this.has_unread_messages,this.last_user_msg_time,this.last_op_msg_time
+      this.user_typing_txt,this.owner,this.has_unread_messages,this.last_user_msg_time,this.last_op_msg_time,this.phone
       });
 
 static int checkInt(dynamic value){
@@ -64,7 +65,8 @@ static int checkInt(dynamic value){
           owner: map[columns['db_owner']],
           has_unread_messages: checkInt(map[columns['db_has_unread_messages']]),
     last_user_msg_time: checkInt(map['last_user_msg_time']),
-      last_op_msg_time: checkInt(map['last_user_msg_time'])
+      last_op_msg_time: checkInt(map['last_user_msg_time']),
+        phone: map['phone'] ?? "",
         );
 
   Map<String, dynamic> toMap() {
@@ -87,6 +89,7 @@ static int checkInt(dynamic value){
     columns['db_owner']: owner,
     columns['db_has_unread_messages']: has_unread_messages,
     'last_msg_time': last_msg_time,
+    columns['db_phone']: phone,
     };
   }
 

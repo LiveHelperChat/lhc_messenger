@@ -73,7 +73,7 @@ class LoginFormState extends State<LoginForm> {
 
     _isNewServer = widget?.isNew ?? false;
 
-    if(widget.server != null ) _initServer(widget.server);
+    _initServer(widget.server);
 
   }
 
@@ -224,8 +224,10 @@ class LoginFormState extends State<LoginForm> {
 
   void _submit() async {
 
+      try{ 
+        
     final form = _formKey.currentState;
-    if (form.validate()) {
+        if (form.validate()) {
       setState(() => _isLoading = true);
       form.save();
 
@@ -253,12 +255,17 @@ class LoginFormState extends State<LoginForm> {
           _login();
         }
 
-
       } else {
         _isNewServer = true;
         _login();
       }
-    }
+      }
+
+      }
+      catch(ex){
+           setState(() => _isLoading = false);
+      }
+   
   }
 
   void _resetControllers(){
@@ -269,11 +276,14 @@ class LoginFormState extends State<LoginForm> {
   }
 
   void _initServer(server){
-    if(server != null)
-     setState(() {
+    if(server != null){
+      setState(() {
              _currentServer = server;
              _resetControllers();
            });
+    } 
+    else _currentServer = new Server();
+     
   }
 
 
@@ -292,10 +302,8 @@ class LoginFormState extends State<LoginForm> {
 
     if (srv.loggedIn()) {
       // we use this to fetch the already saved serverid
-      _currentServer =_isNewServer ? await dbHelper.upsertServer(
-          srv, null,null) :
-      await dbHelper.upsertServer(
-          srv, "${Server.columns['db_id']} = ? ", [srv.id]) ;
+      _currentServer =_isNewServer ? await dbHelper.upsertServer(srv, null,null) 
+      :  await dbHelper.upsertServer(srv, "${Server.columns['db_id']} = ? ", [srv.id]) ;
 
 
       try {
@@ -331,7 +339,8 @@ class LoginFormState extends State<LoginForm> {
        dbHelper.upsertServer(
           _currentServer, "id=?", [_currentServer.id]).then((srvv) {
               setState(() => _isNewServer = false);
-        Navigator.of(context).pushReplacement(new FadeRoute(
+           //   Navigator.of(context).pop();
+              Navigator.of(context).pushAndRemoveUntil(new FadeRoute(
               builder: (BuildContext context) => new TokenInheritedWidget(
                     token: fcmToken,
                     //TODO
@@ -340,8 +349,8 @@ class LoginFormState extends State<LoginForm> {
                     child: new MainPage(),
                   ),
               settings:
-                  new RouteSettings(name: MyRoutes.main, isInitialRoute: false),
-            ));
+                  new RouteSettings(name: MyRoutes.main, isInitialRoute: true),
+            ), (Route<dynamic> route) => false);
 
       });
     } else

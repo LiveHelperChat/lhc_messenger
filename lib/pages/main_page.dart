@@ -345,7 +345,7 @@ class _MainPageState extends State<MainPage>
                 listOfServers: listServers,
                 listToAdd: _activeChatList,
                 loadingState: onActionLoading,
-                refreshList: _getChatList,
+                refreshList: _initLists,
               ),
             ),
 
@@ -353,7 +353,7 @@ class _MainPageState extends State<MainPage>
               listOfServers: listServers,
               listToAdd: _pendingChatList,
               loadingState: onActionLoading,
-              refreshList: _getChatList,
+              refreshList: _initLists,
             ),
             new TransferredListWidget(
               listOfServers: listServers,
@@ -461,9 +461,9 @@ class _MainPageState extends State<MainPage>
      List<Chat> pendingLists = [];
      List<Chat> transferLists = [];
 
-     await Future.forEach(listServers, (server) async {
+     await Future.forEach(listServers, (Server server) async {
 
-        if (server.isloggedin == 1) {
+        if (server.loggedIn()) {
       
           var srvr = await   _serverRequest.getChatLists(server);
             
@@ -507,11 +507,22 @@ class _MainPageState extends State<MainPage>
                 _transferedChatList = cleanUpLists(_transferedChatList, srvr.transferChatList);
                 _transferedChatList.sort((a, b) => a.last_msg_id.compareTo(b.last_msg_id));
               });
-            } else {
+            } else {              
+                setState(() {                
               _transferedChatList?.removeWhere((chat) => chat.serverid == server.id);
+                });
             }
 
-            onActionLoading(false);
+        }
+        else { 
+          if(mounted){
+              setState(() {
+                _activeChatList?.removeWhere((chat) => chat.serverid == server.id);                
+                _pendingChatList?.removeWhere((chat) => chat.serverid == server.id);           
+              _transferedChatList?.removeWhere((chat) => chat.serverid == server.id);
+              });
+               }
+
         }
       });
           if(mounted){            
@@ -522,19 +533,21 @@ class _MainPageState extends State<MainPage>
         _transferedChatList =  _removeMissing(_transferedChatList, transferLists);
         transferLists.clear();
           }
+          
+        
       }
     else {
-    /*  if(mounted){
+      
+     if(mounted){
          setState(() {        
       _activeChatList.clear();
       _pendingChatList.clear();
       _transferedChatList.clear();
       });
-      }
-     */
+      }     
     }
+        onActionLoading(false);
     }
-
   }
 
   List<Chat> cleanUpLists(List<Chat> chatToClean, List<dynamic> listFromServer) {
@@ -554,7 +567,7 @@ class _MainPageState extends State<MainPage>
     });
     return chatToClean;
   }
-      /**Remove chats which have been closed from another device */
+      /*Remove chats which have been closed from another device */
       List<Chat> _removeMissing(List<Chat> chatToClean, List<Chat> longList){
 
       if (chatToClean.length > 0 && longList.length > 0) {  
@@ -624,9 +637,7 @@ class _MainPageState extends State<MainPage>
   }
 
   void _loadManageServerPage(){
-      // Go to manage server page
-       Navigator.of(context).pop();
-      Navigator.of(context).pushReplacement(
+      Navigator.of(context).pushAndRemoveUntil(
                        FadeRoute(
                         builder: (BuildContext context) =>
                             new TokenInheritedWidget(
@@ -634,8 +645,7 @@ class _MainPageState extends State<MainPage>
                                 child: new ServersManage(manage: false,)),
                         settings: RouteSettings(
                             name: MyRoutes.server, isInitialRoute: false),
-                      )
-                    );
+                      ), (Route<dynamic> route) => false);
   }
 
   void _showAlert() {
@@ -649,10 +659,8 @@ class _MainPageState extends State<MainPage>
             child: new Text("Yes"),
             onPressed: () async {
              var sv = await _logout();
-             setState(() {
-              _selectedServer = sv; 
-             });
               Navigator.of(context).pop();
+              _selectedServer = sv; 
               _initLists();
              
             }),
