@@ -135,13 +135,13 @@ class ChatPageState extends State<ChatPage>
     TextStyle headerbottom = new TextStyle(
         fontSize: 12.0,
         color: Colors.white,
-        fontWeight: FontWeight.bold,
+        
         );
 
     var _asyncLoader = new AsyncLoader(
       key: _mainAsyncLoaderState,
       initState: () async {
-        await _syncMessages();
+        return await _syncMessages();
       },
       renderLoad: () => new Center(child: new CircularProgressIndicator()),
       renderError: ([error]) =>
@@ -227,15 +227,18 @@ class ChatPageState extends State<ChatPage>
             child: new Container(
               height: 48.0,
               padding:
-              const EdgeInsets.only(top: 8.0, left: 8.0, right: 8.0),
+              const EdgeInsets.only(top: 8.0, left: 16.0, right: 8.0),
               alignment: Alignment.centerLeft,
               child: new Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  new Text(
-                    'Owner: ${_chatOwner ??""}',
+                  Row(children: <Widget>[
+                    Text('Owner: ',
                     style: headerbottom,
-                  ),
+                  ), 
+                  Text('${_chatOwner ??""}', style: headerbottom, ),
+                  ],),
+                  
                   new Text(
                     'Server: ${widget.server.servername ??""}',
                     style: headerbottom,
@@ -363,6 +366,11 @@ return menuItems;
                     new ListTile(
                       leading: new Text("Email", style: styling),
                       title: new Text(_chatCopy.email ?? ""),
+                      onTap: () {},
+                    ),
+                    new ListTile(
+                      leading: new Text("Phone", style: styling),
+                      title: new Text(_chatCopy.phone ?? ""),
                       onTap: () {},
                     ),
                     new ListTile(

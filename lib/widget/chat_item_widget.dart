@@ -33,8 +33,6 @@ class ChatItemWidget extends StatelessWidget {
       fontFamily: 'Roboto',
     );
 
-// This menu button widget updates a _selection field (of type WhyFarther,
-// not shown here).
     var popupMenuBtn = new PopupMenuButton<ChatItemMenuOption>(
         onSelected: (ChatItemMenuOption result) {
       onMenuSelected(result);
@@ -53,6 +51,7 @@ class ChatItemWidget extends StatelessWidget {
                       color: chat.has_unread_messages == 1
                           ? Theme.of(context).primaryColorLight
                           : Theme.of(context).cardColor,
+                          borderRadius: BorderRadius.circular(4.0)
                     ),
                     padding: const EdgeInsets.all(8.0),
                     child:  Column(
@@ -91,7 +90,7 @@ class ChatItemWidget extends StatelessWidget {
                                       child: Text(chat.country_name ?? ""),
                                       textAlign: TextAlign.left,
                                       style: styling.copyWith(
-                                        color: Colors.grey,
+                                        color: Colors.teal.shade400,
                                         fontSize: 14.0,
                                       )),
                                 ])),
@@ -191,6 +190,10 @@ class ChatItemWidget extends StatelessWidget {
                           ],
                         ),
                       ],
-                    )))));
+                    )
+                  )
+                )
+              )
+            );
   }
 }

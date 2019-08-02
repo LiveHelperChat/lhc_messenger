@@ -1,16 +1,3 @@
-.DS_Store
-.atom/
-.idea
-.vscode/
-.packages
-.pub/
-build/
-ios/.generated/
-packages
-.flutter-plugins
-RELEASE FILES/
-android/key.properties
-
 # See https://www.dartlang.org/guides/libraries/private-files
 
 # Files and directories created by pub
@@ -34,4 +21,13 @@ doc/api/
 *.js.map
 .idea/
 test/
+android/key.properties
+pubspec.lock
+
+.DS_Store
+.atom/
+.vscode/
+.pub/
+ios/.generated/
+.flutter-plugins
 android/key.properties

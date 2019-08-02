@@ -19,11 +19,7 @@ def keystoreProperties = new Properties()
 keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 
 android {
-<<<<<<< HEAD
     compileSdkVersion 28
-=======
-    compileSdkVersion 27
->>>>>>> d4f4935ed4db3a8f8a1f1f1dfdd9e04685d0ae76
 
     lintOptions {
         disable 'InvalidPackage'
@@ -34,13 +30,8 @@ android {
         applicationId "gh.tbsapps.lhcmessenger"
         minSdkVersion 16
         targetSdkVersion 28
-<<<<<<< HEAD
-        versionCode 25
-        versionName "1.2.5"
-=======
-        versionCode 24
-        versionName "1.2.4"
->>>>>>> d4f4935ed4db3a8f8a1f1f1dfdd9e04685d0ae76
+        versionCode 26
+        versionName "1.2.6"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
 	

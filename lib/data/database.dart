@@ -142,17 +142,16 @@ class DatabaseHelper {
     return result[0];
   }
 
-  /// Get all books with ids, will return a list with all the books found
+  
   Future<List<dynamic>> fetchAll(String tableName,String orderBy,String condition,List arguments) async {
     var db = await getDb();
     // Building SELECT * FROM TABLE WHERE ID IN (id1, id2, ..., idn)
     //var results =
-    return await db.query(tableName,
+    return db.query(tableName,
         where: condition,
         whereArgs: arguments
 
     ).then((res){
-      _reset_db();
       return res;
     });//tableName,columns:columns
 
