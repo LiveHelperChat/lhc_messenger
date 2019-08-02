@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 
-import 'package:livehelp/pages/token_inherited_widget.dart';
 import 'package:livehelp/model/server.dart';
 import 'package:livehelp/model/chat.dart';
 import 'package:livehelp/widget/chat_item_widget.dart';
@@ -64,15 +63,19 @@ return <PopupMenuEntry<ChatItemMenuOption>>[
 }
 
  Widget _itemBuilder(BuildContext context,int index){
-   Chat chat = _listToAdd[index];
-   Server server = widget.listOfServers.firstWhere((srvr)=>srvr.id == chat.serverid);
-    return new GestureDetector(
-        child:  new ChatItemWidget(
+
+   List<Chat> reversedList = _listToAdd.reversed.toList();
+
+   Chat chat = reversedList[index];
+   Server server = widget.listOfServers.firstWhere((srvr)=>srvr.id == chat.serverid,
+        orElse: ()=> null);
+    return server == null ? Text("Server not found") : GestureDetector(
+        child: ChatItemWidget(
           server:server,chat: chat,menuBuilder:_itemMenuBuilder(),
          onMenuSelected:(selectedOption){ onItemSelected(server,chat,selectedOption);},),
         onTap:() {
-    var route = new FadeRoute(
-      settings: new RouteSettings(name: "/chats/chat"),
+    var route = FadeRoute(
+      settings: RouteSettings(name: MyRoutes.chatPage),
       builder: (BuildContext context) => new ChatPage(server:server,chat: chat,isNewChat: true,refreshList: widget.refreshList,),
     );
     Navigator.of(context).push(route);
@@ -88,7 +91,7 @@ return <PopupMenuEntry<ChatItemMenuOption>>[
       case ChatItemMenuOption.PREVIEW:
         widget.loadingState(true);
         var route = new FadeRoute(
-          settings: new RouteSettings(name: "/chats/chat"),
+          settings: new RouteSettings(name: MyRoutes.chatPage),
           builder: (BuildContext context) => new ChatPage(server:srvr,chat: chat,isNewChat: true,refreshList: widget.refreshList,),
         );
         Navigator.of(context).push(route);

@@ -132,6 +132,10 @@ class Server {
     };
   }
 
+  bool loggedIn(){
+    return this.isloggedin == Server.LOGGED_IN;
+  }
+
   void addChatsToList(List<dynamic> newChatList, String list) {
     switch (list) {
       case "active":

@@ -63,7 +63,7 @@ class NotificationHelper {
       default:
         break;
     }
-    if (server.isloggedin == 1) {
+    if (server.loggedIn()) {
       if (server.soundnotify == 0) {
         notifyWithNoSound(server.servername + ": " + title, msg, int.tryParse(channel['number']));
       }

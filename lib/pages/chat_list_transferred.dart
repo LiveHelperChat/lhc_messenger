@@ -85,7 +85,7 @@ return <PopupMenuEntry<ChatItemMenuOption>>[
       default:
         break;
     }
-    print(selectedMenu.value.toString());
+    
   }
 
 
@@ -96,7 +96,7 @@ return <PopupMenuEntry<ChatItemMenuOption>>[
           widget.loadingState(false);
 
        var route = new FadeRoute(
-      settings: new RouteSettings(name: "/chats/chat"),
+      settings: new RouteSettings(name: MyRoutes.chatPage),
 
       builder: (BuildContext context) => new ChatPage(server:srv,chat: chat,isNewChat: false,), );
 

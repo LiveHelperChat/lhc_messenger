@@ -49,7 +49,7 @@ class ServerRequest {
     //{'username':'${server.username}','password':'${server.password}'}
     //http request, catching error like no internet connection.
     //If no internet is available for example
-    return await _client.post(server.getUrl()+path, body:parameters)
+    return _client.post(server.getUrl()+path, body:parameters)
         .then((response){
 
      // print (response.statusCode);
@@ -304,7 +304,7 @@ class ServerRequest {
     List<Department> departments =new List<Department>();
 
     if(response.isOk() && response.body["error"].toString() =="false"){
-     // print("Departments: "+response.body.toString());
+    // print("Departments: "+response.body.toString());
       if(response.body['departments'] != null)
         {
           List<dynamic> dept = response.body['departments'];

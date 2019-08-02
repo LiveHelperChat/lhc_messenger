@@ -5,13 +5,11 @@ import 'package:async_loader/async_loader.dart';
 
 import 'package:livehelp/data/database.dart';
 import 'package:livehelp/model/server.dart';
-import 'package:livehelp/model/user.dart';
 import 'package:livehelp/model/department.dart';
 import 'package:livehelp/utils/server_requests.dart';
 import 'package:livehelp/utils/widget_utils.dart';
 import 'package:livehelp/widget/office_time_picker.dart';
 import 'package:livehelp/pages/token_inherited_widget.dart';
-import 'package:livehelp/widget/circularWithBackground.dart';
 
 class ServerDetails extends StatefulWidget {
   ServerDetails({this.server});
@@ -57,13 +55,7 @@ class _ServerDetailsState extends State<ServerDetails> {
     _serverRequest = new ServerRequest();
     _localServer = widget.server;
 
-    /*
-    if(widget.server == null)
-      ()async=>await  _syncServerData();
-    else {
-
-      listServers.add(_localServer);
-    }*/
+     _syncServerData();
   }
 
   /*
@@ -110,10 +102,21 @@ class _ServerDetailsState extends State<ServerDetails> {
                     icon: new CircularProgressIndicator(
                       backgroundColor: Colors.white,
                       ),onPressed: null,)),  */
-            new Offstage(
+           
+               FlatButton(
+              shape: CircleBorder(side: BorderSide(color: Colors.transparent)),
+                textColor: Colors.white,
+                child: new Text("Re-Sync"),
+                onPressed: () {
+                  _isLoading = true;
+                  _refreshServerData();
+                  _initAsyncloader();
+                }),
+                 new Offstage(
               offstage: _department == null,
-              child: new MaterialButton(
-                  child:  new Text("Save Data"),
+              child:  FlatButton(
+                 shape: CircleBorder(side: BorderSide(color: Colors.transparent)),
+                  child:  Icon(Icons.save),
                 textColor: Colors.white,
                 onPressed: () {
                   _department.online_hours_active = _onlineHoursActive;
@@ -126,71 +129,52 @@ class _ServerDetailsState extends State<ServerDetails> {
                     _isLoading = false;
                   });
                 }), ),
-            new MaterialButton(
-                child: new Text("Sync Server"),
-                textColor: Colors.white,
-                onPressed: () {
-                  _isLoading = true;
-                  _refreshServerData();
-                  _initAsyncloader();
-                }),
           ],
         ),
         body:new Stack(
           children:<Widget>[
             new SingleChildScrollView(
           child: new Container(
-            margin: EdgeInsets.only(top: 16.0, left: 8.0, right: 8.0),
+            decoration: BoxDecoration(color: Colors.white),
             child: new Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-        new Card(
-                  child: new Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        new Padding(
-                            padding: EdgeInsets.all(8.0),
+                        
+                         Padding(
+                            padding: EdgeInsets.only(left:16.00,top: 16.00),
                             child: new Text(
                               "SERVER INFO",
-                              textAlign: TextAlign.center,
+                              textAlign: TextAlign.left,
                               style: new TextStyle(fontWeight: FontWeight.bold),
                             )),
-                        new Divider(),
-                        new ListTile(
-                          title: new Text('${_localServer?.url}'),
+                         Padding(
+                          padding: EdgeInsets.only(left:16.00,top: 8.00),
+                          child: new Text('${_localServer?.url}'),
                         ),
-                      ]),
-                ),
-
-               new Card(
-                  child: new Column(
-                  mainAxisSize: MainAxisSize.min,
-                      // crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        new Padding(
-                          padding: EdgeInsets.all(8.0),
+                         Divider(),
+                            Padding(
+                          padding:  EdgeInsets.only(left:16.00,top: 8.00),
                           child: new Text(
                             "OPERATOR INFO",
-                            textAlign: TextAlign.center,
+                            textAlign: TextAlign.left,
                             style: new TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
-                        new Divider(),
-                        new ListTile(
-                          title: new Text(
+                         Padding(
+                          padding:  EdgeInsets.only(left:16.00,top: 8.00),
+                          child:Text(
                               '${_localServer?.firstname} ${_localServer?.surname}'),
-                        ),
-                        new ListTile(
-                          title: new Text('${_localServer?.operatoremail}'),
-                        ),
-                      ]),
-                ),
-             new Divider(),
-
-                      new Container(
+                         ),
+                         Padding(
+                          padding: EdgeInsets.only(left:16.00,top: 8.00),
+                          child:  Text('${_localServer?.operatoremail}'),
+                          ),
+                  Divider(),
+                 Container(
                         margin: const EdgeInsets.only(bottom: 4.0),
                         child: new ListTile(
-                          leading:new Offstage(
+                          trailing: new Offstage(
                             offstage: _department == null,
                             child:new Checkbox(
                               value: _onlineHoursActive,
@@ -198,16 +182,11 @@ class _ServerDetailsState extends State<ServerDetails> {
                                 setState(() {
                                   _onlineHoursActive = val;
                                 });
-                              }) ,) ,
-                          title: new Text("Department Work hours/day active",
-                          style: new TextStyle(fontSize: 12.0),),
-                          subtitle:_department ==null ? new Text("Could not load department hours from server.", style: new TextStyle(fontSize: 14.0,fontWeight: FontWeight.bold),)
-                              : new Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: <Widget>[
-
-                         new Expanded(
-                                child: new DropdownButton(
+                              }) ,),
+                          title: _department ==null ? new Text("Could not load department hours from server.\nCheck your network connection. ", 
+                          style: new TextStyle(fontSize: 14.0,fontWeight: FontWeight.bold),)
+                              :  DropdownButton(
+                                  isExpanded: true,
                                     value: _department,
                                     items: userDepartments.map((dept) {
                                       return new DropdownMenuItem(
@@ -216,12 +195,11 @@ class _ServerDetailsState extends State<ServerDetails> {
                                       );
                                     }).toList(),
                                     onChanged: _onDeptListChanged),
-                              )
-
-
-                            ],
-                          ),
-                        ) ,
+                              
+                     
+                         subtitle: Text("Department Work hours/day active",
+                          style: new TextStyle(fontSize: 12.0),),
+                        ),
                       ),
 
                       new Divider(),
@@ -514,7 +492,7 @@ class _ServerDetailsState extends State<ServerDetails> {
                             onTap: () {
                               _selectTime(context);
                             },
-                            trailing: new Checkbox(
+                            trailing: Checkbox(
                               value: _saturdayHoursActive || _department != null
                                   ? _department.saturdayActive
                                   : false,
@@ -585,7 +563,7 @@ class _ServerDetailsState extends State<ServerDetails> {
   }  */
 
   Future<Null> _syncServerData() async {
-//    print("Localserver: " + _localServer?.toMap().toString());
+  //  print("Localserver: " + _localServer?.toMap().toString());
 
     if (_localServer != null) {
       //TODO
@@ -594,7 +572,8 @@ class _ServerDetailsState extends State<ServerDetails> {
     //      .then((srvr)=>_localServer = srvr);
       
       // fetch user data
-      await _serverRequest.getUserFromServer(_localServer).then((user) {
+     var user = await _serverRequest.getUserFromServer(_localServer);
+
         if (user != null) {
           setState(() {
             _localServer.userid = user['id'];
@@ -606,21 +585,21 @@ class _ServerDetailsState extends State<ServerDetails> {
             _localServer.departments_ids = user['departments_ids'];
           });
         }
-      });
+
       await _dbHelper.upsertServer(_localServer, "id=?", [_localServer.id]);
 
       // fetch departments
-      await _serverRequest.getUserDepartments(_localServer).then((list) {
-        if (list is List) {
+     List<Department> listDepts = await _serverRequest.getUserDepartments(_localServer);
+     
+        if (listDepts is List) {
           setState(() {
-            userDepartments = list;
+            userDepartments = listDepts;
             if(userDepartments.length >0) {
               _department = userDepartments.elementAt(0);
               _checkActiveHours();
             }
           });
         }
-      });
     }
   }
 
