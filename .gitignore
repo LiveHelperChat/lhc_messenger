@@ -11,3 +11,5 @@ packages
 RELEASE FILES/
 android/key.properties
 pubspec.lock
+.dart_tool/package_config.json
+.history

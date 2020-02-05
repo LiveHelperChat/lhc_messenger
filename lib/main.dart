@@ -118,8 +118,8 @@ class _MyHomePageState extends State<MyHomePage> with AfterLayoutMixin<MyHomePag
     if(msg['data'].isEmpty) return;
     var data = msg['data'];
 
-    if(data.containsKey("m")){
-
+    if(data.containsKey("info")){
+         NotificationHelper.showInfoNotification("LHC", data["info"].toString());
     }
 
     if (data.containsKey("chat_type")) {

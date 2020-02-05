@@ -63,7 +63,7 @@ class Bubble extends StatelessWidget {
 
               new Padding(
                 padding:const EdgeInsets.only(right: 8.0,bottom: 8.0),
-                child:new Text(message.msg,textAlign: TextAlign.left,),
+                child:new SelectableText(message.msg,textAlign: TextAlign.left,),
               ), // positioned at bottom but object renderer needs it to calculate
               // width of the column
               new Padding(
