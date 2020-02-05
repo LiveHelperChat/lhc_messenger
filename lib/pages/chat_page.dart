@@ -148,7 +148,7 @@ class ChatPageState extends State<ChatPage>
        new Center(child: new Text('Could not load chat messages')),
       renderSuccess: ({data}) {
         return  new ListView.builder(
-          scrollDirection: Axis.horizontal,
+          scrollDirection: Axis.vertical,
           reverse: true,
           padding: new EdgeInsets.all(6.0),
           itemBuilder: (_, int index) => _msgsHandlerList[index],
@@ -597,6 +597,7 @@ class MsgHandler extends StatelessWidget {
         child: new Container(
             margin: const EdgeInsets.symmetric(vertical: 8.0),
             child: new Row(
+                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   new Expanded(

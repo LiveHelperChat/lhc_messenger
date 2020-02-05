@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:livehelp/data/database.dart';
 import 'package:livehelp/model/chat.dart';
@@ -39,6 +40,43 @@ class ServerRequest {
     _client.close();
   }
 
+  String _encodeCredentials(Server server){
+    String credentials = "${server.username}:${server.password}";
+    return base64.encode(utf8.encode(credentials));
+  }
+
+  Future<ParsedResponse> apiGet(Server server, String path) async {
+    String auth = _encodeCredentials(server);
+    final response = await http.get(
+      server.getUrl()+path,
+      headers: {HttpHeaders.authorizationHeader: "Basic $auth"},
+    ).catchError((resp) {
+    return new ParsedResponse(NO_INTERNET, json.decode('{"error":"true","msg":${resp.toString()}') );
+    });
+    final responseJson = json.decode(response.body);
+    print("RESPONSE: "+responseJson.toString());
+    var respBody ={};
+    response.body != null ? respBody = json.decode(response.body) : respBody=null;
+    return new ParsedResponse(response.statusCode, respBody );
+  }
+
+  Future<ParsedResponse> apiPost(Server server, String path, Map<String,String> params) async {
+    String auth = _encodeCredentials(server);
+
+    final response = await http.post(
+      server.getUrl()+path,
+      headers: {HttpHeaders.authorizationHeader: "Basic $auth"},
+      body: jsonEncode(params),
+    ).catchError((resp) {
+    return new ParsedResponse(NO_INTERNET, json.decode('{"error":"true","msg":${resp.toString()}') );
+    });
+
+    var respBody ={};
+    response.body != null ? respBody = json.decode(response.body) : respBody=null;
+    return new ParsedResponse(response.statusCode, respBody );
+
+  }
+
   Future<ParsedResponse> _makeRequest(Server server,String path,Map jsonParams) async {
 
     Map parameters={};
@@ -64,9 +102,9 @@ class ServerRequest {
         return new ParsedResponse(response.statusCode, json.decode('{"error":"true"}'));
       }
       var respBody ={};
-      try{
+
         response.body != null ? respBody = json.decode(response.body) : respBody=null;
-      } catch(Exception){}
+
 
       return new ParsedResponse(response.statusCode, respBody );
     })
@@ -76,6 +114,18 @@ class ServerRequest {
 
 
 
+  }
+
+  // Check whether twilio extension is enabled
+  Future<bool> isExtensionInstalled(Server serv, String extension) async {
+    var resp = await apiGet(serv, "/restapi/extensions");
+    if(resp.isOk()){
+      var response = resp.body;
+      if(response['error'] == false){
+        return  response['result'].toList().contains(extension);
+      }
+    }
+    return false;
   }
 
   Future<Server> login(Server server) {
@@ -421,5 +471,9 @@ class ServerRequest {
   await  _makeRequest(server, "/xml/setonlinestatus/"+status, null);
     // status 1 or 0
     return await getUserOnlineStatus(server);
+  }
+
+  prepareApiRequest(){
+
   }
 }
