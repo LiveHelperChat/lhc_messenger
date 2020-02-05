@@ -8,7 +8,15 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class NotificationHelper {
   //[ChannelID, Channel Description]
-  static final Map<String, String> channelIDNewChat = {
+  // default channel id - same as in AndroidManifest.xml file
+  static final Map<String, String> channelIDDefault = {
+    "id": "lhcmessenger_notification",
+    "name": "Information",
+    "description": "Info from server",
+    "number":"1001"
+  }; 
+  
+   static final Map<String, String> channelIDNewChat = {
     "id": "gh.com.tbsapps.lhcmessenger.channel.NEWCHAT",
     "name": "New Chat",
     "description": "New Chat",
@@ -72,6 +80,23 @@ class NotificationHelper {
       }
     }
   }
+
+   static void showInfoNotification(String title, String msg) async {
+    var initializationSettingsAndroid =
+    new AndroidInitializationSettings('icon');
+    var initializationSettingsIOS = new IOSInitializationSettings();
+    var initializationSettings = new InitializationSettings(
+        initializationSettingsAndroid, initializationSettingsIOS);
+
+    flutterLocalNotificationsPlugin.initialize(
+        initializationSettings, selectNotification: onSelectNotification);
+
+    Map<String, String> channel = channelIDDefault;
+
+        notifyWithSound(channel, "LHC: " + title, msg,int.tryParse(channel['number']));
+
+  }
+
 
 
   /// Schedules a notification that specifies a different icon, sound and vibration pattern

@@ -148,6 +148,7 @@ class ChatPageState extends State<ChatPage>
        new Center(child: new Text('Could not load chat messages')),
       renderSuccess: ({data}) {
         return  new ListView.builder(
+          scrollDirection: Axis.horizontal,
           reverse: true,
           padding: new EdgeInsets.all(6.0),
           itemBuilder: (_, int index) => _msgsHandlerList[index],
