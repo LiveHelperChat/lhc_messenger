@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import 'package:async_loader/async_loader.dart';
 import 'package:after_layout/after_layout.dart';
+import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 
 import 'package:livehelp/data/database.dart';
 import 'package:livehelp/model/chat.dart';
@@ -363,16 +364,8 @@ class _MainPageState extends State<MainPage>
           ]),
           new Center(child: loadingIndicator),
         ]),
-        floatingActionButton: new FloatingActionButton(
-          child: new Icon(Icons.refresh),
-          onPressed: () {
-            /*    setState(() {
-              _actionLoading = true;
-            });  */
-            _initLists();
-          },
+        floatingActionButton: _speedDial(),
 
-        ),
         bottomNavigationBar: Offstage(
           child: GestureDetector(
             onTap: () => _showBottomSheet(context),
@@ -809,4 +802,56 @@ class _MainPageState extends State<MainPage>
 
     showDialog(context: context, builder: (BuildContext context) => dialog );
   }
+
+  SpeedDial _speedDial(){
+        return SpeedDial(
+          // both default to 16
+          marginRight: 18,
+          marginBottom: 20,
+          animatedIcon: AnimatedIcons.menu_close,
+          animatedIconTheme: IconThemeData(size: 22.0),
+          // this is ignored if animatedIcon is non null
+          // child: Icon(Icons.add),
+          visible: true,
+          // If true user is forced to close dial manually
+          // by tapping main button and overlay is not rendered.
+          closeManually: false,
+          curve: Curves.bounceIn,
+          overlayColor: Colors.black,
+          overlayOpacity: 0.5,
+          onOpen: () => print('OPENING DIAL'),
+          onClose: () => print('DIAL CLOSED'),
+          tooltip: 'Actions',
+          heroTag: 'speed-dial-hero-tag',
+          backgroundColor: Theme.of(context).primaryColor,
+          foregroundColor: Colors.white,
+          elevation: 8.0,
+          shape: CircleBorder(),
+          children: [
+            SpeedDialChild(
+                child: Icon(Icons.refresh),
+                backgroundColor: Theme.of(context).primaryColor,
+                label: 'Reload list',
+                labelStyle: TextStyle(fontSize: 18.0),
+                onTap: () => _initLists()
+            ),
+            SpeedDialChild(
+              child: Icon(Icons.sms),
+              backgroundColor: Theme.of(context).primaryColor,
+              label: 'Twilio Chat',
+              labelStyle: TextStyle(fontSize: 18.0),
+              onTap: () async {
+                onActionLoading(true);
+                // Check twilio extension before proceeding.
+              var resp = await _serverRequest.isExtensionInstalled(_selectedServer, 'twilio');
+              onActionLoading(false);
+              },
+            ),
+
+          ],
+        );
+  }
+
+
+
 }

@@ -56,9 +56,7 @@ class _MyHomePageState extends State<MyHomePage> with AfterLayoutMixin<MyHomePag
 
   bool isInitialised =false;
 
-  _MyHomePageState(){
-
-  }
+  _MyHomePageState();
 
 
   @override

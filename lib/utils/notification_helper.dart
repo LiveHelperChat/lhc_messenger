@@ -39,6 +39,20 @@ class NotificationHelper {
     "number":"3333"
   };
 
+  static Future<dynamic> backgroundMessageHandler(Map<String, dynamic> message) {
+    if (message.containsKey('data')) {
+      // Handle data message
+      final dynamic data = message['data'];
+    }
+
+    if (message.containsKey('notification')) {
+      // Handle notification message
+      final dynamic notification = message['notification'];
+    }
+
+    // Or do other work.
+  }
+
   //static final String channelNameUnreadMsg =;
   static FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = new FlutterLocalNotificationsPlugin();
 
@@ -51,7 +65,7 @@ class NotificationHelper {
         initializationSettingsAndroid, initializationSettingsIOS);
 
     flutterLocalNotificationsPlugin.initialize(
-        initializationSettings, selectNotification: onSelectNotification);
+        initializationSettings, onSelectNotification: onSelectNotification);
 
     Map<String, String> channel;
     //String title="";
@@ -89,7 +103,7 @@ class NotificationHelper {
         initializationSettingsAndroid, initializationSettingsIOS);
 
     flutterLocalNotificationsPlugin.initialize(
-        initializationSettings, selectNotification: onSelectNotification);
+        initializationSettings, onSelectNotification: onSelectNotification);
 
     Map<String, String> channel = channelIDDefault;
 
