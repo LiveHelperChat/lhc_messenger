@@ -5,11 +5,9 @@ import 'package:livehelp/pages/token_inherited_widget.dart';
 class ChatListPage extends StatefulWidget{
   @override
   _ChatListPageState createState()=> new _ChatListPageState();
-
 }
 
 class _ChatListPageState extends State<ChatListPage>{
-
 
   @override
   Widget build(BuildContext context) {

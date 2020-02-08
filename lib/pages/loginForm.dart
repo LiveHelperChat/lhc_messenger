@@ -6,7 +6,7 @@ import 'package:async_loader/async_loader.dart';
 
 import 'package:livehelp/model/server.dart';
 import 'package:livehelp/utils/server_requests.dart';
-import 'package:livehelp/data//database.dart';
+import 'package:livehelp/data/database.dart';
 import 'package:livehelp/utils/routes.dart';
 import 'package:livehelp/pages/main_page.dart';
 import 'package:livehelp/pages/token_inherited_widget.dart';
@@ -85,7 +85,7 @@ class LoginFormState extends State<LoginForm> {
 
     final tokenInherited = TokenInheritedWidget.of(context);
     setState(() {
-      fcmToken = tokenInherited.token;
+      fcmToken = tokenInherited?.token;
     });
 
     var loginBtn = new Container(
@@ -194,29 +194,25 @@ class LoginFormState extends State<LoginForm> {
     var scaffoldLoginForm = new Scaffold(
       appBar:new AppBar(title: new Text("Login"),centerTitle: true,) ,
       key: _scaffoldKey,
-      backgroundColor: Colors.teal,
-      body: new Container(
+      backgroundColor: Colors.white,
+      body:  Center(
+        child:  SingleChildScrollView(
+            padding: const EdgeInsets.all(8.0),
+            key: _scrollViewKey,
+            scrollDirection: Axis.vertical,
+            child: Container(
+              decoration: new BoxDecoration(
+                  color: Colors.white
+              ),
+              child: Container(
+                child:loginForm,
+                height: 450.0,
+                width: 300.0,
 
-          decoration: new BoxDecoration(
-          
-             color: Colors.white
-
-          ),
-        child: new Center(
-          child: new ClipRect(
-            child: new Container(
-              child: new SingleChildScrollView(
-                  padding: const EdgeInsets.all(8.0),
-                  key: _scrollViewKey,
-                  scrollDirection: Axis.vertical,
-                  child: loginForm),
-              height: 450.0,
-              width: 300.0,
-
-            ),
-          ),
+              ),
+            )
         ),
-      ),
+      ) ,
     );
 
   return scaffoldLoginForm;
@@ -288,6 +284,7 @@ class LoginFormState extends State<LoginForm> {
 
 
   Future<Null> _login() async {
+
     if(_isNewServer) _currentServer.id = null;
     _currentServer.servername = _nameController.text;
     _currentServer.url = _urlController.text;
@@ -295,11 +292,14 @@ class LoginFormState extends State<LoginForm> {
     _currentServer.username = _userNameController.text;
     _currentServer.password = _passwordController.text;
     // _currentServer.fcm_token = fcmToken;
-
+    bool checkExtension = await srvrRequest.isExtensionInstalled(_currentServer, "gcm");
+    if(!checkExtension){
+      _showAlertMsg("Extension Not found", "Could not detect the extension required for this app to run. "
+          "\n Install extension or check internet connection.");
+      return;
+    }
     Server srv = await srvrRequest.login(_currentServer);
-
     setState(() => _isLoading = false);
-
     if (srv.loggedIn()) {
       // we use this to fetch the already saved serverid
       _currentServer =_isNewServer ? await dbHelper.upsertServer(srv, null,null) 

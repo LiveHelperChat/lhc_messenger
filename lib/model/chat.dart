@@ -1,6 +1,3 @@
-import 'package:meta/meta.dart';
-
-
 class Chat {
 
   // Database table name

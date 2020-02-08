@@ -67,20 +67,21 @@ class _MyHomePageState extends State<MyHomePage> with AfterLayoutMixin<MyHomePag
    _dbHelper = new DatabaseHelper();
 
     _firebaseMessaging.configure(
+      onBackgroundMessage: NotificationHelper.backgroundMessageHandler,
       onMessage: (Map<String, dynamic> message)async {
-        // print("onMessage: $message");
+        //print("onMessage: $message");
         if(mounted && isInitialised){
-      //    print("Message:"+message.toString());
+        // print("FirebaseMessage:"+message.toString());
           _showNotification(message);
         }
-
       },
       onLaunch: (Map<String, dynamic> message) {
-
+       // print("onLaunch: $message");
+        //_showNotification(message);
       },
       onResume: (Map<String, dynamic> message) {
-        // print("onResume: $message");
-       // _navigateToItemDetail(message);
+        //print("onResume: $message");
+       // _showNotification(message);
       },
     );
     _firebaseMessaging.requestNotificationPermissions(
@@ -91,7 +92,7 @@ class _MyHomePageState extends State<MyHomePage> with AfterLayoutMixin<MyHomePag
     });
     _firebaseMessaging.getToken().then((String fcmtoken){
       assert(fcmtoken != null);
-
+     // print("Token "+fcmtoken);
      setState((){
       token = fcmtoken;
       });
@@ -117,7 +118,7 @@ class _MyHomePageState extends State<MyHomePage> with AfterLayoutMixin<MyHomePag
     var data = msg['data'];
 
     if(data.containsKey("info")){
-         NotificationHelper.showInfoNotification("LHC", data["info"].toString());
+         NotificationHelper.showInfoNotification("Yay!", data["info"].toString());
     }
 
     if (data.containsKey("chat_type")) {
@@ -132,7 +133,6 @@ class _MyHomePageState extends State<MyHomePage> with AfterLayoutMixin<MyHomePag
               NotificationHelper.showNotification(
                   srv, 'new_msg', "New message from " + chat['nick'].toString(),
                   data['msg'].toString());
-
             }
 
             // pending chat

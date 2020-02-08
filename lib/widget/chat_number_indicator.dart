@@ -11,17 +11,16 @@ class ChatNumberIndcator extends StatelessWidget{
   @override
   Widget build(BuildContext context) {
     return
-      new Row(
+       Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
-          new Text(title,textAlign: TextAlign.center,style: new TextStyle(fontSize: 12.0),),
-          new Offstage(
+          Text(title,textAlign: TextAlign.center,style: new TextStyle(fontSize: 12.0),),
+           Offstage(
             offstage: offstage,
-            child: new Container(
-              padding: const EdgeInsets.symmetric(vertical: 2.0,horizontal: 2.0),
-              width: 18.0,
-              height: 18.0,
-              margin: const EdgeInsets.only(left: 2.0),
+            child:  Container(
+              padding: const EdgeInsets.symmetric(vertical: 5.0,horizontal: 5.0),
+              margin: const EdgeInsets.all( 2.0),
               decoration: new BoxDecoration(
                 shape: BoxShape.circle,
                 color: Colors.white,
@@ -29,7 +28,7 @@ class ChatNumberIndcator extends StatelessWidget{
               child: new Text(
                 number,
                 style: new TextStyle(
-                  fontSize: 11.0,
+                  fontSize: 8.0,
                   color: Theme.of(context).primaryColorDark,
                 ),
                 textAlign: TextAlign.center,
