@@ -625,8 +625,8 @@ class _ServerDetailsState extends State<ServerDetails> {
     return picked ?? 00;
   }
 
-  void _refreshServerData()async{
-    await _serverRequest.fetchInstallationId(_localServer,_fcmToken,"add")
+  void _refreshServerData(){
+     _serverRequest.fetchInstallationId(_localServer,_fcmToken,"add")
         .then((server){
         _localServer = server;
       _dbHelper.upsertServer(_localServer,"${Server.columns['db_id']} = ?",

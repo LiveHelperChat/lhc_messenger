@@ -11,6 +11,7 @@ import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:livehelp/data/database.dart';
 import 'package:livehelp/model/chat.dart';
 import 'package:livehelp/model/server.dart';
+import 'package:livehelp/pages/twilio_sms_chat.dart';
 import 'package:livehelp/utils/routes.dart';
 import 'package:livehelp/utils/server_requests.dart';
 import 'package:livehelp/pages/loginForm.dart';
@@ -43,8 +44,6 @@ class _MainPageState extends State<MainPage>
 
   final int extensionVersion = 12; //(0.1.2)
 
-  TabController tabBarController;
-
   ServerRequest _serverRequest = new ServerRequest();
   DatabaseHelper dbHelper;
 
@@ -52,6 +51,7 @@ class _MainPageState extends State<MainPage>
   List<Chat> _activeChatList = new List<Chat>();
   List<Chat> _pendingChatList = new List<Chat>();
   List<Chat> _transferedChatList = new List<Chat>();
+  List<Chat> _twilioChatList = new List<Chat>();
 
   List<dynamic> activeChatStore = new List();
   List<dynamic> pendingChatStore = new List();
@@ -67,15 +67,14 @@ class _MainPageState extends State<MainPage>
 
   bool _showUpdateNotice = false;
   bool initialized = false;
+  bool isTwilioActive = false;
+
 
   @override
   void initState() {
     super.initState();
 
     WidgetsBinding.instance.addObserver(this);
-
-    // for controlling the tabbar
-    tabBarController = new TabController(length: 3, vsync: this);
 
     dbHelper = new DatabaseHelper();
     _user_online = false;
@@ -95,8 +94,6 @@ class _MainPageState extends State<MainPage>
 
   @override
   void dispose() {
-    tabBarController.dispose();
-
     _timer.cancel();
 
     WidgetsBinding.instance.removeObserver(this);
@@ -142,251 +139,263 @@ class _MainPageState extends State<MainPage>
     Widget loadingIndicator =
         _actionLoading ? new CircularProgressIndicator() : new Container();
 
-    var mainScaffold = new Scaffold(
-      key: _scaffoldKey,
-        appBar: new AppBar(
-          title: new Text("Chat Lists"),
-          bottom: new TabBar(controller: tabBarController, tabs: <Tab>[
-            new Tab(
-              child: new ChatNumberIndcator(
-                title: "Active",
-                offstage: _activeChatList.length == 0,
-                number: _activeChatList.length.toString(),
-              ),
-            ),
-            new Tab(
-              child: new ChatNumberIndcator(
-                title: "Pending",
-                offstage: _pendingChatList.length == 0,
-                number: _pendingChatList.length.toString(),
-              ),
-            ),
-            new Tab(
+    var mainScaffold = DefaultTabController(
+      length: 4,
+      child:Scaffold(
+          key: _scaffoldKey,
+          appBar:  AppBar(
+            title:  Text("Chat Lists"),
+            bottom:  TabBar( tabs: <Tab>[
+              Tab(
                 child: new ChatNumberIndcator(
-              title: "Transferred",
-              offstage: _transferedChatList.length == 0,
-              number: _transferedChatList.length.toString(),
-            )),
-          ]),
-        ),
-        drawer: new Drawer(
-            child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.max,
-            children: <Widget>[
-              new UserAccountsDrawerHeader(
-                accountName: Text(""),
-                accountEmail:Container(
-                             
-                              child:DropdownButton(
-                                    isExpanded: true,
-                                    value: _selectedServer,
-                                    icon: Icon(Icons.arrow_drop_down, color: Colors.white ,),
-                                    items: listServers.map((srvr) {
-                                      return new DropdownMenuItem(
-                                        value: srvr,
-                                        child: new Text('${srvr?.servername}', style: TextStyle(color: Colors.teal.shade900),),
-                                      );
-                                    }).toList(),
-                                    onChanged: (srv){
-                                        setState(() {
-                                  _selectedServer = srv;
-                                 /**Enable when extension version changes */
-                                 // showUpdateMsg();
-                                });
-                                    }), ) ,
-                currentAccountPicture: GestureDetector(
-                  child: new CircleAvatar(
-                    child: new Text(
-                        _selectedServer?.servername?.substring(0, 1) ?? "",
-                        style: TextStyle(fontSize: 18.00, fontWeight: FontWeight.bold), ),
-                  ),
-                  onTap: () => {},
+                  title: "Active",
+                  offstage: _activeChatList.length == 0,
+                  number: _activeChatList.length.toString(),
                 ),
-              
-                decoration: new BoxDecoration(
-                    image: new DecorationImage(
-                        image: new AssetImage('graphics/header.jpg'),
-                        fit: BoxFit.fill)),
               ),
-              new Card(
-                child: new Container(
-                  height: 150.0,
-                  child: new Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: <Widget>[
-                      ListTile(
-                          title:_selectedServer == null ? Text("") : Text("${_selectedServer?.url}",
+              Tab(
+                child:  ChatNumberIndcator(
+                  title: "New",
+                  offstage: _pendingChatList.length == 0,
+                  number: _pendingChatList.length.toString(),
+                ),
+              ),
+              Tab(
+                  child: new ChatNumberIndcator(
+                    title: "Transfer",
+                    offstage: _transferedChatList.length == 0,
+                    number: _transferedChatList.length.toString(),
+                  )),
+              Tab(
+                  child: new ChatNumberIndcator(
+                    title: "SMS",
+                    offstage: _twilioChatList?.length == 0,
+                    number: _twilioChatList?.length.toString(),
+                  ))
+            ]),
+          ),
+          drawer: new Drawer(
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.max,
+                  children: <Widget>[
+                    new UserAccountsDrawerHeader(
+                      accountName: Text(""),
+                      accountEmail:Container(
+
+                        child:DropdownButton(
+                            isExpanded: true,
+                            value: _selectedServer,
+                            icon: Icon(Icons.arrow_drop_down, color: Colors.white ,),
+                            items: listServers.map((srvr) {
+                              return new DropdownMenuItem(
+                                value: srvr,
+                                child: new Text('${srvr?.servername}', style: TextStyle(color: Colors.teal.shade900),),
+                              );
+                            }).toList(),
+                            onChanged: (srv){
+                              setState(() {
+                                _selectedServer = srv;
+                                /**Enable when extension version changes */
+                                // showUpdateMsg();
+                              });
+                            }), ) ,
+                      currentAccountPicture: GestureDetector(
+                        child: new CircleAvatar(
+                          child: new Text(
+                            _selectedServer?.servername?.substring(0, 1) ?? "",
+                            style: TextStyle(fontSize: 18.00, fontWeight: FontWeight.bold), ),
+                        ),
+                        onTap: () => {},
+                      ),
+
+                      decoration: new BoxDecoration(
+                          image: new DecorationImage(
+                              image: new AssetImage('graphics/header.jpg'),
+                              fit: BoxFit.fill)),
+                    ),
+                    new Card(
+                      child: new Container(
+                        height: 150.0,
+                        child: new Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: <Widget>[
+                            ListTile(
+                              title:_selectedServer == null ? Text("") : Text("${_selectedServer?.url}",
                                 style: TextStyle(fontSize: 11.0),
                                 textAlign: TextAlign.left,
-                                overflow: TextOverflow.fade, 
+                                overflow: TextOverflow.fade,
                                 maxLines: 2,
                                 softWrap: true,),
-                          subtitle: _isServerLoggedIn() ? Text("Logged In", style:TextStyle(color: Colors.green))
-                                   :  Text("Logged Out", style:TextStyle(color: Colors.redAccent)) ,
-                                ),                                 
-                         ListTile(
-                          title: new Text(
-                              "${_selectedServer?.firstname ?? ""} ${_selectedServer?.surname ?? ""}"),
-                          subtitle: _selectedServer?.user_online == 1 ?? false
-                              ? new Text(
-                                  "Operator Online",
-                                  style: new TextStyle(fontSize: 10.0),
-                                )
-                              : new Text("Operator Offline",
+                              subtitle: _isServerLoggedIn() ? Text("Logged In", style:TextStyle(color: Colors.green))
+                                  :  Text("Logged Out", style:TextStyle(color: Colors.redAccent)) ,
+                            ),
+                            ListTile(
+                              title: new Text(
+                                  "${_selectedServer?.firstname ?? ""} ${_selectedServer?.surname ?? ""}"),
+                              subtitle: _selectedServer?.user_online == 1 ?? false
+                                  ? new Text(
+                                "Operator Online",
+                                style: new TextStyle(fontSize: 10.0),
+                              )
+                                  : new Text("Operator Offline",
                                   style: new TextStyle(fontSize: 10.0)),
-                          trailing: _userOnlineLoading
-                              ? new CircularProgressIndicator()
-                              : new IconButton(
-                                  icon:
-                                      _selectedServer?.user_online == 1 ?? false
-                                          ? new Icon(Icons.flash_on,color: Colors.green,)
-                                          : new Icon(Icons.flash_off,color: Colors.red,),
-                                  onPressed: () {
-                                    if(_isServerLoggedIn()){
-                                      setState(() {
+                              trailing: _userOnlineLoading
+                                  ? new CircularProgressIndicator()
+                                  : new IconButton(
+                                icon:
+                                _selectedServer?.user_online == 1 ?? false
+                                    ? new Icon(Icons.flash_on,color: Colors.green,)
+                                    : new Icon(Icons.flash_off,color: Colors.red,),
+                                onPressed: () {
+                                  if(_isServerLoggedIn()){
+                                    setState(() {
                                       _userOnlineLoading = true;
                                     });
                                     _setOnlineStatus();
-                                    }
-                                    else {
-                                      Navigator.of(context).pop();
-                                      _showSnackBar("You are not logged in to the server");
-                                    }
-                                    
-                                  },
-                                ),
+                                  }
+                                  else {
+                                    Navigator.of(context).pop();
+                                    _showSnackBar("You are not logged in to the server");
+                                  }
+
+                                },
+                              ),
+                            ),
+
+                          ],
                         ),
-                   
-                    ],
-                  ),
-                ),
-              ),
-              
-              new Divider(),
-              new ListTile(
-                  title: new Text("Server Details"),
-                  leading: new Icon(Icons.web),
-                  onTap: () {
-                       if(_isServerLoggedIn()){
-                            Navigator.of(context).pop();
-                    Navigator.of(context).push(
-                      new FadeRoute(
-                        builder: (BuildContext context) =>
-                            new TokenInheritedWidget(
-                                token: _fcmToken,
-                                child: new ServerDetails(
-                                  server: _selectedServer,
-                                )),
-                        settings: new RouteSettings(
-                            name: MyRoutes.serverDetails, isInitialRoute: false),
                       ),
-                    );        
-                    }
-                    else {
-                         Navigator.of(context).pop();
-                         _showSnackBar("You are not logged in to the server");
+                    ),
+
+                    new Divider(),
+                    new ListTile(
+                        title: new Text("Server Details"),
+                        leading: new Icon(Icons.web),
+                        onTap: () {
+                          if(_isServerLoggedIn()){
+                            Navigator.of(context).pop();
+                            Navigator.of(context).push(
+                              new FadeRoute(
+                                builder: (BuildContext context) =>
+                                new TokenInheritedWidget(
+                                    token: _fcmToken,
+                                    child: new ServerDetails(
+                                      server: _selectedServer,
+                                    )),
+                                settings: new RouteSettings(
+                                    name: MyRoutes.serverDetails, isInitialRoute: false),
+                              ),
+                            );
+                          }
+                          else {
+                            Navigator.of(context).pop();
+                            _showSnackBar("You are not logged in to the server");
+                          }
+                        }),
+
+                    _isServerLoggedIn() ?
+                    ListTile(
+                      title: new Text("Logout server"),
+                      leading: new Icon(Icons.exit_to_app),
+                      onTap: () {
+                        if(_isServerLoggedIn()){
+                          Navigator.pop(context);
+                          _showAlert();
                         }
-                  }),
-            
-             _isServerLoggedIn() ?             
-             ListTile(
-                title: new Text("Logout server"),
-                leading: new Icon(Icons.exit_to_app),
-                onTap: () {
-                     if(_isServerLoggedIn()){
-                  Navigator.pop(context);
-                  _showAlert();
-                     }
-                    else {
-                         Navigator.of(context).pop();
-                         _showSnackBar("You are not logged in to the server");
+                        else {
+                          Navigator.of(context).pop();
+                          _showSnackBar("You are not logged in to the server");
                         }
-                },
-              ) 
-              :  ListTile(
-                title: new Text("Login"),
-                leading: new Icon(Icons.exit_to_app),
-                onTap: () {                     
-                  Navigator.pop(context);
-                _addServer(server: _selectedServer);
-                },
-              ) ,
-             
-              new Divider(),
-              ListTile(
-                title: new Text("Manage Servers"),
-                leading: new Icon(Icons.settings),
-                onTap: () {
-                    Navigator.of(context).pop();
-                    Navigator.of(context).push(
-                      new FadeRoute(
-                        builder: (BuildContext context) =>
+                      },
+                    )
+                        :  ListTile(
+                      title: new Text("Login"),
+                      leading: new Icon(Icons.exit_to_app),
+                      onTap: () {
+                        Navigator.pop(context);
+                        _addServer(server: _selectedServer);
+                      },
+                    ) ,
+
+                    new Divider(),
+                    ListTile(
+                      title: new Text("Manage Servers"),
+                      leading: new Icon(Icons.settings),
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        Navigator.of(context).push(
+                          new FadeRoute(
+                            builder: (BuildContext context) =>
                             new TokenInheritedWidget(
                                 token: _fcmToken,
                                 child: new ServersManage(manage: true,)
-                                ),
-                        settings: RouteSettings(name: MyRoutes.serversManage, isInitialRoute: false),
-                      ),
-                    );
-                },
-              ),
-            
-            ],
-          ),
-        )),
-        body: new Stack(children: <Widget>[
-          new TabBarView(
-              controller: tabBarController,
-              children: <Widget>[
-            Container(
-              child: new ActiveListWidget(
-                listOfServers: listServers,
-                listToAdd: _activeChatList,
-                loadingState: onActionLoading,
-                refreshList: _initLists,
-              ),
-            ),
+                            ),
+                            settings: RouteSettings(name: MyRoutes.serversManage, isInitialRoute: false),
+                          ),
+                        );
+                      },
+                    ),
 
-            new PendingListWidget(
-              listOfServers: listServers,
-              listToAdd: _pendingChatList,
-              loadingState: onActionLoading,
-              refreshList: _initLists,
-            ),
-            new TransferredListWidget(
-              listOfServers: listServers,
-              listToAdd: _transferedChatList,
-              loadingState: onActionLoading,
-            )
+                  ],
+                ),
+              )),
+          body: new Stack(children: <Widget>[
+            new TabBarView(
+                children: <Widget>[
+                  ActiveListWidget(
+                    listOfServers: listServers,
+                    listToAdd: _activeChatList,
+                    loadingState: onActionLoading,
+                    refreshList: _initLists,
+                  ),
+                  PendingListWidget(
+                    listOfServers: listServers,
+                    listToAdd: _pendingChatList,
+                    loadingState: onActionLoading,
+                    refreshList: _initLists,
+                  ),
+                  TransferredListWidget(
+                    listOfServers: listServers,
+                    listToAdd: _transferedChatList,
+                    loadingState: onActionLoading,
+                  ),
+                  ActiveListWidget(
+                    listOfServers: listServers,
+                    listToAdd: _twilioChatList,
+                    loadingState: onActionLoading,
+                    refreshList: _initLists,
+                  )
+                ]),
+            Center(child: loadingIndicator),
           ]),
-          new Center(child: loadingIndicator),
-        ]),
-        floatingActionButton: _speedDial(),
+          floatingActionButton: _speedDial(),
 
-        bottomNavigationBar: Offstage(
-          child: GestureDetector(
-            onTap: () => _showBottomSheet(context),
-            child: PreferredSize(
-              preferredSize: const Size.fromHeight(48.0),
-              child: Theme(
-                data: Theme.of(context).copyWith(accentColor: Colors.white),
-                child: Container(
-                  color: Colors.red,
-                  height: 48.0,
-                  alignment: Alignment.center,
-                  child: Text(
-                    'Extension Update: Click me for more details',
-                    style: TextStyle(color: Colors.white),
+          bottomNavigationBar: Offstage(
+            child: GestureDetector(
+              onTap: () => _showBottomSheet(context),
+              child: PreferredSize(
+                preferredSize: const Size.fromHeight(48.0),
+                child: Theme(
+                  data: Theme.of(context).copyWith(accentColor: Colors.white),
+                  child: Container(
+                    color: Colors.red,
+                    height: 48.0,
+                    alignment: Alignment.center,
+                    child: Text(
+                      'Extension Update: Click me for more details',
+                      style: TextStyle(color: Colors.white),
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-          offstage: !_showUpdateNotice,
-        ));
+            offstage: !_showUpdateNotice,
+          )) ,
+    )
+    ;
 
     var _asyncLoader = new AsyncLoader(
       key: _mainAsyncLoaderState,
@@ -453,15 +462,14 @@ class _MainPageState extends State<MainPage>
      List<Chat> activeLists =[];
      List<Chat> pendingLists = [];
      List<Chat> transferLists = [];
+     List<Chat> twilioLists = [];
 
      await Future.forEach(listServers, (Server server) async {
 
         if (server.loggedIn()) {
       
           var srvr = await   _serverRequest.getChatLists(server);
-            
             if (srvr.activeChatList != null && srvr.activeChatList.length > 0) {
-            
               activeLists.addAll(srvr.activeChatList);
               if(mounted){
                 setState((){
@@ -494,7 +502,7 @@ class _MainPageState extends State<MainPage>
                }
             }
 
-            if (srvr.transferChatList != null &&srvr.transferChatList.length > 0) {
+            if (srvr.transferChatList != null && srvr.transferChatList.length > 0) {
               transferLists.addAll(srvr.transferChatList);
               setState(() {
                 _transferedChatList = cleanUpLists(_transferedChatList, srvr.transferChatList);
@@ -506,6 +514,32 @@ class _MainPageState extends State<MainPage>
                 });
             }
 
+            // check again in case there was network problem
+
+           var hasTwilio =  await  _checkTwilio(server);
+            if(hasTwilio){
+                setState(() {
+                  isTwilioActive = hasTwilio;
+                });
+
+                var svr2 = await _serverRequest.getTwilioChats(server);
+
+                if (svr2.twilioChatList != null && svr2.twilioChatList.length > 0) {
+                  twilioLists.addAll(svr2.twilioChatList);
+                  setState(() {
+                    _twilioChatList = cleanUpLists(_twilioChatList, srvr.twilioChatList);
+                    _twilioChatList.sort((a, b) => a.last_msg_id.compareTo(b.last_msg_id));
+                  });
+                } else {
+                  if (mounted) {
+                    setState(() {
+                      _twilioChatList?.removeWhere((chat) =>
+                      chat.serverid == server.id);
+                    });
+                  }
+                }
+            }
+
         }
         else { 
           if(mounted){
@@ -513,6 +547,8 @@ class _MainPageState extends State<MainPage>
                 _activeChatList?.removeWhere((chat) => chat.serverid == server.id);                
                 _pendingChatList?.removeWhere((chat) => chat.serverid == server.id);           
               _transferedChatList?.removeWhere((chat) => chat.serverid == server.id);
+              _twilioChatList?.removeWhere((chat) =>
+                chat.serverid == server.id);
               });
                }
 
@@ -525,6 +561,9 @@ class _MainPageState extends State<MainPage>
         pendingLists.clear();
         _transferedChatList =  _removeMissing(_transferedChatList, transferLists);
         transferLists.clear();
+         _twilioChatList =  _removeMissing(_twilioChatList, twilioLists);
+         twilioLists.clear();
+
           }
           
         
@@ -533,14 +572,20 @@ class _MainPageState extends State<MainPage>
       
      if(mounted){
          setState(() {        
-      _activeChatList.clear();
-      _pendingChatList.clear();
-      _transferedChatList.clear();
+      _activeChatList?.clear();
+      _pendingChatList?.clear();
+      _transferedChatList?.clear();
+      _twilioChatList?.clear();
       });
       }     
     }
+
         onActionLoading(false);
     }
+  }
+
+  Future<bool> _checkTwilio(Server server) async{
+   return await _serverRequest.isExtensionInstalled(server, "twilio");
   }
 
   List<Chat> cleanUpLists(List<Chat> chatToClean, List<dynamic> listFromServer) {
@@ -695,10 +740,8 @@ class _MainPageState extends State<MainPage>
       setState(() {
         _selectedServer.user_online = online ? 1 : 0;
       });
-    
 
-
-    var srvr = await dbHelper.upsertServer(_selectedServer, "id=?", [_selectedServer.id]);
+        var srvr = await dbHelper.upsertServer(_selectedServer, "id=?", [_selectedServer.id]);
             setState(() {
                   _selectedServer = srvr;
                     _userOnlineLoading = false;
@@ -838,13 +881,24 @@ class _MainPageState extends State<MainPage>
             SpeedDialChild(
               child: Icon(Icons.sms),
               backgroundColor: Theme.of(context).primaryColor,
-              label: 'Twilio Chat',
+              label: 'Twilio SMS/Chat',
               labelStyle: TextStyle(fontSize: 18.0),
               onTap: () async {
-                onActionLoading(true);
-                // Check twilio extension before proceeding.
-              var resp = await _serverRequest.isExtensionInstalled(_selectedServer, 'twilio');
-              onActionLoading(false);
+    onActionLoading(true);
+    // Check twilio extension before proceeding.
+    var resp = await _serverRequest.isExtensionInstalled(_selectedServer, 'twilio');
+    onActionLoading(false);
+    if(resp){
+      Navigator.of(context).push(FadeRoute(
+        builder: (BuildContext context) =>  TwilioSMSChat(server:_selectedServer, refreshList: _initLists,),
+        settings:
+        new RouteSettings(name: MyRoutes.twilio, isInitialRoute: false),
+      )
+      );
+
+    } else {
+          Scaffold.of(context).showSnackBar(SnackBar(content: Text('Twilio Extension not installed or Network issues.')));
+                }
               },
             ),
 

@@ -43,6 +43,7 @@ class NotificationHelper {
     if (message.containsKey('data')) {
       // Handle data message
       final dynamic data = message['data'];
+      showInfoNotification("LHC", data.toString());
     }
 
     if (message.containsKey('notification')) {
@@ -106,12 +107,9 @@ class NotificationHelper {
         initializationSettings, onSelectNotification: onSelectNotification);
 
     Map<String, String> channel = channelIDDefault;
-
         notifyWithSound(channel, "LHC: " + title, msg,int.tryParse(channel['number']));
 
   }
-
-
 
   /// Schedules a notification that specifies a different icon, sound and vibration pattern
   static notifyWithSound(Map<String, String> channel, String title,String msg,int notificationID) async {
