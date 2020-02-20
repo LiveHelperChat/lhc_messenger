@@ -292,19 +292,21 @@ class LoginFormState extends State<LoginForm> {
     _currentServer.username = _userNameController.text;
     _currentServer.password = _passwordController.text;
     // _currentServer.fcm_token = fcmToken;
-    bool checkExtension = await srvrRequest.isExtensionInstalled(_currentServer, "gcm");
+   
+    Server srv = await srvrRequest.login(_currentServer);
+
+    if (srv.loggedIn()) {
+       bool checkExtension = await srvrRequest.isExtensionInstalled(_currentServer, "gcm");
+    setState(() => _isLoading = false);
+
     if(!checkExtension){
-      _showAlertMsg("Extension Not found", "Could not detect the extension required for this app to run. "
-          "\n Install extension or check internet connection.");
+      _showAlertMsg("Can't Access REST API", " Could not detect the extension required for this app to run.\nIf extension is installed, user needs these permissions:\n Live helper Chat REST API service, EX - Twilio Rest API \n use_admin \n use_direct_logins.");
       return;
     }
-    Server srv = await srvrRequest.login(_currentServer);
-    setState(() => _isLoading = false);
-    if (srv.loggedIn()) {
+
       // we use this to fetch the already saved serverid
       _currentServer =_isNewServer ? await dbHelper.upsertServer(srv, null,null) 
       :  await dbHelper.upsertServer(srv, "${Server.columns['db_id']} = ? ", [srv.id]) ;
-
 
       try {
         // fetch installation id
@@ -318,7 +320,7 @@ class LoginFormState extends State<LoginForm> {
         //  _showSnackBar("Couldn't find this app's extension at the given url");
         }
       } catch (e) {
-        _showSnackBar("Couldn't find this app's extension at the given url");
+        _showSnackBar("Couldn't communicate with the extension on the server.");
         return;
       }
 

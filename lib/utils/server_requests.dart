@@ -27,11 +27,12 @@ final int NO_INTERNET = 404;
 
 class ServerRequest {
   DatabaseHelper dbHelper;
-  http.Client _client;
+   http.Client _client;
 
   ServerRequest() {
-    dbHelper = new DatabaseHelper();
+    dbHelper = new DatabaseHelper();    
     _client = new http.Client();
+  
   }
 
   dispose() async {
@@ -50,14 +51,13 @@ class ServerRequest {
       headers: {HttpHeaders.authorizationHeader: "Basic $auth"},
     ).catchError((resp) {
       return new ParsedResponse(
-          NO_INTERNET, json.decode('{"error":"true","msg":${resp.toString()}'));
+          NO_INTERNET, jsonDecode('{"error":"true","msg":${resp.toString()}'));
     });
     try {
-      final responseJson = json.decode(response.body);
-      //  print("RESPONSE: "+responseJson.toString());
+    
       var respBody = {};
       response.body != null
-          ? respBody = json.decode(response.body)
+          ? respBody = jsonDecode(response.body)
           : respBody = null;
       return ParsedResponse(response.statusCode, respBody);
     } catch (ex) {
@@ -68,7 +68,7 @@ class ServerRequest {
   Future<ParsedResponse> apiPost(
       Server server, String path, Map<String, dynamic> params) async {
     String auth = _encodeCredentials(server);
-
+    print("Params: "+jsonEncode(params).toString());
     final response = await http
         .post(
       server.getUrl() + path,
@@ -77,14 +77,14 @@ class ServerRequest {
     )
         .catchError((resp) {
       return new ParsedResponse(
-          NO_INTERNET, json.decode('{"error":"true","msg":${resp.toString()}'));
+          NO_INTERNET, jsonDecode('{"error":"true","msg":${resp.toString()}'));
     });
     try {
-      final responseJson = json.decode(response.body);
+      final responseJson = jsonDecode(response.body);
       print("RESPONSE: " + responseJson.toString());
       var respBody = {};
       response.body != null
-          ? respBody = json.decode(response.body)
+          ? respBody = jsonDecode(response.body)
           : respBody = null;
       return new ParsedResponse(response.statusCode, respBody);
     } catch (ex) {
@@ -92,40 +92,44 @@ class ServerRequest {
     }
   }
 
-  Future<ParsedResponse> _makeRequest(
-      Server server, String path, Map jsonParams) async {
+  Future<ParsedResponse> _makeRequest(Server server, String path, Map jsonParams) async {
     Map parameters = {};
     parameters['username'] = server.username;
     parameters['password'] = server.password;
 
     if (jsonParams != null) parameters.addAll(jsonParams);
-    //{'username':'${server.username}','password':'${server.password}'}
     //http request, catching error like no internet connection.
     //If no internet is available for example
-    return _client
-        .post(server.getUrl() + path, body: parameters)
-        .then((response) {
-      // print (response.statusCode);
-      // print ('Body: ${response.body}');
+    String url = "${server.getUrl()}$path";
 
+    try{
+      var response = await _client.post(url, body: parameters);
+       //print (response.statusCode);
+       //print ('Body: ${response.body}');
       if (response == null) {
-        return new ParsedResponse(NO_INTERNET, json.decode('{"error":"true"}'));
+        return ParsedResponse(200, jsonDecode('{"error":"true"}'));
       }
       //If there was an error return an empty list
       if (response.statusCode < 200 || response.statusCode >= 300) {
         //print(response.body.toString());
-        return new ParsedResponse(
-            response.statusCode, json.decode('{"error":"true"}'));
+        return ParsedResponse(
+            response.statusCode, jsonDecode('{"error":"true"}'));
       }
       var respBody = {};
       response.body != null
-          ? respBody = json.decode(response.body)
+          ? respBody = jsonDecode(response.body)
           : respBody = null;
-      return new ParsedResponse(response.statusCode, respBody);
-    }).catchError((resp) {
-      return new ParsedResponse(NO_INTERNET,
-          json.decode('{"error":"true","msg":"Request could not be sent"}'));
-    });
+      return  ParsedResponse(response.statusCode, respBody);
+
+    } on FormatException catch(fx) {
+        // Workaround for unknown error when deleting closing or deleting chat.
+      return ParsedResponse(NO_INTERNET,    jsonDecode('{"error":"false","msg": "Unknown Error" }'));
+    } catch(ex) {
+
+    String msg = "";
+    msg = ex != null ? ex  : "Request could not be sent.";
+    return ParsedResponse(NO_INTERNET,    jsonDecode('{"error":"true","msg": $msg }'));
+    }
   }
 
   // Check whether twilio extension is enabled
@@ -161,7 +165,6 @@ class ServerRequest {
     // check for twilio extention
     var twilExt = await isExtensionInstalled(server, "twilio");
 
-    List<Chat> chatList = List<Chat>();
     if (twilExt) {
       String params = "twilio_sms_chat=true&prefill_fields=phone";
       var resp = await apiGet(server, "/restapi/chats?" + params);
@@ -187,17 +190,16 @@ class ServerRequest {
     return server;
   }
 
-  Future<Server> login(Server server) {
-    return _makeRequest(server, "/xml/checklogin", null).then((resp) async {
-      // print (resp.body);
-      if (resp.isOk() && resp.body["result"].toString() == "true") {
+  Future<Server> login(Server server) async {
+    var response = await _makeRequest(server, "/xml/checklogin", null);
+   
+      if (response.isOk() && response.body["result"].toString() == "true") {
         server.isloggedin = Server.LOGGED_IN;
         return server;
       } else {
         server.isloggedin = Server.LOGGED_OUT;
         return server;
       }
-    });
   }
 
   Future<Server> fetchInstallationId(
@@ -205,29 +207,24 @@ class ServerRequest {
     Map param = {};
     param["action"] = action;
     if (token.isNotEmpty) param["regId"] = token;
-    return await _makeRequest(server, "/gcm/registerdevice", param)
-        .then((response) async {
-      //print("Body"+response.body.toString());
+    var response = await _makeRequest(server, "/gcm/registerdevice", param);
+
       if (response.isOk() && response.body["error"].toString() == "false") {
         server.installationid = response.body["results"].toString();
       }
-
       return server;
-    });
   }
 
   Future<String> fetchVersionExt(Server server) async {
     Map param = {};
     param["regId"] = server.installationid;
-    return await _makeRequest(server, "/gcm/registerdevice", param)
-        .then((response) async {
-      //  print("Body"+response.body.toString());
+    var response = await _makeRequest(server, "/gcm/registerdevice", param);
+     
       String resp;
       if (response.isOk() && response.body["error"].toString() == "false") {
         resp = response.body["version"].toString();
       }
       return resp;
-    });
   }
 
   // returns a list of chats as maps
@@ -278,7 +275,6 @@ class ServerRequest {
       } else
         server.clearList('pending');
 
-      // TODO
       int transferSize = response.body['transfered_chats']['size'];
       if (transferSize > 0) {
         List<dynamic> transferredList =
@@ -306,12 +302,14 @@ class ServerRequest {
     return response.isOk() ? true : false;
   }
 
-  Future<bool> closeChat(Server server, Chat chat) async {
-    ParsedResponse response =
-        await _makeRequest(server, "/xml/closechat/${chat.id}", null);
 
-    return response.isOk() ? true : false;
-  }
+  Future<bool> closeChat(Server server, Chat chat) async {
+    String path = "/xml/closechat/${chat.id}";
+    ParsedResponse response =   await _makeRequest(server, path, null);
+         if(response.body["error"] == "true") // no error
+              return false;
+        else return true; 
+  } 
 
   Future<bool> deleteChat(Server server, Chat chat) async {
     ParsedResponse response =
@@ -375,14 +373,13 @@ class ServerRequest {
   }
 
   Future<Map<String, dynamic>> getUserFromServer(Server server) async {
-    return await _makeRequest(server, "/gcm/getuser", new Map())
-        .then((resp) async {
+    var response = await _makeRequest(server, "/gcm/getuser", new Map());
+      
       Map<String, dynamic> user;
-      if (resp.isOk() && resp.body["error"].toString() == "false") {
-        user = Map.castFrom(resp.body['result']);
+      if (response.isOk() && response.body["error"].toString() == "false") {
+        user = Map.castFrom(response.body['result']);
       }
       return user;
-    });
   }
 
   Future<List<Department>> getUserDepartments(Server server) async {
@@ -415,17 +412,14 @@ class ServerRequest {
     Map params = {};
     params['work_hours'] = json.encode(department.toMapWorkHours());
 
-    return await _makeRequest(server, "/gcm/departmenthours", params)
-        .then((response) {
+    var response = await _makeRequest(server, "/gcm/departmenthours", params);
       Map<String, dynamic> chatData = {};
-
       if (response.isOk() && response.body["error"].toString() == "false") {
         chatData = Map.castFrom(response.body);
       }
 
       //   print(chatData.toString());
       return chatData;
-    });
   }
 
   Future<bool> setOperatorTyping(
@@ -434,18 +428,16 @@ class ServerRequest {
     params['chat_id'] = "$chatid";
     params['status'] = istyping ? "true" : "false";
 
-    return await _makeRequest(server, "/gcm/operatortyping", params)
-        .then((response) {
-      if (response.isOk()) {
+    var response = await _makeRequest(server, "/gcm/operatortyping", params);
+      if (response.isOk()) 
         return true;
-      } else
+      else
         return false;
-    });
   }
 
   Future<List<dynamic>> getOperatorsList(Server server) async {
-    return await _makeRequest(server, "/xml/transferchat", null)
-        .then((response) {
+    var response = await _makeRequest(server, "/xml/transferchat", null);
+      
       List<dynamic> operatorList = [];
       if (response.isOk() && response.body["result"] is List) {
         List<dynamic> llist = response.body["result"];
@@ -455,7 +447,6 @@ class ServerRequest {
         });
       }
       return operatorList;
-    });
   }
 
   Future<bool> transferChatUser(Server server, Chat chat, int userid) async {
@@ -500,7 +491,7 @@ class ServerRequest {
       status = isOnline ? "1" : "0";
     });
 
-    await _makeRequest(server, "/xml/setonlinestatus/" + status, null);
+   var response = await _makeRequest(server, "/xml/setonlinestatus/" + status, null);
     // status 1 or 0
     return await getUserOnlineStatus(server);
   }

@@ -295,10 +295,28 @@ class _MainPageState extends State<MainPage>
                             _showSnackBar("You are not logged in to the server");
                           }
                         }),
+                    ListTile(
+                      title: new Text("Manage Servers"),
+                      leading: new Icon(Icons.settings),
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        Navigator.of(context).push(
+                          new FadeRoute(
+                            builder: (BuildContext context) =>
+                            new TokenInheritedWidget(
+                                token: _fcmToken,
+                                child: new ServersManage(manage: true,)
+                            ),
+                            settings: RouteSettings(name: MyRoutes.serversManage, isInitialRoute: false),
+                          ),
+                        );
+                      },
+                    ),
 
+                    new Divider(),
                     _isServerLoggedIn() ?
                     ListTile(
-                      title: new Text("Logout server"),
+                      title: new Text("Logout Server"),
                       leading: new Icon(Icons.exit_to_app),
                       onTap: () {
                         if(_isServerLoggedIn()){
@@ -320,24 +338,7 @@ class _MainPageState extends State<MainPage>
                       },
                     ) ,
 
-                    new Divider(),
-                    ListTile(
-                      title: new Text("Manage Servers"),
-                      leading: new Icon(Icons.settings),
-                      onTap: () {
-                        Navigator.of(context).pop();
-                        Navigator.of(context).push(
-                          new FadeRoute(
-                            builder: (BuildContext context) =>
-                            new TokenInheritedWidget(
-                                token: _fcmToken,
-                                child: new ServersManage(manage: true,)
-                            ),
-                            settings: RouteSettings(name: MyRoutes.serversManage, isInitialRoute: false),
-                          ),
-                        );
-                      },
-                    ),
+
 
                   ],
                 ),
@@ -862,8 +863,8 @@ class _MainPageState extends State<MainPage>
           curve: Curves.bounceIn,
           overlayColor: Colors.black,
           overlayOpacity: 0.5,
-          onOpen: () => print('OPENING DIAL'),
-          onClose: () => print('DIAL CLOSED'),
+          onOpen: (){},
+          onClose: (){},
           tooltip: 'Actions',
           heroTag: 'speed-dial-hero-tag',
           backgroundColor: Theme.of(context).primaryColor,
