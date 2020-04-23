@@ -1,6 +1,3 @@
-import 'package:meta/meta.dart';
-
-import 'package:livehelp/model/user.dart';
 import 'package:livehelp/model/chat.dart';
 
 class Server {

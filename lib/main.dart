@@ -1,12 +1,10 @@
 import 'dart:convert';
-import 'dart:isolate';
 
 import 'package:flutter/material.dart';
 //plugin imports
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:after_layout/after_layout.dart';
 
-import 'package:livehelp/pages/loginForm.dart';
 import 'package:livehelp/pages/servers_manage.dart';
 import 'package:livehelp/pages/token_inherited_widget.dart';
 import 'package:livehelp/model/server.dart';
@@ -15,38 +13,30 @@ import 'package:livehelp/data/database.dart';
 import 'package:livehelp/utils/notification_helper.dart';
 
 void main() async {
-      runApp(new MyApp());
-}
-
-class MyApp extends StatelessWidget {
-
-  @override
-  Widget build(BuildContext context) {
-
-    return new MaterialApp(
+      runApp(
+        MaterialApp(
       title: 'LiveHelp',
       theme: new ThemeData(
         primarySwatch:  Colors.teal,
         scaffoldBackgroundColor: Colors.white70,
       ),
-       home: new MyHomePage(title: "Login",)
+       home:  MyHomePage(title: "Login",)
+     )
      );
-  }
 }
+
 
 class MyHomePage extends StatefulWidget {
   MyHomePage({Key key, this.title}) : super(key: key);
 
   final String title;
-
-  @override
-  _MyHomePageState createState() => new _MyHomePageState();
+  
+  State<MyHomePage> createState() => new _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> with AfterLayoutMixin<MyHomePage> {
+class _MyHomePageState extends State<MyHomePage> with AfterLayoutMixin<MyHomePage>, RouteAware {
 
-
-  final GlobalKey<_MyHomePageState> homePageStateKey = new GlobalKey<_MyHomePageState>();
+  final GlobalKey<_MyHomePageState> homePageStateKey =  GlobalKey<_MyHomePageState>();
 
   final FirebaseMessaging _firebaseMessaging = new FirebaseMessaging();
 
@@ -58,7 +48,6 @@ class _MyHomePageState extends State<MyHomePage> with AfterLayoutMixin<MyHomePag
 
   _MyHomePageState();
 
-
   @override
   void initState() {
     super.initState();
@@ -69,19 +58,17 @@ class _MyHomePageState extends State<MyHomePage> with AfterLayoutMixin<MyHomePag
     _firebaseMessaging.configure(
       onBackgroundMessage: NotificationHelper.backgroundMessageHandler,
       onMessage: (Map<String, dynamic> message)async {
-        //print("onMessage: $message");
         if(mounted && isInitialised){
-        // print("FirebaseMessage:"+message.toString());
           _showNotification(message);
         }
       },
       onLaunch: (Map<String, dynamic> message) {
-       // print("onLaunch: $message");
         //_showNotification(message);
+        return;
       },
       onResume: (Map<String, dynamic> message) {
-        //print("onResume: $message");
        // _showNotification(message);
+       return;
       },
     );
     _firebaseMessaging.requestNotificationPermissions(

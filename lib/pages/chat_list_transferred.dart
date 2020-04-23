@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 
-import 'package:livehelp/pages/token_inherited_widget.dart';
 import 'package:livehelp/model/server.dart';
 import 'package:livehelp/model/chat.dart';
 import 'package:livehelp/widget/chat_item_widget.dart';
@@ -96,7 +95,7 @@ return <PopupMenuEntry<ChatItemMenuOption>>[
           widget.loadingState(false);
 
        var route = new FadeRoute(
-      settings: new RouteSettings(name: MyRoutes.chatPage),
+      settings: new RouteSettings(name: AppRoutes.chatPage),
 
       builder: (BuildContext context) => new ChatPage(server:srv,chat: chat,isNewChat: false,), );
 

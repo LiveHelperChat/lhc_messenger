@@ -75,7 +75,7 @@ return <PopupMenuEntry<ChatItemMenuOption>>[
          onMenuSelected:(selectedOption){ onItemSelected(server,chat,selectedOption);},),
         onTap:() {
     var route = FadeRoute(
-      settings: RouteSettings(name: MyRoutes.chatPage),
+      settings: RouteSettings(name: AppRoutes.chatPage),
       builder: (BuildContext context) => new ChatPage(server:server,chat: chat,isNewChat: true,refreshList: widget.refreshList,),
     );
     Navigator.of(context).push(route);
@@ -91,7 +91,7 @@ return <PopupMenuEntry<ChatItemMenuOption>>[
       case ChatItemMenuOption.PREVIEW:
         widget.loadingState(true);
         var route = new FadeRoute(
-          settings: new RouteSettings(name: MyRoutes.chatPage),
+          settings: new RouteSettings(name: AppRoutes.chatPage),
           builder: (BuildContext context) => new ChatPage(server:srvr,chat: chat,isNewChat: true,refreshList: widget.refreshList,),
         );
         Navigator.of(context).push(route);
