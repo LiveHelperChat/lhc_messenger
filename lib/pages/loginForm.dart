@@ -351,7 +351,7 @@ class LoginFormState extends State<LoginForm> {
                     child: new MainPage(),
                   ),
               settings:
-                  new RouteSettings(name: MyRoutes.main, isInitialRoute: true),
+                  new RouteSettings(name: AppRoutes.main, ),
             ), (Route<dynamic> route) => false);
 
       });

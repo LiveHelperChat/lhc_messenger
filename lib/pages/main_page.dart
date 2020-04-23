@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:core';
 
 import 'package:flutter/material.dart';
@@ -22,7 +21,6 @@ import 'package:livehelp/pages/chat_list_pending.dart';
 import 'package:livehelp/pages/chat_list_transferred.dart';
 import 'package:livehelp/pages/server_details.dart';
 import 'package:livehelp/widget/chat_number_indicator.dart';
-import 'package:livehelp/widget/expansion_panel.dart';
 
 class MainPage extends StatefulWidget {
   @override
@@ -286,7 +284,7 @@ class _MainPageState extends State<MainPage>
                                       server: _selectedServer,
                                     )),
                                 settings: new RouteSettings(
-                                    name: MyRoutes.serverDetails, isInitialRoute: false),
+                                    name: AppRoutes.serverDetails,),
                               ),
                             );
                           }
@@ -307,7 +305,7 @@ class _MainPageState extends State<MainPage>
                                 token: _fcmToken,
                                 child: new ServersManage(manage: true,)
                             ),
-                            settings: RouteSettings(name: MyRoutes.serversManage, isInitialRoute: false),
+                            settings: RouteSettings(name: AppRoutes.serversManage,),
                           ),
                         );
                       },
@@ -683,7 +681,7 @@ class _MainPageState extends State<MainPage>
                                 token: _fcmToken,
                                 child: new ServersManage(manage: false,)),
                         settings: RouteSettings(
-                            name: MyRoutes.server, isInitialRoute: false),
+                            name: AppRoutes.server,),
                       ), (Route<dynamic> route) => false);
   }
 
@@ -762,7 +760,7 @@ class _MainPageState extends State<MainPage>
     Navigator.of(context).push(FadeRoute(
       builder: (BuildContext context) => new TokenInheritedWidget(
           token: _fcmToken, child:  LoginForm(isNew: true, server: server,)),
-      settings: new RouteSettings(name: MyRoutes.login, isInitialRoute: false),
+      settings: new RouteSettings(name: AppRoutes.login, ),
     ));
   }
 
@@ -893,7 +891,7 @@ class _MainPageState extends State<MainPage>
       Navigator.of(context).push(FadeRoute(
         builder: (BuildContext context) =>  TwilioSMSChat(server:_selectedServer, refreshList: _initLists,),
         settings:
-        new RouteSettings(name: MyRoutes.twilio, isInitialRoute: false),
+        new RouteSettings(name: AppRoutes.twilio,),
       )
       );
 

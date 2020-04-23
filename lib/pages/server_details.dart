@@ -55,7 +55,7 @@ class _ServerDetailsState extends State<ServerDetails> {
     _serverRequest = new ServerRequest();
     _localServer = widget.server;
 
-     _syncServerData();
+    _syncServerData();
   }
 
   /*
@@ -80,31 +80,33 @@ class _ServerDetailsState extends State<ServerDetails> {
       }).toList(),
       onChanged: _onServerListChanged), )
    */
-  
 
   @override
   Widget build(BuildContext context) {
-    final tokenInherited =TokenInheritedWidget.of(context);
-    _fcmToken =tokenInherited?.token;
+    final tokenInherited = TokenInheritedWidget.of(context);
+    _fcmToken = tokenInherited?.token;
     // print('$_fcmToken');
 
-    Widget loadingIndicator =_isLoading ?  new CircularProgressIndicator():new Container();
+    Widget loadingIndicator =
+        _isLoading ? new CircularProgressIndicator() : new Container();
     var scaff = new Scaffold(
         key: _scaffoldKey,
         appBar: new AppBar(
-          title:new Text(widget.server.servername),// new Text("Server Details"),
+          title:
+              new Text(widget.server.servername), // new Text("Server Details"),
           elevation:
               Theme.of(context).platform == TargetPlatform.android ? 6.0 : 0.0,
           actions: <Widget>[
-           /* new Offstage(
+            /* new Offstage(
                 offstage:_isLoading,
                 child: new IconButton(
                     icon: new CircularProgressIndicator(
                       backgroundColor: Colors.white,
                       ),onPressed: null,)),  */
-           
-               FlatButton(
-              shape: CircleBorder(side: BorderSide(color: Colors.transparent)),
+
+            FlatButton(
+                shape:
+                    CircleBorder(side: BorderSide(color: Colors.transparent)),
                 textColor: Colors.white,
                 child: new Text("Re-Sync"),
                 onPressed: () {
@@ -112,428 +114,426 @@ class _ServerDetailsState extends State<ServerDetails> {
                   _refreshServerData();
                   _initAsyncloader();
                 }),
-                 new Offstage(
+            new Offstage(
               offstage: _department == null,
-              child:  FlatButton(
-                 shape: CircleBorder(side: BorderSide(color: Colors.transparent)),
-                  child:  Icon(Icons.save),
-                textColor: Colors.white,
-                onPressed: () {
-                  _department.online_hours_active = _onlineHoursActive;
-                  _isLoading = true;
-                  _serverRequest
-                      .setDepartmentWorkHours(_localServer, _department)
-                      .then((value) {
-                    if(value['error'] == 'false')
-                    { WidgetUtils.creatDialog(context, "Worked hours saved successfully."); }
-                    _isLoading = false;
-                  });
-                }), ),
+              child: FlatButton(
+                  shape:
+                      CircleBorder(side: BorderSide(color: Colors.transparent)),
+                  child: Icon(Icons.save),
+                  textColor: Colors.white,
+                  onPressed: () {
+                    _department.online_hours_active = _onlineHoursActive;
+                    _isLoading = true;
+                    _serverRequest
+                        .setDepartmentWorkHours(_localServer, _department)
+                        .then((value) {
+                      if (value['error'] == 'false') {
+                        WidgetUtils.creatDialog(
+                            context, "Worked hours saved successfully.");
+                      }
+                      _isLoading = false;
+                    });
+                  }),
+            ),
           ],
         ),
-        body:new Stack(
-          children:<Widget>[
-            new SingleChildScrollView(
-          child: new Container(
-            decoration: BoxDecoration(color: Colors.white),
-            child: new Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                        
-                         Padding(
-                            padding: EdgeInsets.only(left:16.00,top: 16.00),
-                            child: new Text(
-                              "SERVER INFO",
-                              textAlign: TextAlign.left,
-                              style: new TextStyle(fontWeight: FontWeight.bold),
-                            )),
-                         Padding(
-                          padding: EdgeInsets.only(left:16.00,top: 8.00),
-                          child: new Text('${_localServer?.url}'),
-                        ),
-                         Divider(),
-                            Padding(
-                          padding:  EdgeInsets.only(left:16.00,top: 8.00),
-                          child: new Text(
-                            "OPERATOR INFO",
-                            textAlign: TextAlign.left,
-                            style: new TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                         Padding(
-                          padding:  EdgeInsets.only(left:16.00,top: 8.00),
-                          child:Text(
-                              '${_localServer?.firstname} ${_localServer?.surname}'),
-                         ),
-                         Padding(
-                          padding: EdgeInsets.only(left:16.00,top: 8.00),
-                          child:  Text('${_localServer?.operatoremail}'),
-                          ),
+        body: new Stack(children: <Widget>[
+          new SingleChildScrollView(
+            child: new Container(
+              decoration: BoxDecoration(color: Colors.white),
+              child: new Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Padding(
+                      padding: EdgeInsets.only(left: 16.00, top: 16.00),
+                      child: new Text(
+                        "SERVER INFO",
+                        textAlign: TextAlign.left,
+                        style: new TextStyle(fontWeight: FontWeight.bold),
+                      )),
+                  Padding(
+                    padding: EdgeInsets.only(left: 16.00, top: 8.00),
+                    child: new Text('${_localServer?.url}'),
+                  ),
                   Divider(),
-                 Container(
-                        margin: const EdgeInsets.only(bottom: 4.0),
-                        child: new ListTile(
-                          trailing: new Offstage(
-                            offstage: _department == null,
-                            child:new Checkbox(
-                              value: _onlineHoursActive,
-                              onChanged: (val) {
-                                setState(() {
-                                  _onlineHoursActive = val;
-                                });
-                              }) ,),
-                          title: _department ==null ? new Text("Could not load department hours from server.\nCheck your network connection. ", 
-                          style: new TextStyle(fontSize: 14.0,fontWeight: FontWeight.bold),)
-                              :  DropdownButton(
-                                  isExpanded: true,
-                                    value: _department,
-                                    items: userDepartments.map((dept) {
-                                      return new DropdownMenuItem(
-                                        value: dept,
-                                        child: new Text('Dept: ${dept?.name}'),
-                                      );
-                                    }).toList(),
-                                    onChanged: _onDeptListChanged),
-                              
-                     
-                         subtitle: Text("Department Work hours/day active",
-                          style: new TextStyle(fontSize: 12.0),),
-                        ),
+                  Padding(
+                    padding: EdgeInsets.only(left: 16.00, top: 8.00),
+                    child: new Text(
+                      "OPERATOR INFO",
+                      textAlign: TextAlign.left,
+                      style: new TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.only(left: 16.00, top: 8.00),
+                    child: Text(
+                        '${_localServer?.firstname} ${_localServer?.surname}'),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.only(left: 16.00, top: 8.00),
+                    child: Text('${_localServer?.operatoremail}'),
+                  ),
+                  Divider(),
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 4.0),
+                    child: new ListTile(
+                      trailing: new Offstage(
+                        offstage: _department == null,
+                        child: new Checkbox(
+                            value: _onlineHoursActive,
+                            onChanged: (val) {
+                              setState(() {
+                                _onlineHoursActive = val;
+                              });
+                            }),
                       ),
-
-                      new Divider(),
-                      new Offstage(
-                        offstage: !_onlineHoursActive,
-                        child: new ListTile(
-                            title: new Text('Sunday'),
-                            subtitle: new OfficeTimePicker(
-                                isChecked:
-                                    _sundayHoursActive || _department != null
-                                        ? _department.sundayActive
-                                        : false,
-                                startTime: _department?.sud_start_hour,
-                                endTime: _department?.sud_end_hour,
-                                startTimeChanged: (time) {
-                                  setState(() {
-                                    _department?.sud_start_hour = time;
-                                  });
-                                },
-                                endTimeChanged: (time) {
-                                  setState(() {
-                                    _department?.sud_end_hour = time;
-                                  });
-                                }),
-                            onTap: () {
-                              _selectTime(context);
+                      title: _department == null
+                          ? new Text(
+                              "Could not load department hours from server.\nCheck your network connection. ",
+                              style: new TextStyle(
+                                  fontSize: 14.0, fontWeight: FontWeight.bold),
+                            )
+                          : DropdownButton(
+                              isExpanded: true,
+                              value: _department,
+                              items: userDepartments.map((dept) {
+                                return new DropdownMenuItem(
+                                  value: dept,
+                                  child: new Text('Dept: ${dept?.name}'),
+                                );
+                              }).toList(),
+                              onChanged: _onDeptListChanged),
+                      subtitle: Text(
+                        "Department Work hours/day active",
+                        style: new TextStyle(fontSize: 12.0),
+                      ),
+                    ),
+                  ),
+                  new Divider(),
+                  new Offstage(
+                    offstage: !_onlineHoursActive,
+                    child: new ListTile(
+                        title: new Text('Sunday'),
+                        subtitle: new OfficeTimePicker(
+                            isChecked: _sundayHoursActive || _department != null
+                                ? _department.sundayActive
+                                : false,
+                            startTime: _department?.sud_start_hour,
+                            endTime: _department?.sud_end_hour,
+                            startTimeChanged: (time) {
+                              setState(() {
+                                _department?.sud_start_hour = time;
+                              });
                             },
-                            trailing: new Checkbox(
-                              value: _sundayHoursActive || _department != null
-                                  ? _department.sundayActive
-                                  : false,
-                              onChanged: (val) {
-                                if (!val) {
-                                  setState(() {
-                                    _department.sud_start_hour = "-1";
-                                    _department.sud_end_hour = "-1";
-                                  });
-                                } else {
-                                  _department.sud_start_hour = "00";
-                                  _department.sud_end_hour = "00";
-                                }
-                                setState(() {
-                                  _mondayHoursActive = val;
-                                });
-                              },
-                            )),
-                      ),
-                      new Offstage(
-                        offstage: !_onlineHoursActive,
-                        child: new ListTile(
-                            title: new Text('Monday'),
-                            subtitle: new OfficeTimePicker(
-                                isChecked:
-                                    _mondayHoursActive || _department != null
-                                        ? _department.mondayActive
-                                        : false,
-                                startTime: _department?.mod_start_hour,
-                                endTime: _department?.mod_end_hour,
-                                startTimeChanged: (time) {
-                                  setState(() {
-                                    _department?.mod_start_hour = time;
-                                  });
-                                },
-                                endTimeChanged: (time) {
-                                  setState(() {
-                                    _department?.mod_end_hour = time;
-                                  });
-                                }),
-                            onTap: () {
-                              _selectTime(context);
+                            endTimeChanged: (time) {
+                              setState(() {
+                                _department?.sud_end_hour = time;
+                              });
+                            }),
+                        onTap: () {
+                          _selectTime(context);
+                        },
+                        trailing: new Checkbox(
+                          value: _sundayHoursActive || _department != null
+                              ? _department.sundayActive
+                              : false,
+                          onChanged: (val) {
+                            if (!val) {
+                              setState(() {
+                                _department.sud_start_hour = "-1";
+                                _department.sud_end_hour = "-1";
+                              });
+                            } else {
+                              _department.sud_start_hour = "00";
+                              _department.sud_end_hour = "00";
+                            }
+                            setState(() {
+                              _mondayHoursActive = val;
+                            });
+                          },
+                        )),
+                  ),
+                  new Offstage(
+                    offstage: !_onlineHoursActive,
+                    child: new ListTile(
+                        title: new Text('Monday'),
+                        subtitle: new OfficeTimePicker(
+                            isChecked: _mondayHoursActive || _department != null
+                                ? _department.mondayActive
+                                : false,
+                            startTime: _department?.mod_start_hour,
+                            endTime: _department?.mod_end_hour,
+                            startTimeChanged: (time) {
+                              setState(() {
+                                _department?.mod_start_hour = time;
+                              });
                             },
-                            trailing: new Checkbox(
-                              value: _mondayHoursActive || _department != null
-                                  ? _department.mondayActive
-                                  : false,
-                              onChanged: (val) {
-                                if (!val) {
-                                  setState(() {
-                                    _department.mod_start_hour = "-1";
-                                    _department.mod_end_hour = "-1";
-                                  });
-                                } else {
-                                  _department.mod_start_hour = "00";
-                                  _department.mod_end_hour = "00";
-                                }
-                                setState(() {
-                                  _mondayHoursActive = val;
-                                });
-                              },
-                            )),
-                      ),
-                      new Offstage(
-                        offstage: !_onlineHoursActive,
-                        child: new ListTile(
-                            title: new Text('Tuesday'),
-                            subtitle: new OfficeTimePicker(
-                                isChecked:
-                                    _tuesdayHoursActive || _department != null
-                                        ? _department.tuesdayActive
-                                        : false,
-                                startTime: _department?.tud_start_hour,
-                                endTime: _department?.tud_end_hour,
-                                startTimeChanged: (time) {
-                                  setState(() {
-                                    _department?.tud_start_hour = time;
-                                  });
-                                },
-                                endTimeChanged: (time) {
-                                  setState(() {
-                                    _department?.tud_end_hour = time;
-                                  });
-                                }),
-                            onTap: () {
-                              _selectTime(context);
+                            endTimeChanged: (time) {
+                              setState(() {
+                                _department?.mod_end_hour = time;
+                              });
+                            }),
+                        onTap: () {
+                          _selectTime(context);
+                        },
+                        trailing: new Checkbox(
+                          value: _mondayHoursActive || _department != null
+                              ? _department.mondayActive
+                              : false,
+                          onChanged: (val) {
+                            if (!val) {
+                              setState(() {
+                                _department.mod_start_hour = "-1";
+                                _department.mod_end_hour = "-1";
+                              });
+                            } else {
+                              _department.mod_start_hour = "00";
+                              _department.mod_end_hour = "00";
+                            }
+                            setState(() {
+                              _mondayHoursActive = val;
+                            });
+                          },
+                        )),
+                  ),
+                  new Offstage(
+                    offstage: !_onlineHoursActive,
+                    child: new ListTile(
+                        title: new Text('Tuesday'),
+                        subtitle: new OfficeTimePicker(
+                            isChecked:
+                                _tuesdayHoursActive || _department != null
+                                    ? _department.tuesdayActive
+                                    : false,
+                            startTime: _department?.tud_start_hour,
+                            endTime: _department?.tud_end_hour,
+                            startTimeChanged: (time) {
+                              setState(() {
+                                _department?.tud_start_hour = time;
+                              });
                             },
-                            trailing: new Checkbox(
-                              value: _tuesdayHoursActive || _department != null
-                                  ? _department.tuesdayActive
-                                  : false,
-                              onChanged: (val) {
-                                if (!val) {
-                                  setState(() {
-                                    _department.tud_start_hour = "-1";
-                                    _department.tud_end_hour = "-1";
-                                  });
-                                } else {
-                                  _department.tud_start_hour = "00";
-                                  _department.tud_end_hour = "00";
-                                }
-                                setState(() {
-                                  _tuesdayHoursActive = val;
-                                });
-                              },
-                            )),
-                      ),
-                      new Offstage(
-                        offstage: !_onlineHoursActive,
-                        child: new ListTile(
-                            title: new Text('Wednesday'),
-                            subtitle: new OfficeTimePicker(
-                                isChecked:
-                                    _wednesdayHoursActive || _department != null
-                                        ? _department.wednesdayActive
-                                        : false,
-                                startTime: _department?.wed_start_hour,
-                                endTime: _department?.wed_end_hour,
-                                startTimeChanged: (time) {
-                                  setState(() {
-                                    _department?.wed_start_hour = time;
-                                  });
-                                },
-                                endTimeChanged: (time) {
-                                  setState(() {
-                                    _department?.wed_end_hour = time;
-                                  });
-                                }),
-                            onTap: () {
-                              _selectTime(context);
+                            endTimeChanged: (time) {
+                              setState(() {
+                                _department?.tud_end_hour = time;
+                              });
+                            }),
+                        onTap: () {
+                          _selectTime(context);
+                        },
+                        trailing: new Checkbox(
+                          value: _tuesdayHoursActive || _department != null
+                              ? _department.tuesdayActive
+                              : false,
+                          onChanged: (val) {
+                            if (!val) {
+                              setState(() {
+                                _department.tud_start_hour = "-1";
+                                _department.tud_end_hour = "-1";
+                              });
+                            } else {
+                              _department.tud_start_hour = "00";
+                              _department.tud_end_hour = "00";
+                            }
+                            setState(() {
+                              _tuesdayHoursActive = val;
+                            });
+                          },
+                        )),
+                  ),
+                  new Offstage(
+                    offstage: !_onlineHoursActive,
+                    child: new ListTile(
+                        title: new Text('Wednesday'),
+                        subtitle: new OfficeTimePicker(
+                            isChecked:
+                                _wednesdayHoursActive || _department != null
+                                    ? _department.wednesdayActive
+                                    : false,
+                            startTime: _department?.wed_start_hour,
+                            endTime: _department?.wed_end_hour,
+                            startTimeChanged: (time) {
+                              setState(() {
+                                _department?.wed_start_hour = time;
+                              });
                             },
-                            trailing: new Checkbox(
-                              value:
-                                  _wednesdayHoursActive || _department != null
-                                      ? _department.wednesdayActive
-                                      : false,
-                              onChanged: (val) {
-                                if (!val) {
-                                  setState(() {
-                                    _department.wed_start_hour = "-1";
-                                    _department.wed_end_hour = "-1";
-                                  });
-                                } else {
-                                  _department.wed_start_hour = "00";
-                                  _department.wed_end_hour = "00";
-                                }
-                                setState(() {
-                                  _wednesdayHoursActive = val;
-                                });
-                              },
-                            )),
-                      ),
-                      new Offstage(
-                        offstage: !_onlineHoursActive,
-                        child: new ListTile(
-                            title: new Text('Thursday'),
-                            subtitle: new OfficeTimePicker(
-                                isChecked:
-                                    _thursdayHoursActive || _department != null
-                                        ? _department.thursdayActive
-                                        : false,
-                                startTime: _department?.thd_start_hour,
-                                endTime: _department?.thd_end_hour,
-                                startTimeChanged: (time) {
-                                  setState(() {
-                                    _department?.thd_start_hour = time;
-                                  });
-                                },
-                                endTimeChanged: (time) {
-                                  setState(() {
-                                    _department?.thd_end_hour = time;
-                                  });
-                                }),
-                            onTap: () {
-                              _selectTime(context);
+                            endTimeChanged: (time) {
+                              setState(() {
+                                _department?.wed_end_hour = time;
+                              });
+                            }),
+                        onTap: () {
+                          _selectTime(context);
+                        },
+                        trailing: new Checkbox(
+                          value: _wednesdayHoursActive || _department != null
+                              ? _department.wednesdayActive
+                              : false,
+                          onChanged: (val) {
+                            if (!val) {
+                              setState(() {
+                                _department.wed_start_hour = "-1";
+                                _department.wed_end_hour = "-1";
+                              });
+                            } else {
+                              _department.wed_start_hour = "00";
+                              _department.wed_end_hour = "00";
+                            }
+                            setState(() {
+                              _wednesdayHoursActive = val;
+                            });
+                          },
+                        )),
+                  ),
+                  new Offstage(
+                    offstage: !_onlineHoursActive,
+                    child: new ListTile(
+                        title: new Text('Thursday'),
+                        subtitle: new OfficeTimePicker(
+                            isChecked:
+                                _thursdayHoursActive || _department != null
+                                    ? _department.thursdayActive
+                                    : false,
+                            startTime: _department?.thd_start_hour,
+                            endTime: _department?.thd_end_hour,
+                            startTimeChanged: (time) {
+                              setState(() {
+                                _department?.thd_start_hour = time;
+                              });
                             },
-                            trailing: new Checkbox(
-                              value: _thursdayHoursActive || _department != null
-                                  ? _department.thursdayActive
-                                  : false,
-                              onChanged: (val) {
-                                if (!val) {
-                                  setState(() {
-                                    _department.thd_start_hour = "-1";
-                                    _department.thd_end_hour = "-1";
-                                  });
-                                } else {
-                                  _department.thd_start_hour = "00";
-                                  _department.thd_end_hour = "00";
-                                }
-                                setState(() {
-                                  _thursdayHoursActive = val;
-                                });
-                              },
-                            )),
-                      ),
-                      new Offstage(
-                        offstage: !_onlineHoursActive,
-                        child: new ListTile(
-                            title: new Text('Friday'),
-                            subtitle: new OfficeTimePicker(
-                                isChecked:
-                                    _fridayHoursActive || _department != null
-                                        ? _department.fridayActive
-                                        : false,
-                                startTime: _department?.frd_start_hour,
-                                endTime: _department?.frd_end_hour,
-                                startTimeChanged: (time) {
-                                  setState(() {
-                                    _department?.frd_start_hour = time;
-                                  });
-                                },
-                                endTimeChanged: (time) {
-                                  setState(() {
-                                    _department?.frd_end_hour = time;
-                                  });
-                                }),
-                            onTap: () {
-                              _selectTime(context);
+                            endTimeChanged: (time) {
+                              setState(() {
+                                _department?.thd_end_hour = time;
+                              });
+                            }),
+                        onTap: () {
+                          _selectTime(context);
+                        },
+                        trailing: new Checkbox(
+                          value: _thursdayHoursActive || _department != null
+                              ? _department.thursdayActive
+                              : false,
+                          onChanged: (val) {
+                            if (!val) {
+                              setState(() {
+                                _department.thd_start_hour = "-1";
+                                _department.thd_end_hour = "-1";
+                              });
+                            } else {
+                              _department.thd_start_hour = "00";
+                              _department.thd_end_hour = "00";
+                            }
+                            setState(() {
+                              _thursdayHoursActive = val;
+                            });
+                          },
+                        )),
+                  ),
+                  new Offstage(
+                    offstage: !_onlineHoursActive,
+                    child: new ListTile(
+                        title: new Text('Friday'),
+                        subtitle: new OfficeTimePicker(
+                            isChecked: _fridayHoursActive || _department != null
+                                ? _department.fridayActive
+                                : false,
+                            startTime: _department?.frd_start_hour,
+                            endTime: _department?.frd_end_hour,
+                            startTimeChanged: (time) {
+                              setState(() {
+                                _department?.frd_start_hour = time;
+                              });
                             },
-                            trailing: new Checkbox(
-                              value: _fridayHoursActive || _department != null
-                                  ? _department.fridayActive
-                                  : false,
-                              onChanged: (val) {
-                                if (!val) {
-                                  setState(() {
-                                    _department.frd_start_hour = "-1";
-                                    _department.frd_end_hour = "-1";
-                                  });
-                                } else {
-                                  _department.frd_start_hour = "00";
-                                  _department.frd_end_hour = "00";
-                                }
-                                setState(() {
-                                  _fridayHoursActive = val;
-                                });
-                              },
-                            )),
-                      ),
-                      new Offstage(
-                        offstage: !_onlineHoursActive,
-                        child: new ListTile(
-                            title: new Text('Saturday'),
-                            subtitle: new OfficeTimePicker(
-                                isChecked:
-                                    _saturdayHoursActive || _department != null
-                                        ? _department.saturdayActive
-                                        : false,
-                                startTime: _department?.sad_start_hour,
-                                endTime: _department?.sad_end_hour,
-                                startTimeChanged: (time) {
-                                  setState(() {
-                                    _department?.sad_start_hour = time;
-                                  });
-                                },
-                                endTimeChanged: (time) {
-                                  setState(() {
-                                    _department?.sad_end_hour = time;
-                                  });
-                                }),
-                            onTap: () {
-                              _selectTime(context);
+                            endTimeChanged: (time) {
+                              setState(() {
+                                _department?.frd_end_hour = time;
+                              });
+                            }),
+                        onTap: () {
+                          _selectTime(context);
+                        },
+                        trailing: new Checkbox(
+                          value: _fridayHoursActive || _department != null
+                              ? _department.fridayActive
+                              : false,
+                          onChanged: (val) {
+                            if (!val) {
+                              setState(() {
+                                _department.frd_start_hour = "-1";
+                                _department.frd_end_hour = "-1";
+                              });
+                            } else {
+                              _department.frd_start_hour = "00";
+                              _department.frd_end_hour = "00";
+                            }
+                            setState(() {
+                              _fridayHoursActive = val;
+                            });
+                          },
+                        )),
+                  ),
+                  new Offstage(
+                    offstage: !_onlineHoursActive,
+                    child: new ListTile(
+                        title: new Text('Saturday'),
+                        subtitle: new OfficeTimePicker(
+                            isChecked:
+                                _saturdayHoursActive || _department != null
+                                    ? _department.saturdayActive
+                                    : false,
+                            startTime: _department?.sad_start_hour,
+                            endTime: _department?.sad_end_hour,
+                            startTimeChanged: (time) {
+                              setState(() {
+                                _department?.sad_start_hour = time;
+                              });
                             },
-                            trailing: Checkbox(
-                              value: _saturdayHoursActive || _department != null
-                                  ? _department.saturdayActive
-                                  : false,
-                              onChanged: (val) {
-                                if (!val) {
-                                  setState(() {
-                                    _department.sad_start_hour = "-1";
-                                    _department.sad_end_hour = "-1";
-                                  });
-                                } else {
-                                  _department.sad_start_hour = "00";
-                                  _department.sad_end_hour = "00";
-                                }
-                                setState(() {
-                                  _saturdayHoursActive = val;
-                                });
-                              },
-                            )),
-                      ),
-
-
-              ],
+                            endTimeChanged: (time) {
+                              setState(() {
+                                _department?.sad_end_hour = time;
+                              });
+                            }),
+                        onTap: () {
+                          _selectTime(context);
+                        },
+                        trailing: Checkbox(
+                          value: _saturdayHoursActive || _department != null
+                              ? _department.saturdayActive
+                              : false,
+                          onChanged: (val) {
+                            if (!val) {
+                              setState(() {
+                                _department.sad_start_hour = "-1";
+                                _department.sad_end_hour = "-1";
+                              });
+                            } else {
+                              _department.sad_start_hour = "00";
+                              _department.sad_end_hour = "00";
+                            }
+                            setState(() {
+                              _saturdayHoursActive = val;
+                            });
+                          },
+                        )),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-            new Center(child: loadingIndicator),
-        ]
-    )
-    );
+          new Center(child: loadingIndicator),
+        ]));
 
     var _asyncLoader = new AsyncLoader(
       key: _asyncLoaderState,
       initState: () async => await _initAsyncloader(),
       renderLoad: () => new Scaffold(
-            body: new Center(child: new CircularProgressIndicator()),
-          ),
+        body: new Center(child: new CircularProgressIndicator()),
+      ),
       renderError: ([error]) => new Scaffold(
-            body: new Center(
-              child: new Text('Something is wrong'),
-            ),
-          ),
+        body: new Center(
+          child: new Text('Something is wrong'),
+        ),
+      ),
       renderSuccess: ({data}) {
         return scaff;
       },
@@ -544,62 +544,42 @@ class _ServerDetailsState extends State<ServerDetails> {
 
   Future<Null> _initAsyncloader() async {
     _isLoading = true;
-  //  await _fetchServerDetails();
+    //  await _fetchServerDetails();
     await _syncServerData();
     _isLoading = false;
   }
-/*
-  Future<Null> _fetchServerDetails() async {
-    //get server details from db
-    await _dbHelper.fetchAll(Server.tableName, null, null, null).then((srvrs) {
-      listServers.clear();
-      srvrs.forEach((map) {
-        listServers.add(new Server.fromMap(map));
-      });
-      setState(() {
-        _localServer = listServers.elementAt(0);
-      });
-    });
-  }  */
 
   Future<Null> _syncServerData() async {
-  //  print("Localserver: " + _localServer?.toMap().toString());
-
     if (_localServer != null) {
-      //TODO
-      //Get 
-    //  await _serverRequest.fetchInstallationId(_localServer, _fcmToken)
-    //      .then((srvr)=>_localServer = srvr);
-      
-      // fetch user data
-     var user = await _serverRequest.getUserFromServer(_localServer);
+      var user = await _serverRequest.getUserFromServer(_localServer);
 
-        if (user != null) {
-          setState(() {
-            _localServer.userid = user['id'];
-            _localServer.firstname = user['name'];
-            _localServer.surname = user['surname'];
-            _localServer.operatoremail = user['email'];
-            _localServer.job_title = user['job_title'];
-            _localServer.all_departments = user['all_departments'];
-            _localServer.departments_ids = user['departments_ids'];
-          });
-        }
+      if (user != null) {
+        setState(() {
+          _localServer.userid = user['id'];
+          _localServer.firstname = user['name'];
+          _localServer.surname = user['surname'];
+          _localServer.operatoremail = user['email'];
+          _localServer.job_title = user['job_title'];
+          _localServer.all_departments = user['all_departments'];
+          _localServer.departments_ids = user['departments_ids'];
+        });
+      }
 
       await _dbHelper.upsertServer(_localServer, "id=?", [_localServer.id]);
 
       // fetch departments
-     List<Department> listDepts = await _serverRequest.getUserDepartments(_localServer);
-     
-        if (listDepts is List) {
-          setState(() {
-            userDepartments = listDepts;
-            if(userDepartments.length >0) {
-              _department = userDepartments.elementAt(0);
-              _checkActiveHours();
-            }
-          });
-        }
+      List<Department> listDepts =
+          await _serverRequest.getUserDepartments(_localServer);
+
+      if (listDepts is List) {
+        setState(() {
+          userDepartments = listDepts;
+          if (userDepartments.length > 0) {
+            _department = userDepartments.elementAt(0);
+            _checkActiveHours();
+          }
+        });
+      }
     }
   }
 
@@ -608,12 +588,7 @@ class _ServerDetailsState extends State<ServerDetails> {
       _onlineHoursActive = _department.online_hours_active;
     });
   }
-/*
-  _onServerListChanged(Server srvr) {
-    setState(() => _localServer = srvr);
-    _syncServerData();
-  }
-*/
+
   _onDeptListChanged(Department dept) {
     setState(() => _department = dept);
     _checkActiveHours();
@@ -625,19 +600,16 @@ class _ServerDetailsState extends State<ServerDetails> {
     return picked ?? 00;
   }
 
-  void _refreshServerData(){
-     _serverRequest.fetchInstallationId(_localServer,_fcmToken,"add")
-        .then((server){
-        _localServer = server;
-      _dbHelper.upsertServer(_localServer,"${Server.columns['db_id']} = ?",
+  void _refreshServerData() {
+    _serverRequest
+        .fetchInstallationId(_localServer, _fcmToken, "add")
+        .then((server) {
+      _localServer = server;
+      _dbHelper.upsertServer(_localServer, "${Server.columns['db_id']} = ?",
           ['${_localServer.id}']);
       setState(() {
         _isLoading = false;
       });
-    }
-    );
-
-
-
+    });
   }
 }
