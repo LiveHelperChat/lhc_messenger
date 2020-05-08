@@ -225,7 +225,7 @@ class DatabaseHelper {
       return server;
     } else {
       await db.update(Server.tableName, server.toMap(),
-          where: "id = ?", whereArgs: [server.id]).then((val) => _reset_db());
+          where: "id = ?", whereArgs: [server.id]).then((val) => _resetDb());
       // db.close();
 
       return server;
@@ -269,7 +269,7 @@ class DatabaseHelper {
     await db.delete(tableName);
   }
 
-  Future<Null> _reset_db() async {
+  Future<Null> _resetDb() async {
     // db = null;
   }
 

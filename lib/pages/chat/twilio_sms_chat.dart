@@ -56,7 +56,7 @@ class TwilioSMSChatState extends State<TwilioSMSChat> {
   Widget build(BuildContext context) {
     var sendBtn = new Container(
         padding: const EdgeInsets.only(top: 8.0),
-        child: new RaisedButton(
+        child: RaisedButton(
           onPressed: () {
             _submit();
           },
