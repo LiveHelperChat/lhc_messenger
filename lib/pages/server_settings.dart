@@ -6,10 +6,8 @@ import 'package:async_loader/async_loader.dart';
 
 import 'package:livehelp/data/database.dart';
 import 'package:livehelp/model/server.dart';
-import 'package:livehelp/model/user.dart';
 import 'package:livehelp/model/department.dart';
 import 'package:livehelp/utils/server_requests.dart';
-import 'package:livehelp/utils/widget_utils.dart';
 import 'package:livehelp/widget/office_time_picker.dart';
 import 'package:livehelp/pages/token_inherited_widget.dart';
 import 'package:livehelp/widget/circularWithBackground.dart';
@@ -32,7 +30,7 @@ class _ServerSettingsState extends State<ServerSettings> {
 
   GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   final GlobalKey<AsyncLoaderState> _asyncLoaderState =
-  new GlobalKey<AsyncLoaderState>();
+      new GlobalKey<AsyncLoaderState>();
 
   bool _onlineHoursActive = false;
   bool _sundayHoursActive = false;
@@ -90,71 +88,67 @@ class _ServerSettingsState extends State<ServerSettings> {
       onChanged: _onServerListChanged), )
    */
 
-
   @override
   Widget build(BuildContext context) {
-    final tokenInherited =TokenInheritedWidget.of(context);
-    _fcmToken =tokenInherited?.token;
+    final tokenInherited = TokenInheritedWidget.of(context);
+    _fcmToken = tokenInherited?.token;
 
-
-    Widget loadingIndicator =_isLoading ?  new CircularProgressIndicator():new Container();
+    Widget loadingIndicator =
+        _isLoading ? new CircularProgressIndicator() : new Container();
     var scaff = new Scaffold(
         key: _scaffoldKey,
         appBar: new AppBar(
-          title:new Text(widget.server.servername),// new Text("Server Details"),
+          title:
+              new Text(widget.server.servername), // new Text("Server Details"),
           elevation:
-          Theme.of(context).platform == TargetPlatform.android ? 6.0 : 0.0,
-          actions: <Widget>[
-
-
-          ],
+              Theme.of(context).platform == TargetPlatform.android ? 6.0 : 0.0,
+          actions: <Widget>[],
         ),
-        body:new Stack(
-            children:<Widget>[
-              new SingleChildScrollView(
-                child: new Container(
-                  margin: EdgeInsets.only(top: 16.0, left: 8.0, right: 8.0),
-                  child: new Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                    new ListTile(
-                      title: new Text("Sound"),
-                      trailing: new Checkbox(
-                        value: _localServer.soundnotify == 1,
-                        onChanged: (val) {
-                            setState(() {
-                              _localServer.soundnotify = val ? 1 : 0;
-                            });
-                            saveSetting(_localServer);
-                            },
-                      ),
+        body: new Stack(children: <Widget>[
+          new SingleChildScrollView(
+            child: new Container(
+              margin: EdgeInsets.only(top: 16.0, left: 8.0, right: 8.0),
+              child: new Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  new ListTile(
+                    title: new Text("Sound"),
+                    trailing: new Checkbox(
+                      value: _localServer.soundnotify == 1,
+                      onChanged: (val) {
+                        setState(() {
+                          _localServer.soundnotify = val ? 1 : 0;
+                        });
+                        saveSetting(_localServer);
+                      },
                     ),
-                    new ListTile(
-                      title: new Text("Vibrate"),
-                      trailing: new Checkbox(
-                        value: _localServer.vibrate == 1,
-                        onChanged: (val) {
-                          setState(() {
-                            _localServer.vibrate = val ? 1 : 0;
-                          });
-                          saveSetting(_localServer);
-                        },
-                      ),
-                    )
-                    ],
                   ),
-                ),
+                  new ListTile(
+                    title: new Text("Vibrate"),
+                    trailing: new Checkbox(
+                      value: _localServer.vibrate == 1,
+                      onChanged: (val) {
+                        setState(() {
+                          _localServer.vibrate = val ? 1 : 0;
+                        });
+                        saveSetting(_localServer);
+                      },
+                    ),
+                  )
+                ],
               ),
-              new Center(child: loadingIndicator),
-            ]
-        )
-    );
+            ),
+          ),
+          new Center(child: loadingIndicator),
+        ]));
 
     var _asyncLoader = new AsyncLoader(
       key: _asyncLoaderState,
-      initState: (){},
+      initState: () {
+        return null;
+      },
       renderLoad: () => new Scaffold(
-        body: new Center(child: new CircularProgressIndicator()),
+        body: Center(child: new CircularProgressIndicator()),
       ),
       renderError: ([error]) => new Scaffold(
         body: new Center(
@@ -169,8 +163,8 @@ class _ServerSettingsState extends State<ServerSettings> {
     return _asyncLoader;
   }
 
-  Future<Null> saveSetting(Server srvr) async{
-   await _dbHelper.upsertServer(srvr, "${Server.columns['db_id']} = ?", [srvr.id]);
-
+  Future<Null> saveSetting(Server srvr) async {
+    await _dbHelper
+        .upsertServer(srvr, "${Server.columns['db_id']} = ?", [srvr.id]);
   }
 }
