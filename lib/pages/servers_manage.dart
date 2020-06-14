@@ -126,15 +126,10 @@ class ServersManageState extends State<ServersManage> {
                   else {
                   Navigator.of(context).pop();
                    Navigator.of(context).pushReplacement(
-                       FadeRoute(
-                        builder: (BuildContext context) =>
-                            new TokenInheritedWidget(
-                                token: _fcmToken,
-                                child: new MainPage(
-                                )),
-                        settings: RouteSettings(
-                            name: MyRoutes.main, isInitialRoute: false),
-                      )
+                     Router.generateRoute(new RouteSettings(
+                       name: AppRoutes.main, arguments:new RouteArguments(_fcmToken)
+                     )
+                     )
                     );
                   }
                    
@@ -163,7 +158,7 @@ class ServersManageState extends State<ServersManage> {
     Navigator.of(context).push(FadeRoute(
       builder: (BuildContext context) => new TokenInheritedWidget(
           token: _fcmToken, child:  LoginForm(isNew: true, server: svr,)),
-      settings: new RouteSettings(name: MyRoutes.login, isInitialRoute: false),
+      settings: new RouteSettings(name: AppRoutes.login,),
     ));
   }
 
