@@ -13,5 +13,5 @@ android/key.properties
 pubspec.lock
 .dart_tool/
 .history
-ios/Flutter/flutter_export_environment.sh
 .flutter-plugins-dependencies
+ios/Flutter/flutter_export_environment.sh
