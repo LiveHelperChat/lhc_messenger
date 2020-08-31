@@ -1,7 +1,3 @@
-import 'package:meta/meta.dart';
-
-import 'package:livehelp/model/server.dart';
-
 class User{
 
   User({this.user_id,this.name,this.surname,this.email,this.job_title,this.all_departments,this.departments_ids});

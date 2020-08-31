@@ -1,6 +1,3 @@
-import 'package:meta/meta.dart';
-
-import 'package:livehelp/model/user.dart';
 import 'package:livehelp/model/chat.dart';
 
 class Server {
@@ -57,6 +54,7 @@ class Server {
   List<Chat> pendingChatList;
   List<Chat> activeChatList;
   List<Chat> transferChatList;
+  List<Chat> twilioChatList;
 
   Server(
       {this.id,
@@ -150,6 +148,10 @@ class Server {
         this.transferChatList ??= new List<Chat>();
         this.transferChatList = _cleanUpLists(this.transferChatList,newChatList);
         break;
+      case "twilio":
+        this.twilioChatList ??= new List<Chat>();
+        this.twilioChatList = _cleanUpLists(this.twilioChatList, newChatList);
+        break;
     }
   }
 
@@ -210,6 +212,11 @@ class Server {
       case 'transfer':
         this.transferChatList?.clear();
         break;
+      case 'twilio':
+        this.twilioChatList?.clear();
+        break;
+      default:
+        break;
     }
   }
 
@@ -226,4 +233,5 @@ class Server {
         break;
     }
   }
+
 }
