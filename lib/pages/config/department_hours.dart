@@ -473,7 +473,7 @@ class _DepartmentHoursState extends State<DepartmentHours> {
                   _serverRequest
                       .setDepartmentWorkHours(_localServer, _department)
                       .then((value) {
-                    if (value['error'] == 'false') {
+                    if (value['error'] == false) {
                       WidgetUtils.creatDialog(
                           context, "Working hours saved successfully.");
                     }
