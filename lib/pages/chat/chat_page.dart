@@ -478,12 +478,11 @@ class ChatPageState extends State<ChatPage>
 
           _chatOwner = chatData["ownerstring"];
           _operator = chatData["operator"];
-          _cannedMsgs =
-              Map.castFrom(chatData["canned_messages"]).values.toList();
+          _cannedMsgs = Map.castFrom(chatData["canned_messages"]).values.toList();
 
           _isNewChat = false;
-          _isOwnerOfChat = _operator == _chatOwner;
-          // delete timer since chat is successfully accepted
+          _isOwnerOfChat = chatData['chat']['user_id'].toString() == widget.server.userid.toString();
+
           _cancelAccept();
         });
       }
@@ -507,7 +506,6 @@ class ChatPageState extends State<ChatPage>
     _serverRequest.postMesssage(widget.server, widget.chat, msg);
 
     _operatorTyping();
-    // _syncMessages();
   }
 
   void _textChanged(String text) {
@@ -557,13 +555,6 @@ class ChatPageState extends State<ChatPage>
         });
       }
 
-      /* check if chat has been accepted
-    * not a very good way to check but
-    * can't find a better way
-
-      if (_msgsHandlerList.any((handler) => handler.msg.user_id > 0))
-        _isNewChat = false;
-      */
     });
   }
 }

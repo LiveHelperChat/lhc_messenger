@@ -14,6 +14,7 @@ if (flutterRoot == null) {
 apply plugin: 'com.android.application'
 apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
 
+// REmdex
 def keystorePropertiesFile = rootProject.file("key.properties")
 def keystoreProperties = new Properties()
 keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
@@ -27,11 +28,11 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId "gh.tbsapps.lhcmessenger"
+        applicationId "com.livehelperchat.chat"
         minSdkVersion 16
         targetSdkVersion 29
         versionCode 27
-        versionName "1.2.6"
+        versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 	
@@ -49,7 +50,7 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             //signingConfig signingConfigs.debug
-			 signingConfig signingConfigs.release
+			signingConfig signingConfigs.release
         }
     }
 }
@@ -69,5 +70,7 @@ dependencies {
 }
 
 apply plugin: 'com.google.gms.google-services'
+
 // Work around required for removing play-services-measurement
 //com.google.gms.googleservices.GoogleServicesPlugin.config.disableVersionCheck = true
+

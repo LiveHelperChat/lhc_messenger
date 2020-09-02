@@ -30,7 +30,7 @@ class Server {
     'db_fcmtoken': "fcm_token"
   };
 
-  bool urlhasindex;
+  bool urlhasindex, twilioInstalled = false, extensionsSynced;
   int id,
       userid,
       isloggedin,

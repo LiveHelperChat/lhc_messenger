@@ -1,4 +1,4 @@
-package gh.tbsapps.lhcmessenger;
+package com.livehelperchat.chat;
 
 import io.flutter.app.FlutterApplication;
 import io.flutter.plugin.common.PluginRegistry;

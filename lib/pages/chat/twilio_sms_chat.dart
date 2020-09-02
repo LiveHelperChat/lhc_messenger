@@ -237,7 +237,7 @@ class TwilioSMSChatState extends State<TwilioSMSChat> {
   void _getTwilioPhones() async {
     setState(() => _isLoading = true);
     twilioPhonesList?.clear();
-    print("SERver: " + _currentServer.toMap().toString());
+    //print("SERver: " + _currentServer.toMap().toString());
     var phones = await _serverRequest.getTwilioPhones(_currentServer);
     setState(() => _isLoading = false);
     if (phones != null && phones.length > 0) {
