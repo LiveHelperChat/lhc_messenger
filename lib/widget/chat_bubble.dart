@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:livehelp/model/message.dart';
 import 'package:intl/intl.dart';
 
+import 'package:flutter_html/flutter_html.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 class Bubble extends StatelessWidget {
   Bubble({this.message});
   final Message message;
@@ -40,6 +43,8 @@ class Bubble extends StatelessWidget {
                 bottomLeft: const Radius.circular(10.0),
               );
 
+    final margin = message.user_id == 0 ? const EdgeInsets.only(right: 40.0) : const EdgeInsets.only(left: 40.0);
+
     return new Column(
       crossAxisAlignment: align,
       children: <Widget>[
@@ -49,15 +54,9 @@ class Bubble extends StatelessWidget {
         ),
         new Container(
           constraints: const BoxConstraints(minWidth: 50.0),
-          margin: const EdgeInsets.all(3.0),
-          padding: const EdgeInsets.all(8.0),
+          margin: margin,
+          padding: const EdgeInsets.all(4.0),
           decoration: new BoxDecoration(
-            boxShadow: [
-              new BoxShadow(
-                  blurRadius: .5,
-                  spreadRadius: 1.0,
-                  color: Colors.black.withOpacity(.12))
-            ],
             color: bg,
             borderRadius: radius,
           ),
@@ -65,11 +64,13 @@ class Bubble extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               new Padding(
-                padding: const EdgeInsets.only(right: 8.0, bottom: 8.0),
-                child: new SelectableText(
-                  message.msg,
-                  textAlign: TextAlign.left,
-                ),
+                padding: const EdgeInsets.only(right: 4.0, bottom: 4.0),
+                child: Html(
+                    data: message.msg,
+                    onLinkTap: (url) {
+                      _launchURL(url);
+                    }
+                  )
               ), // positioned at bottom but object renderer needs it to calculate
               // width of the column
               new Padding(
@@ -89,4 +90,14 @@ class Bubble extends StatelessWidget {
       ],
     );
   }
+
+  _launchURL(url) async {
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      throw 'Could not launch $url';
+    }
+  }
+
+
 }

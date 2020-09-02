@@ -1,4 +1,4 @@
-# livehelp
+# Live Helper Chat
 
 A messenger app for livehelper chat 
 
@@ -8,11 +8,7 @@ This is the source code for Messenger for livehelperchat.
 https://github.com/samapraku/lhc_messenger/tree/master/apk
 
 ## Playstore link:  
-https://play.google.com/store/apps/details?id=gh.tbsapps.lhcmessenger
-
-## Required Extension to work with the app  
-https://github.com/samapraku/lhc_gcm_extension
-
+https://play.google.com/store/apps/details?id=com.livehelperchat.com
 
 Refer to the readme on the extension page especially the section on the REST API setup.
 https://github.com/samapraku/lhc_gcm_extension#important---rest-api-requirements
