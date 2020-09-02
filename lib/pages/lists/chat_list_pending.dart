@@ -99,7 +99,6 @@ class _PendingListWidgetState extends State<PendingListWidget> {
   void onItemSelected(Server srvr, Chat chat, ChatItemMenuOption selectedMenu) {
     switch (selectedMenu) {
       case ChatItemMenuOption.PREVIEW:
-        widget.loadingState(true);
         var route = new FadeRoute(
           settings: new RouteSettings(name: AppRoutes.chatPage),
           builder: (BuildContext context) => new ChatPage(
@@ -122,7 +121,7 @@ class _PendingListWidgetState extends State<PendingListWidget> {
   }
 
   void _deleteChat(Server srv, Chat chat) async {
-    await _serverRequest.deleteChat(srv, chat).then((deleted) {
+    await _serverRequest.deleteChat(srv, chat, list : 'pending').then((deleted) {
       widget.loadingState(!deleted);
 //TODO
       if (deleted) _updateList(chat);

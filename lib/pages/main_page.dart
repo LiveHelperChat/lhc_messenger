@@ -130,46 +130,76 @@ class _MainPageState extends State<MainPage>
     final tokenInherited = TokenInheritedWidget.of(context);
     _fcmToken = tokenInherited.token;
 
-    // get user online status
-    // if (_selectedServer != null)_getOnlineStatus();
-
     Widget loadingIndicator =
         _actionLoading ? new CircularProgressIndicator() : new Container();
 
+    var tabs = <Tab>[
+      Tab(
+        child: new ChatNumberIndcator(
+          title: "Active",
+          offstage: _activeChatList.length == 0,
+          number: _activeChatList.length.toString(),
+        ),
+      ),
+      Tab(
+        child: ChatNumberIndcator(
+          title: "New",
+          offstage: _pendingChatList.length == 0,
+          number: _pendingChatList.length.toString(),
+        ),
+      ),
+      Tab(
+          child: new ChatNumberIndcator(
+            title: "Transfer",
+            offstage: _transferedChatList.length == 0,
+            number: _transferedChatList.length.toString(),
+          ))
+    ];
+
+    var bodyWidgets = <Widget>[
+      ActiveListWidget(
+        listOfServers: listServers,
+        listToAdd: _activeChatList,
+        loadingState: onActionLoading,
+        refreshList: _initLists,
+      ),
+      PendingListWidget(
+        listOfServers: listServers,
+        listToAdd: _pendingChatList,
+        loadingState: onActionLoading,
+        refreshList: _initLists,
+      ),
+      TransferredListWidget(
+        listOfServers: listServers,
+        listToAdd: _transferedChatList,
+        loadingState: onActionLoading,
+      ),
+    ];
+
+    if (_selectedServer != null && _selectedServer.twilioInstalled == true) {
+      tabs.add(Tab(
+          child: new ChatNumberIndcator(
+            title: "SMS",
+            offstage: _twilioChatList?.length == 0,
+            number: _twilioChatList?.length.toString(),
+          )));
+      bodyWidgets.add(
+          ActiveListWidget(
+            listOfServers: listServers,
+            listToAdd: _twilioChatList,
+            loadingState: onActionLoading,
+            refreshList: _initLists,
+          )
+      );
+    }
+
     var mainScaffold = DefaultTabController(
-      length: 4,
+      length: tabs.length,
       child: Scaffold(
           key: _scaffoldKey,
           appBar: AppBar(
             title: Text("Chat Lists"),
-            bottom: TabBar(tabs: <Tab>[
-              Tab(
-                child: new ChatNumberIndcator(
-                  title: "Active",
-                  offstage: _activeChatList.length == 0,
-                  number: _activeChatList.length.toString(),
-                ),
-              ),
-              Tab(
-                child: ChatNumberIndcator(
-                  title: "New",
-                  offstage: _pendingChatList.length == 0,
-                  number: _pendingChatList.length.toString(),
-                ),
-              ),
-              Tab(
-                  child: new ChatNumberIndcator(
-                title: "Transfer",
-                offstage: _transferedChatList.length == 0,
-                number: _transferedChatList.length.toString(),
-              )),
-              Tab(
-                  child: new ChatNumberIndcator(
-                title: "SMS",
-                offstage: _twilioChatList?.length == 0,
-                number: _twilioChatList?.length.toString(),
-              ))
-            ]),
+            bottom: TabBar(tabs: tabs),
           ),
           drawer: new Drawer(
               child: SingleChildScrollView(
@@ -357,31 +387,7 @@ class _MainPageState extends State<MainPage>
             ),
           )),
           body: new Stack(children: <Widget>[
-            new TabBarView(children: <Widget>[
-              ActiveListWidget(
-                listOfServers: listServers,
-                listToAdd: _activeChatList,
-                loadingState: onActionLoading,
-                refreshList: _initLists,
-              ),
-              PendingListWidget(
-                listOfServers: listServers,
-                listToAdd: _pendingChatList,
-                loadingState: onActionLoading,
-                refreshList: _initLists,
-              ),
-              TransferredListWidget(
-                listOfServers: listServers,
-                listToAdd: _transferedChatList,
-                loadingState: onActionLoading,
-              ),
-              ActiveListWidget(
-                listOfServers: listServers,
-                listToAdd: _twilioChatList,
-                loadingState: onActionLoading,
-                refreshList: _initLists,
-              )
-            ]),
+            new TabBarView(children: bodyWidgets),
             Center(child: loadingIndicator),
           ]),
           floatingActionButton: _speedDial(),
@@ -528,12 +534,9 @@ class _MainPageState extends State<MainPage>
               });
             }
 
-            // check again in case there was network problem
-
-            var hasTwilio = await _checkTwilio(server);
-            if (hasTwilio) {
+            if (server.twilioInstalled == true) {
               setState(() {
-                isTwilioActive = hasTwilio;
+                isTwilioActive = true;
               });
 
               var svr2 = await _serverRequest.getTwilioChats(server);
@@ -556,6 +559,7 @@ class _MainPageState extends State<MainPage>
                 }
               }
             }
+
           } else {
             if (mounted) {
               setState(() {
@@ -663,6 +667,7 @@ class _MainPageState extends State<MainPage>
             _selectedServer = listServers.elementAt(0);
           });
           _getOnlineStatus();
+          _getTwilioStatus();
 
           //TODO Remove in future updates
           // check extension update
@@ -734,6 +739,14 @@ class _MainPageState extends State<MainPage>
 
   Future<bool> _deleteServer() async {
     return dbHelper.deleteItem(Server.tableName, "id=?", [_selectedServer.id]);
+  }
+
+  Future<Null> _getTwilioStatus() async {
+    _serverRequest.isExtensionInstalled(_selectedServer,"twilio").then((isInstalled) {
+      setState(() {
+        _selectedServer.twilioInstalled = isInstalled;
+      });
+    });
   }
 
   Future<Null> _getOnlineStatus() async {
@@ -864,6 +877,37 @@ class _MainPageState extends State<MainPage>
   }
 
   SpeedDial _speedDial() {
+
+    var children = [
+    SpeedDialChild(
+        child: Icon(Icons.refresh),
+        backgroundColor: Theme.of(context).primaryColor,
+        label: 'Reload list',
+        labelStyle: TextStyle(fontSize: 18.0),
+        onTap: () => _initLists())
+    ];
+
+    if (_selectedServer != null && _selectedServer.twilioInstalled == true) {
+      children.add(SpeedDialChild(
+        child: Icon(Icons.sms),
+        backgroundColor: Theme.of(context).primaryColor,
+        label: 'Twilio SMS/Chat',
+        labelStyle: TextStyle(fontSize: 18.0),
+        onTap: () async {
+          onActionLoading(true);
+          Navigator.of(context).push(FadeRoute(
+              builder: (BuildContext context) => TwilioSMSChat(
+                server: _selectedServer,
+                refreshList: _initLists,
+              ),
+              settings: new RouteSettings(
+                name: AppRoutes.twilio,
+              ),
+          ));
+        },
+      ));
+    }
+
     return SpeedDial(
       // both default to 16
       marginRight: 18,
@@ -887,42 +931,7 @@ class _MainPageState extends State<MainPage>
       foregroundColor: Colors.white,
       elevation: 8.0,
       shape: CircleBorder(),
-      children: [
-        SpeedDialChild(
-            child: Icon(Icons.refresh),
-            backgroundColor: Theme.of(context).primaryColor,
-            label: 'Reload list',
-            labelStyle: TextStyle(fontSize: 18.0),
-            onTap: () => _initLists()),
-        SpeedDialChild(
-          child: Icon(Icons.sms),
-          backgroundColor: Theme.of(context).primaryColor,
-          label: 'Twilio SMS/Chat',
-          labelStyle: TextStyle(fontSize: 18.0),
-          onTap: () async {
-            onActionLoading(true);
-            // Check twilio extension before proceeding.
-            var resp = await _serverRequest.isExtensionInstalled(
-                _selectedServer, 'twilio');
-            onActionLoading(false);
-            if (resp) {
-              Navigator.of(context).push(FadeRoute(
-                builder: (BuildContext context) => TwilioSMSChat(
-                  server: _selectedServer,
-                  refreshList: _initLists,
-                ),
-                settings: new RouteSettings(
-                  name: AppRoutes.twilio,
-                ),
-              ));
-            } else {
-              Scaffold.of(context).showSnackBar(SnackBar(
-                  content: Text(
-                      'Twilio Extension not installed or Network issues.')));
-            }
-          },
-        ),
-      ],
+      children: children
     );
   }
 }

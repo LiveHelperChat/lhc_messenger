@@ -8,6 +8,7 @@ import 'package:livehelp/model/message.dart';
 import 'package:livehelp/model/server.dart';
 import 'package:livehelp/model/department.dart';
 import 'package:http/http.dart' as http;
+import 'dart:developer';
 
 /// A class similar to http.Response but instead of a String describing the body
 /// it already contains the parsed Dart-Object
@@ -83,8 +84,7 @@ class ServerRequest {
     }
   }
 
-  Future<ParsedResponse> _makeRequest(
-      Server server, String path, Map jsonParams) async {
+  Future<ParsedResponse> _makeRequest(Server server, String path, Map jsonParams, {bool asJson = false, method = 'post'}) async {
     Map parameters = {};
     parameters['username'] = server.username;
     parameters['password'] = server.password;
@@ -95,7 +95,40 @@ class ServerRequest {
     String url = "${server.getUrl()}$path";
 
     try {
-      var response = await _client.post(url, body: parameters);
+
+      var response;
+
+      if (server.username.isNotEmpty && server.password.isNotEmpty) {
+
+        Map<String,String> headers = {
+          'authorization' : 'Basic ' + base64Encode(utf8.encode(server.username + ":" + server.password))
+        };
+
+        if (asJson == true) {
+            headers['Content-type'] = 'application/json';
+            headers['Accept'] = 'application/json';
+        }
+
+        if (method == 'post') {
+          response = await _client.post(url, body: (asJson ? jsonEncode(parameters) : parameters), headers: headers);
+        } else if (method == 'put') {
+          response = await _client.put(url, body: (asJson ? jsonEncode(parameters) : parameters), headers: headers);
+        }
+
+      } else {
+        Map<String,String> headers = {};
+
+        if (asJson == true) {
+          headers['Content-type'] = 'application/json';
+          headers['Accept'] = 'application/json';
+        }
+
+        if (method == 'post') {
+          response = await _client.post(url, body: (asJson ? jsonEncode(parameters) : parameters), headers: headers);
+        } else if (method == 'put') {
+          response = await _client.put(url, body: (asJson ? jsonEncode(parameters) : parameters), headers: headers);
+        }
+      }
 
       if (response == null) {
         return ParsedResponse(200, jsonDecode('{"error":"true"}'));
@@ -115,6 +148,10 @@ class ServerRequest {
       // Workaround for unknown error when deleting closing or deleting chat.
       return ParsedResponse(
           NO_INTERNET, jsonDecode('{"error":"false","msg": "Unknown Error" }'));
+    } on SocketException catch (fx) {
+      // Workaround for unknown error when deleting closing or deleting chat.
+      return ParsedResponse(
+          NO_INTERNET, jsonDecode('{"error":"false","msg": "Socket exception" }'));
     } catch (ex) {
       String msg = "";
       msg = ex != null ? ex : "Request could not be sent.";
@@ -193,23 +230,33 @@ class ServerRequest {
     }
   }
 
-  Future<Server> fetchInstallationId(
-      Server server, String token, String action) async {
+  Future<Server> fetchInstallationId(Server server, String token, String action) async {
     Map param = {};
     param["action"] = action;
-    if (token.isNotEmpty) param["regId"] = token;
-    var response = await _makeRequest(server, "/gcm/registerdevice", param);
+    param["generate_token"] = "true";
+    param["device"] = "android";
+    param["username"] = server.username;
+    param["password"] = server.password;
+
+    if (token.isNotEmpty) param["device_token"] = token;
+
+    if (action == 'logout') {
+        param["token"] = server.installationid;
+    }
+
+    var response = await _makeRequest(server, "/restapi/" + (action == 'add' ? 'login' : 'logout'), param);
 
     if (response.isOk() && response.body["error"].toString() == "false") {
-      server.installationid = response.body["results"].toString();
+        server.installationid = response.body["session_token"].toString();
     }
+
     return server;
   }
 
   Future<String> fetchVersionExt(Server server) async {
     Map param = {};
     param["regId"] = server.installationid;
-    var response = await _makeRequest(server, "/gcm/registerdevice", param);
+    var response = await _makeRequest(server, "/restapi/login", param);
 
     String resp;
     if (response.isOk() && response.body["error"].toString() == "false") {
@@ -302,11 +349,11 @@ class ServerRequest {
       return true;
   }
 
-  Future<bool> deleteChat(Server server, Chat chat) async {
+  Future<bool> deleteChat(Server server, Chat chat, {list : "active"}) async {
     ParsedResponse response =
         await _makeRequest(server, "/xml/deletechat/${chat.id}", null);
 
-    if (response.isOk()) server.removeChat(chat.id, 'active');
+    if (response.isOk()) server.removeChat(chat.id, list);
 
     return response.isOk() ? true : false;
   }
@@ -364,7 +411,11 @@ class ServerRequest {
   }
 
   Future<Map<String, dynamic>> getUserFromServer(Server server) async {
-    var response = await _makeRequest(server, "/gcm/getuser", new Map());
+
+    Map param = {};
+    param["by_login"] = "1";
+
+    var response = await _makeRequest(server, "/restapi/getuser", param);
 
     Map<String, dynamic> user;
     if (response.isOk() && response.body["error"].toString() == "false") {
@@ -380,14 +431,14 @@ class ServerRequest {
       "dep_ids": [server.departments_ids]
     });
     ParsedResponse response =
-        await _makeRequest(server, "/gcm/getuserdepartments", params);
+        await _makeRequest(server, "/restapi/user_departments", params);
 
     List<Department> departments = new List<Department>();
 
     if (response.isOk() && response.body["error"].toString() == "false") {
       // print("Departments: "+response.body.toString());
-      if (response.body['departments'] != null) {
-        List<dynamic> dept = response.body['departments'];
+      if (response.body['result'] != null) {
+        List<dynamic> dept = response.body['result'];
         dept.forEach((map) {
           departments.add(new Department.fromMap(map));
         });
@@ -401,9 +452,12 @@ class ServerRequest {
   Future<Map<String, dynamic>> setDepartmentWorkHours(
       Server server, Department department) async {
     Map params = {};
-    params['work_hours'] = json.encode(department.toMapWorkHours());
+    var postData = department.toMapWorkHours();
+    params['post_body'] = json.encode(postData);
+    params['request_method'] = 'PUT';
+    params['raw_attr'] = '1';
 
-    var response = await _makeRequest(server, "/gcm/departmenthours", params);
+    var response = await _makeRequest(server, "/restapi/department/" + postData['id'].toString(), params);
     Map<String, dynamic> chatData = {};
     if (response.isOk() && response.body["error"].toString() == "false") {
       chatData = Map.castFrom(response.body);
@@ -415,11 +469,13 @@ class ServerRequest {
 
   Future<bool> setOperatorTyping(
       Server server, int chatid, bool istyping) async {
-    Map params = {};
-    params['chat_id'] = "$chatid";
-    params['status'] = istyping ? "true" : "false";
 
-    var response = await _makeRequest(server, "/gcm/operatortyping", params);
+    Map params = {
+      "operator_typing" : istyping ? ((new DateTime.now().millisecondsSinceEpoch)/1000).round() : 0,
+      "operator_typing_id" : istyping ? server.userid : 0
+    };
+
+    var response = await _makeRequest(server, "/restapi/chat/" + chatid.toString(), params, asJson : true, method : 'put');
     if (response.isOk())
       return true;
     else
