@@ -1,8 +1,8 @@
 # Live Helper Chat
 
-A messenger app for livehelper chat 
+A messenger app for Live Helper Chat
 
-This is the source code for Messenger for livehelperchat.
+This is the source code for Messenger for Live Helper Chat.
 
 ## Download Apks:  
 https://github.com/LiveHelperChat/lhc_messenger/tree/master/apk
