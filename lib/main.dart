@@ -15,9 +15,9 @@ import 'package:livehelp/utils/notification_helper.dart';
 void main() async {
       runApp(
         MaterialApp(
-      title: 'LiveHelp',
+      title: 'Live Helper Chat',
       theme: new ThemeData(
-        primarySwatch:  Colors.teal,
+        primarySwatch:  Colors.indigo,
         scaffoldBackgroundColor: Colors.white70,
       ),
        home:  MyHomePage(title: "Login",)
@@ -58,16 +58,17 @@ class _MyHomePageState extends State<MyHomePage> with AfterLayoutMixin<MyHomePag
     _firebaseMessaging.configure(
       onBackgroundMessage: NotificationHelper.backgroundMessageHandler,
       onMessage: (Map<String, dynamic> message)async {
-        if(mounted && isInitialised){
+        if (mounted && isInitialised) {
           _showNotification(message);
         }
       },
       onLaunch: (Map<String, dynamic> message) {
-        //_showNotification(message);
+        // @todo Navigate to proper window on click
         return;
       },
       onResume: (Map<String, dynamic> message) {
-       // _showNotification(message);
+        // @todo Navigate to proper window on click
+        //_showNotification(message);
        return;
       },
     );
@@ -99,12 +100,11 @@ class _MyHomePageState extends State<MyHomePage> with AfterLayoutMixin<MyHomePag
     );
   }
 
-
    _showNotification(Map<String,dynamic> msg) async {
     if(msg['data'].isEmpty) return;
     var data = msg['data'];
 
-    if(data.containsKey("info")){
+    if (data.containsKey("info")) {
          NotificationHelper.showInfoNotification("Yay!", data["info"].toString());
     }
 
@@ -112,11 +112,11 @@ class _MyHomePageState extends State<MyHomePage> with AfterLayoutMixin<MyHomePag
      // check if server exists on this device
      _dbHelper.fetchItem(Server.tableName, "installationid=? and isloggedin=?",[data['server_id'],1])
       .then((server){
-        if(server != null){
+        if (server != null) {
             Server srv = new Server.fromMap(server);
             Map<String,dynamic> chat =json.decode(data["chat"].toString());
 
-            if(data['chat_type'].toString() == 'new_msg') {
+            if (data['chat_type'].toString() == 'new_msg') {
               NotificationHelper.showNotification(
                   srv, 'new_msg', "New message from " + chat['nick'].toString(),
                   data['msg'].toString());
@@ -125,15 +125,21 @@ class _MyHomePageState extends State<MyHomePage> with AfterLayoutMixin<MyHomePag
             // pending chat
             if (data["chat_type"].toString() == "pending" )
             {
-              NotificationHelper.showNotification(srv,'pending',"New Chat from "+chat['nick'].toString(), data['msg'].toString());
-              // SYNC DATA
+              NotificationHelper.showNotification(
+                  srv,
+                  'pending',
+                  "New Chat from "+chat['nick'].toString(),
+                  data['msg'].toString()
+              );
             }
 
             if (data["chat_type"].toString() == "unread")
             {
-              NotificationHelper.showNotification(srv,'pending',"Unread message from "+chat['nick'].toString(),"");
-              }
-
+              NotificationHelper.showNotification(
+                  srv,'pending',
+                  "Unread message from "+chat['nick'].toString(),
+                  "");
+            }
           }
       });
   }
