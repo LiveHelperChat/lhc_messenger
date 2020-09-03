@@ -1,22 +1,28 @@
 # Live Helper Chat
 
-A messenger app for livehelper chat 
+A messenger app for Live Helper Chat
 
-This is the source code for Messenger for livehelperchat.
+This is the source code for Messenger for Live Helper Chat. Documentation how to configure Live Helper Chat for mobile app can be found here. https://doc.livehelperchat.com/docs/mobile
 
 ## Download Apks:  
-https://github.com/samapraku/lhc_messenger/tree/master/apk
+https://github.com/LiveHelperChat/lhc_messenger/tree/master/apk
 
 ## Playstore link:  
-https://play.google.com/store/apps/details?id=com.livehelperchat.com
-
-Refer to the readme on the extension page especially the section on the REST API setup.
-https://github.com/samapraku/lhc_gcm_extension#important---rest-api-requirements
+Pending release...
 
 If you implement new features or enhancements, it would be nice to share with the rest of the community
 
-
 Flutter framework is used for this app.
+
+## Todo
+
+* Click on mobile notification should lead to specific window. Now it just opens a mobile app.
+* Loader circle sometimes stucks on chat acceptance.
+
+## Requirements
+
+* Live Helper Chat 3.40v
+
 ## Getting Started
 
 For help getting started with Flutter, view our online
