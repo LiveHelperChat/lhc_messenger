@@ -1,3 +1,5 @@
+[![Codemagic build status](https://api.codemagic.io/apps/5f50c50be2db272d7690ae45/5f50c50be2db272d7690ae44/status_badge.svg)](https://codemagic.io/apps/5f50c50be2db272d7690ae45/5f50c50be2db272d7690ae44/latest_build)
+
 # Live Helper Chat
 
 A messenger app for Live Helper Chat
