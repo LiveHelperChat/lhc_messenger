@@ -72,6 +72,14 @@ class _MyHomePageState extends State<MyHomePage> with AfterLayoutMixin<MyHomePag
        return;
       },
     );
+
+    _firebaseMessaging.onTokenRefresh.listen((String fcmtoken){
+        assert(fcmtoken != null);
+        setState((){
+            token = fcmtoken;
+        });
+    });
+
     _firebaseMessaging.requestNotificationPermissions(
         const IosNotificationSettings(sound: true, badge: true, alert: true));
     _firebaseMessaging.onIosSettingsRegistered
