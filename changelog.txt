@@ -1,0 +1,15 @@
+1.1
+
+To see online visitor status it's require 3.42v
+
+* You will see online visitor status (connected, away, disconnected) in chat lists and chat page.
+* Instead of text you will see icons in chat list.
+* Proper indication that operator is typing.
+* Adjusted icons in message send are to give more space to text.
+* You will see operator in chat lists now also.
+* Taping on message area while in chat page will hide a keyboard.
+* Adjusted colors of messages.
+
+1.0
+
+Initial Release.
