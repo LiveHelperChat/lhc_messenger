@@ -5,6 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 
 import 'package:async_loader/async_loader.dart';
+
 import 'package:rxdart/rxdart.dart';
 
 import 'package:livehelp/model/server.dart';
@@ -56,6 +57,7 @@ class ChatPageState extends State<ChatPage>
   String _chatOwner;
   String _operator;
   String _chatStatus = "";
+  int _chat_scode = 0;
 
   List<dynamic> _cannedMsgs = new List();
 
@@ -67,6 +69,7 @@ class ChatPageState extends State<ChatPage>
 
   Timer _msgsTimer;
   Timer _acceptTimer;
+  Timer _operatorTimer;
 
   BuildContext _context;
 
@@ -82,9 +85,8 @@ class ChatPageState extends State<ChatPage>
     _msgsTimer = new Timer.periodic(
         new Duration(seconds: 5), (Timer timer) => _syncMessages());
 
-    subject.stream
-        .debounce(new Duration(milliseconds: 500))
-        .listen(_textChanged);
+    //subject.stream.debounce(new Duration(milliseconds: 300)).listen(_textChanged);
+    subject.stream.listen(_textChanged);
 
     if (!_isNewChat) _acceptChat();
   }
@@ -105,6 +107,10 @@ class ChatPageState extends State<ChatPage>
     }
     _msgsTimer.cancel();
 
+    if (_operatorTimer != null && _operatorTimer.isActive) {
+      _operatorTimer.cancel();
+    }
+
     subject.close();
 
     WidgetsBinding.instance.removeObserver(this);
@@ -120,6 +126,7 @@ class ChatPageState extends State<ChatPage>
       case AppLifecycleState.paused:
       case AppLifecycleState.inactive:
         if (_msgsTimer.isActive) _msgsTimer.cancel();
+        if (_operatorTimer != null &&_operatorTimer.isActive) _operatorTimer.cancel();
         _cancelAccept();
         break;
       default:
@@ -137,6 +144,7 @@ class ChatPageState extends State<ChatPage>
 
     TextStyle headerbottom = new TextStyle(
       fontSize: 12.0,
+      height: 1,
       color: Colors.white,
       fontWeight: FontWeight.w300,
     );
@@ -178,20 +186,28 @@ class ChatPageState extends State<ChatPage>
             mainAxisAlignment: MainAxisAlignment.center,
             // mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              Text(
-                '${_chatCopy.nick}',
-                style: TextStyle(fontSize: 16.0, fontWeight: FontWeight.w400),
-                softWrap: true,
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
+              RichText(
+                text: TextSpan(
+                  children: [
+                    WidgetSpan(
+                        style: TextStyle(height: 1, fontSize: 17),
+                        child: Icon(Icons.person, size: 14, color: _chat_scode == 0 ? Colors.green.shade400 : (_chat_scode == 2 ? Colors.yellow.shade400 : Colors.red.shade400) ),
+                    ),
+                    TextSpan(
+                      style: TextStyle(height: 2, fontSize: 15),
+                      text: ' ${_chatCopy.nick}',
+                    ),
+                  ],
+                ),
               ),
               Row(
                 children: <Widget>[
-                  Text(
-                    'Owner: ',
-                    style: headerbottom,
+                  Icon(
+                    Icons.people,
+                    size: 17,
+                    color: Colors.white,
                   ),
-                  Text('${_chatOwner ?? ""}',
+                  Text(' ${_chatOwner ?? " - "}',
                     style: headerbottom,
                   ),
                 ],
@@ -231,11 +247,11 @@ class ChatPageState extends State<ChatPage>
             popupMenuBtn
           ],
           bottom: new PreferredSize(
-              preferredSize: const Size.fromHeight(48.0),
+              preferredSize: const Size.fromHeight(25.0),
               child: new Container(
-                height: 48.0,
+                height: 28.0,
                 padding:
-                    const EdgeInsets.only(top: 8.0, left: 48.0, right: 8.0),
+                    const EdgeInsets.only(top: 0.0, left: 73.0, right: 8.0),
                 alignment: Alignment.centerLeft,
                 child:
                     Text(
@@ -255,8 +271,8 @@ class ChatPageState extends State<ChatPage>
               children: <Widget>[
                 Flexible(
                     child: Padding(
-                  padding: const EdgeInsets.only(left: 8.0, right: 8.0),
-                  child: _asyncLoader,
+                    padding: const EdgeInsets.only(left: 8.0, right: 8.0),
+                    child: _asyncLoader,
                 )),
                 new Divider(
                   height: 1.0,
@@ -270,7 +286,11 @@ class ChatPageState extends State<ChatPage>
           Center(child: loadingIndicator)
         ]));
 
-    return mainScaffold;
+    return new GestureDetector(
+        onTap: () {
+          FocusScope.of(context).unfocus();
+        },
+        child: mainScaffold);
   }
 
   // Generate Chat Menu options
@@ -342,7 +362,7 @@ class ChatPageState extends State<ChatPage>
   }
 
   void _showChatInfo(context) {
-    TextStyle styling = new TextStyle(fontFamily: 'Roboto', fontSize: 10.0);
+    TextStyle styling = new TextStyle(fontFamily: 'Roboto', fontSize: 16.0, fontWeight: FontWeight.bold);
     showModalBottomSheet<void>(
         context: context,
         builder: (BuildContext context) {
@@ -395,19 +415,19 @@ class ChatPageState extends State<ChatPage>
   }
 
   Widget _buildComposer() {
-    var cupertinoButton = CupertinoButton(
+    /*var cupertinoButton = CupertinoButton(
         child: Text("Send"),
-        onPressed: _isWriting ? () => _submitMsg(_textController.text) : null);
+        onPressed: _isWriting ? () => _submitMsg(_textController.text) : null);*/
 
     var iconButton = IconButton(
-      icon: new Icon(Icons.message),
-      onPressed: _isWriting ? () => _submitMsg(_textController.text) : null,
+      icon: new Icon(Icons.send),
+      onPressed: _textController.text.length > 0 ? () => _submitMsg(_textController.text) : null,
     );
 
     return IconTheme(
       data: IconThemeData(color: Theme.of(context).accentColor),
       child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 9.0),
+          margin: const EdgeInsets.symmetric(horizontal: 0.0),
           child: new Row(
             children: <Widget>[
               IconButton(
@@ -434,7 +454,6 @@ class ChatPageState extends State<ChatPage>
                                           setState(() => _textController.text =
                                               canMsg["msg"]);
                                           Navigator.pop(context);
-                                          _isWriting = true;
                                         },
                                       ));
                                     },
@@ -451,15 +470,27 @@ class ChatPageState extends State<ChatPage>
                 onChanged: (txt) => (subject.add(txt)),
                 onSubmitted: _submitMsg,
                 decoration: _isOwnerOfChat
-                    ? new InputDecoration(hintText: "Enter a message to send")
+                    ? new InputDecoration(
+                    hintText: "Enter a message to send",
+                    border: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    errorBorder: InputBorder.none,
+                    disabledBorder: InputBorder.none
+                )
                     : new InputDecoration(
+                        border: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        errorBorder: InputBorder.none,
+                        disabledBorder: InputBorder.none,
                         hintText: "You are not the owner of this chat"),
               )),
               new Container(
-                margin: new EdgeInsets.symmetric(horizontal: 3.0),
-                child: Theme.of(context).platform == TargetPlatform.iOS
+                margin: new EdgeInsets.symmetric(horizontal: 0.0),
+                child: iconButton /*Theme.of(context).platform == TargetPlatform.iOS
                     ? cupertinoButton
-                    : iconButton,
+                    : iconButton*/,
               )
             ],
           ),
@@ -498,21 +529,39 @@ class ChatPageState extends State<ChatPage>
 
   void _submitMsg(String msg) {
     _textController.clear();
+
     setState(() {
       _isWriting = false;
     });
 
-    //post message to server here
-    _serverRequest.postMesssage(widget.server, widget.chat, msg);
+    //post message to server and update messages instantly
+    _serverRequest.postMesssage(widget.server, widget.chat, msg).then((value) {
+      _syncMessages();
+    });
 
-    _operatorTyping();
   }
 
   void _textChanged(String text) {
-    setState(() {
-      _isWriting = text.length > 0;
+
+    if (_isWriting == false && text.length > 0) {
+      setState(() {
+        _isWriting = true;
+      });
+      _operatorTyping();
+    } else if (_isWriting == true && text.length == 0) {
+        setState(() {
+          _isWriting = false;
+        });
+    }
+
+    // Cancel present
+    if (_operatorTimer != null && _operatorTimer.isActive) _operatorTimer.cancel();
+
+    _operatorTimer = Timer(Duration(seconds: 3), (){
+       _isWriting = false;
+      _operatorTyping();
     });
-    _operatorTyping();
+
   }
 
   void _operatorTyping() async {
@@ -552,6 +601,7 @@ class ChatPageState extends State<ChatPage>
       if (mounted) {
         setState(() {
           _chatStatus = msgsStatusMap['chat_status'] ?? "";
+          _chat_scode = msgsStatusMap['chat_scode'] ?? 0;
         });
       }
 

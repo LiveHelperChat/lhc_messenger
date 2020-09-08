@@ -16,7 +16,7 @@ class Bubble extends StatelessWidget {
       fontFamily: 'Roboto',
     );
     final bg = message.user_id == 0
-        ? Theme.of(context).primaryColorLight
+        ? Colors.black12
         : message.user_id > 0 ? Colors.white : Colors.greenAccent;
     final align = message.user_id == 0
         ? CrossAxisAlignment.start

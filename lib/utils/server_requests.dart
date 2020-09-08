@@ -333,10 +333,8 @@ class ServerRequest {
   Future<bool> postMesssage(Server server, Chat chat, String msg) async {
     Map params = {};
     params["msg"] = msg;
-    ParsedResponse response =
-        await _makeRequest(server, "/xml/addmsgadmin/${chat.id}", params);
+    ParsedResponse response = await _makeRequest(server, "/xml/addmsgadmin/${chat.id}", params);
 
-    //print(response.body.toString());
     return response.isOk() ? true : false;
   }
 
@@ -378,6 +376,7 @@ class ServerRequest {
       Map level1 = results['${chat.id}'];
 
       messagesChatStatus['chat_status'] = level1["chat_status"].toString();
+      messagesChatStatus['chat_scode'] = level1["chat_scode"] ?? 0;
 
       if (level1['messages'] is Map) {
         Map msgs = level1['messages'];

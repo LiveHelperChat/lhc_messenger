@@ -22,6 +22,7 @@ class Chat {
     "db_user_typing_txt": "user_typing_txt",
     "db_last_user_msg_time": "last_user_msg_time",
     "db_phone": "phone",
+    "db_user_status_front": "user_status_front",
   };
 
   int id,
@@ -32,7 +33,8 @@ class Chat {
       user_id,
       has_unread_messages,
       last_user_msg_time,
-      last_op_msg_time;
+      last_op_msg_time,
+      user_status_front;
   String nick,
       email,
       ip,
@@ -77,7 +79,9 @@ class Chat {
       this.has_unread_messages,
       this.last_user_msg_time,
       this.last_op_msg_time,
-      this.phone});
+      this.phone,
+      this.user_status_front
+      });
 
   static int checkInt(dynamic value) {
     if (value == null) return null;
@@ -106,6 +110,7 @@ class Chat {
           last_user_msg_time: checkInt(map['last_user_msg_time']),
           last_op_msg_time: checkInt(map['last_user_msg_time']),
           phone: map['phone'] ?? "",
+          user_status_front: map['user_status_front'] ?? 0,
         );
 
   Map<String, dynamic> toMap() {
@@ -129,6 +134,7 @@ class Chat {
       columns['db_has_unread_messages']: has_unread_messages,
       'last_msg_time': last_msg_time,
       columns['db_phone']: phone,
+      columns['db_user_status_front']: user_status_front,
     };
   }
 }

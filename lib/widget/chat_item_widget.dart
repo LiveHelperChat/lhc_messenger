@@ -42,10 +42,8 @@ class ChatItemWidget extends StatelessWidget {
       return menuBuilder;
     });
 
-
-
     return new SizedBox(
-        height: 180.0,
+        height: 160.0,
         child: new Container(
             padding: const EdgeInsets.only(top: 4.0, bottom: 4.0),
             child: new Container(
@@ -66,7 +64,7 @@ class ChatItemWidget extends StatelessWidget {
                           width: 40.0,
                           child: new Icon(
                             Icons.person,
-                            color: Theme.of(context).primaryColor,
+                            color: (chat.user_status_front == 0 ? Colors.green.shade400 : (chat.user_status_front  == 2 ? Colors.yellow.shade400 : Colors.red.shade400)),
                           ),
                         ),
                         Expanded(
@@ -132,26 +130,57 @@ class ChatItemWidget extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: <Widget>[
+                        new Icon(
+                          Icons.people,
+                          size: 14,
+                          color: Theme.of(context).primaryColor,
+                        ),
+                        Text(
+                          ' ${chat.owner ?? "-"}',
+                          textAlign: TextAlign.end,
+                          style: styling.copyWith(
+                            color: Colors.black87,
+                            fontSize: 14.0,
+                          ),
+                        )
+                      ],
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: <Widget>[
                         Column(
                           mainAxisAlignment: MainAxisAlignment.start,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
-                            Text(
-                                'Dept.: ${chat.department_name ?? ""}',
-                                textAlign: TextAlign.left,
-                                style:
-                                styling.copyWith(color: Colors.black)),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: <Widget>[
+                                new Icon(
+                                  Icons.home,
+                                  size: 14,
+                                  color: Theme.of(context).primaryColor,
+                                ),
+                                Text(
+                                  ' ${chat.department_name ?? ""}',
+                                  textAlign: TextAlign.end,
+                                  style: styling.copyWith(
+                                    color: Colors.black87,
+                                    fontSize: 14.0,
+                                  ),
+                                )
+                              ],
+                            ),
                             Align(
                               alignment: Alignment.bottomLeft,
                               child:Row(
                                 mainAxisAlignment: MainAxisAlignment.start,
                                 children: <Widget>[
-                                  Text('Server: ',
-                                      textAlign: TextAlign.left,
-                                      style: styling.copyWith(
-                                        color: Colors.black,
-                                      )),
-                                  Text('${server.servername}',
+                                  new Icon(
+                                    Icons.web,
+                                    size: 14,
+                                    color: Theme.of(context).primaryColor,
+                                  ),
+                                  Text(' ${server.servername}',
                                       textAlign: TextAlign.left,
                                       style: styling.copyWith(
                                           color: Colors.black,
@@ -199,7 +228,7 @@ class ChatItemWidget extends StatelessWidget {
   Color backColor(BuildContext context){
     if(chat.status == 2) return Colors.red[200];
     if(chat.has_unread_messages == 1)
-     return Theme.of(context).primaryColorLight;
+     return Colors.yellow.shade300;
       else return Theme.of(context).cardColor;
   }
 }
