@@ -78,6 +78,7 @@ class _MyHomePageState extends State<MyHomePage> with AfterLayoutMixin<MyHomePag
         setState((){
             token = fcmtoken;
         });
+
     });
 
     _firebaseMessaging.requestNotificationPermissions(

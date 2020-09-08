@@ -9,7 +9,7 @@ dependencies:
   path_provider: ^1.2.0
   async_loader: ^0.1.1
   intl: ^0.15.3
-  firebase_messaging: ^6.0.9
+  firebase_messaging: ^7.0.0
   flutter_local_notifications: ^1.1.5+1
   rxdart: ^0.18.1
   after_layout: ^1.0.4
