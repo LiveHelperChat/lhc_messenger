@@ -234,7 +234,7 @@ class ServerRequest {
     Map param = {};
     param["action"] = action;
     param["generate_token"] = "true";
-    param["device"] = "android";
+    param["device"] = Platform.isAndroid ? "android" : "ios";
     param["username"] = server.username;
     param["password"] = server.password;
 
