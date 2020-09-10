@@ -10,10 +10,10 @@ A messenger app for Live Helper Chat
 
 This is the source code for Messenger for Live Helper Chat. Documentation how to configure Live Helper Chat for mobile app can be found here. https://doc.livehelperchat.com/docs/mobile
 
-## Todo
+## How to compile?
 
-* Click on mobile notification should lead to specific window. Now it just opens a mobile app.
-* Loader circle sometimes stucks on chat acceptance.
+For help getting started with Flutter, view our online	
+[documentation](https://flutter.io/).
 
 ## Requirements
 
