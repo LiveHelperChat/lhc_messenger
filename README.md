@@ -17,12 +17,7 @@ This is the source code for Messenger for Live Helper Chat. Documentation how to
 
 ## Requirements
 
-* Live Helper Chat 3.40v
-
-## Getting Started
-
-For help getting started with Flutter, view our online
-[documentation](https://flutter.io/).
+* Live Helper Chat 3.42v
 
 ## Mobile app screenshots
 
