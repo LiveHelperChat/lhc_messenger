@@ -297,7 +297,7 @@ class LoginFormState extends State<LoginForm> {
     if (srv.loggedIn()) {
 
        setState(() => _isLoading = false);
-
+       
        if (await srvrRequest.isExtensionInstalled(_currentServer, "twilio")) {
           _currentServer.twilioInstalled = true;
        }
@@ -317,6 +317,7 @@ class LoginFormState extends State<LoginForm> {
         if (_currentServer.installationid.isEmpty) {
           _showSnackBar("Couldn't find this app's extension at the given url");
         }
+      
 
       } catch (e) {
         _showSnackBar("Couldn't communicate with the extension on the server.");
@@ -336,6 +337,7 @@ class LoginFormState extends State<LoginForm> {
             _currentServer.departments_ids = user['departments_ids'];
           });
         }
+        
 
        dbHelper.upsertServer(
           _currentServer, "id=?", [_currentServer.id]).then((srvv) {
@@ -354,8 +356,10 @@ class LoginFormState extends State<LoginForm> {
             ), (Route<dynamic> route) => false);
 
       });
-    } else
+    } else{
+       setState(() => _isLoading = false);
       _showSnackBar("Login was not successful");
+    }
   }
 
   void _showSnackBar(String text) {

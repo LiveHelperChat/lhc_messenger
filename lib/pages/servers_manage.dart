@@ -7,7 +7,7 @@ import 'package:livehelp/data/database.dart';
 import 'package:livehelp/model/server.dart';
 import 'package:livehelp/pages/loginForm.dart';
 import 'package:livehelp/pages/main_page.dart';
-import 'package:livehelp/utils/routes.dart';
+import 'package:livehelp/utils/routes.dart' as LHCRouter;
 import 'package:livehelp/utils/server_requests.dart';
 import 'package:livehelp/pages/token_inherited_widget.dart';
 import 'package:livehelp/widget/server_item_widget.dart';
@@ -126,8 +126,8 @@ class ServersManageState extends State<ServersManage> {
                   else {
                   Navigator.of(context).pop();
                    Navigator.of(context).pushReplacement(
-                     Router.generateRoute(new RouteSettings(
-                       name: AppRoutes.main, arguments:new RouteArguments(_fcmToken)
+                     LHCRouter.Router.generateRoute(new RouteSettings(
+                       name: LHCRouter.AppRoutes.main, arguments:new LHCRouter.RouteArguments(_fcmToken)
                      )
                      )
                     );
@@ -155,10 +155,10 @@ class ServersManageState extends State<ServersManage> {
 
     void _addServer({Server svr}) {
     //Navigator.of(context).pop();
-    Navigator.of(context).push(FadeRoute(
+    Navigator.of(context).push(LHCRouter.FadeRoute(
       builder: (BuildContext context) => new TokenInheritedWidget(
           token: _fcmToken, child:  LoginForm(isNew: true, server: svr,)),
-      settings: new RouteSettings(name: AppRoutes.login,),
+      settings: new RouteSettings(name: LHCRouter.AppRoutes.login,),
     ));
   }
 
