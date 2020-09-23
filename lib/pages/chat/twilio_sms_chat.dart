@@ -6,8 +6,9 @@ import 'package:flutter/services.dart';
 import 'package:livehelp/model/TwilioPhone.dart';
 
 import 'package:livehelp/model/server.dart';
-import 'package:livehelp/utils/server_requests.dart';
+import 'package:livehelp/services/server_requests.dart';
 import 'package:livehelp/data/database.dart';
+import 'package:livehelp/services/twilio_service.dart';
 
 const TIMEOUT = const Duration(seconds: 5);
 
@@ -39,7 +40,7 @@ class TwilioSMSChatState extends State<TwilioSMSChat> {
 
   List<TwilioPhone> twilioPhonesList = new List<TwilioPhone>();
   DatabaseHelper dbHelper;
-  ServerRequest _serverRequest = new ServerRequest();
+  TwilioService _twilioService = new TwilioService();
 
   bool _isLoading = false;
   bool _checkBoxCreateChat = true;
@@ -204,7 +205,7 @@ class TwilioSMSChatState extends State<TwilioSMSChat> {
     });
 
     try {
-      var resp = await _serverRequest.apiPost(
+      var resp = await _twilioService.apiPost(
           _currentServer, "/restapi/twilio_create_sms", params);
       setState(() => _isLoading = false);
       if (resp.statusCode == 200) {
@@ -238,7 +239,7 @@ class TwilioSMSChatState extends State<TwilioSMSChat> {
     setState(() => _isLoading = true);
     twilioPhonesList?.clear();
     //print("SERver: " + _currentServer.toMap().toString());
-    var phones = await _serverRequest.getTwilioPhones(_currentServer);
+    var phones = await _twilioService.getTwilioPhones(_currentServer);
     setState(() => _isLoading = false);
     if (phones != null && phones.length > 0) {
       phones.forEach((item) {

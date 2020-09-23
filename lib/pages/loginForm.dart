@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:async_loader/async_loader.dart';
 
 import 'package:livehelp/model/server.dart';
-import 'package:livehelp/utils/server_requests.dart';
+import 'package:livehelp/services/server_requests.dart';
 import 'package:livehelp/data/database.dart';
 import 'package:livehelp/utils/routes.dart';
 import 'package:livehelp/pages/main_page.dart';
@@ -44,13 +44,7 @@ class LoginFormState extends State<LoginForm> {
   Server _currentServer;
   List<Server> savedServersList = new List<Server>();
 
-  //ScrollController formScrollController = new ScrollController();
   DatabaseHelper dbHelper;
-//  String _username, _password, _server_url, _server_name;
-//  String get _username =>_userNameController.text;
-//  String get _password =>_userNameController.text;
-//  String get _server_url =>_urlController.text;
-//  String get _server_name =>_nameController.text;
 
   String fcmToken = "";
 
@@ -116,6 +110,7 @@ class LoginFormState extends State<LoginForm> {
                     if(value.isEmpty){
                         return 'A name is required for this server';
                        }
+                       return null;
                 }
               ),
               new TextFormField(
@@ -131,6 +126,7 @@ class LoginFormState extends State<LoginForm> {
                    if(value.isEmpty){
                      return 'Address cannot be empty';
                    }
+                   return null;
                  } ,
              /*   // TextInputFormatters are applied in sequence.
                 inputFormatters: <TextInputFormatter> [
@@ -140,14 +136,14 @@ class LoginFormState extends State<LoginForm> {
                 ],  */
               ),
               new Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
+                  mainAxisAlignment: MainAxisAlignment.start,
                   children: <Widget>[
-                    new Text('Append index.php to address'),
-                    new Checkbox(
+                     Checkbox(
                         value: _checkBoxUrlHasIndex,
                         onChanged: (bool value) {
-                          onCheckBoxChanged(value);
+                          onCheckBoxUrlHasIndexChanged(value);
                         }),
+                     Text('Append index.php to address'),
                   ]),
               new TextFormField(
                 controller: _userNameController,
@@ -160,6 +156,7 @@ class LoginFormState extends State<LoginForm> {
                   if(value.isEmpty){
                     return 'Username cannot be empty';
                   }
+                  return null;
                 },
                 //   onSaved: (val) => _username = val,
               ),
@@ -175,9 +172,11 @@ class LoginFormState extends State<LoginForm> {
                       if(value.isEmpty){
                         return 'Password cannot be empty';
                          }
+                         return null;
                     },
                 //          onSaved: (val) => _password = val,
               ),
+              
               _isLoading ? new CircularProgressIndicator() : loginBtn,
               new Container(
                 padding: const EdgeInsets.only(top: 8.0),
@@ -288,13 +287,13 @@ class LoginFormState extends State<LoginForm> {
     if(_isNewServer) _currentServer.id = null;
     _currentServer.servername = _nameController.text;
     _currentServer.url = _urlController.text;
-    _currentServer.urlhasindex = _checkBoxUrlHasIndex;
+    _currentServer.appendIndexToUrl = _checkBoxUrlHasIndex;
     _currentServer.username = _userNameController.text;
     _currentServer.password = _passwordController.text;
 
     Server srv = await srvrRequest.login(_currentServer);
 
-    if (srv.loggedIn()) {
+    if (srv.loggedIn) {
 
        setState(() => _isLoading = false);
        
@@ -342,13 +341,9 @@ class LoginFormState extends State<LoginForm> {
        dbHelper.upsertServer(
           _currentServer, "id=?", [_currentServer.id]).then((srvv) {
               setState(() => _isNewServer = false);
-           //   Navigator.of(context).pop();
               Navigator.of(context).pushAndRemoveUntil(new FadeRoute(
               builder: (BuildContext context) => new TokenInheritedWidget(
                     token: fcmToken,
-                    //TODO
-                    //Should rather go to server details page
-                    // so that user can set the online hours
                     child: new MainPage(),
                   ),
               settings:
@@ -367,7 +362,7 @@ class LoginFormState extends State<LoginForm> {
         .showSnackBar(new SnackBar(content: new Text(text)));
   }
 
-  void onCheckBoxChanged(bool value) {
+  void onCheckBoxUrlHasIndexChanged(bool value) {
     setState(() {
       _checkBoxUrlHasIndex = value;
     });

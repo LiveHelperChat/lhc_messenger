@@ -6,7 +6,7 @@ import 'package:livehelp/model/chat.dart';
 import 'package:livehelp/widget/chat_item_widget.dart';
 import 'package:livehelp/pages/chat/chat_page.dart';
 import 'package:livehelp/utils/routes.dart';
-import 'package:livehelp/utils/server_requests.dart';
+import 'package:livehelp/services/server_requests.dart';
 
 import 'package:livehelp/utils/enum_menu_options.dart';
 

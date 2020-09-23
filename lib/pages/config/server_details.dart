@@ -7,7 +7,7 @@ import 'package:livehelp/data/database.dart';
 import 'package:livehelp/model/server.dart';
 import 'package:livehelp/model/department.dart';
 import 'package:livehelp/utils/routes.dart';
-import 'package:livehelp/utils/server_requests.dart';
+import 'package:livehelp/services/server_requests.dart';
 import 'package:livehelp/utils/widget_utils.dart';
 import 'package:livehelp/widget/office_time_picker.dart';
 import 'package:livehelp/pages/token_inherited_widget.dart';

@@ -8,11 +8,14 @@ import 'package:after_layout/after_layout.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 
 import 'package:livehelp/data/database.dart';
+import 'package:livehelp/bloc/chat_list_bloc.dart';
 import 'package:livehelp/model/chat.dart';
 import 'package:livehelp/model/server.dart';
 import 'package:livehelp/pages/chat/twilio_sms_chat.dart';
+import 'package:livehelp/services/chat_list_service.dart';
+import 'package:livehelp/services/twilio_service.dart';
 import 'package:livehelp/utils/routes.dart';
-import 'package:livehelp/utils/server_requests.dart';
+import 'package:livehelp/services/server_requests.dart';
 import 'package:livehelp/pages/loginForm.dart';
 import 'package:livehelp/pages/token_inherited_widget.dart';
 import 'package:livehelp/pages/servers_manage.dart';
@@ -40,9 +43,13 @@ class _MainPageState extends State<MainPage>
 
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
 
+  ChatsListBloc _chatsListBloc;
+
   final int extensionVersion = 12; //(0.1.2)
 
   ServerRequest _serverRequest = new ServerRequest();
+  TwilioService _twilioService = new TwilioService();
+  ChatListService _chatListService = new ChatListService();
   DatabaseHelper dbHelper;
 
   List<Server> listServers = new List<Server>();
@@ -76,18 +83,34 @@ class _MainPageState extends State<MainPage>
     dbHelper = new DatabaseHelper();
     _user_online = false;
     Future.delayed(const Duration(milliseconds: 300), () async {
-      _initLists();
+      // _initLists();
     });
     _timer = myTimer(15);
+
+    _chatsListBloc = new ChatsListBloc(_chatListService, _twilioService);
+    _initLists();
   }
 
   void _initLists() async {
-    await _getSavedServers();
-    if (listServers.length > 0) {
-      await _getChatList();
-    } else {
-      _loadManageServerPage();
-    }
+    _chatsListBloc.serversList.forEach((server) {
+      listServers.add(server);
+    });
+
+    _chatsListBloc.activeChatList$.listen((chats) {
+      if (chats != null && chats.length > 0) {
+        _activeChatList.addAll(chats);
+      } else {
+        _activeChatList.clear();
+      }
+    });
+
+    _chatsListBloc.pendingChatList$.listen((chats) {
+      /*  if (chats.length > 0) {
+        _pendingChatList.addAll(chats);
+      } else {
+        _pendingChatList.clear();
+      } */
+    });
   }
 
   @override
@@ -96,7 +119,7 @@ class _MainPageState extends State<MainPage>
 
     WidgetsBinding.instance.removeObserver(this);
     _serverRequest.dispose();
-
+    _chatsListBloc.dispose();
     super.dispose();
   }
 
@@ -113,11 +136,12 @@ class _MainPageState extends State<MainPage>
     switch (_lastLifecyleState) {
       case AppLifecycleState.resumed:
         _initLists();
-        _timer = myTimer(15);
+        _chatsListBloc.resume();
         break;
       case AppLifecycleState.paused:
       case AppLifecycleState.inactive:
         if (_timer.isActive) _timer.cancel();
+        _chatsListBloc.pause();
         break;
       default:
         break;
@@ -150,49 +174,48 @@ class _MainPageState extends State<MainPage>
       ),
       Tab(
           child: new ChatNumberIndcator(
-            title: "Transfer",
-            offstage: _transferedChatList.length == 0,
-            number: _transferedChatList.length.toString(),
-          ))
+        title: "Transfer",
+        offstage: _transferedChatList.length == 0,
+        number: _transferedChatList.length.toString(),
+      ))
     ];
 
     var bodyWidgets = <Widget>[
       ActiveListWidget(
-        listOfServers: listServers,
         listToAdd: _activeChatList,
+        listOfServers: _chatsListBloc.serversList,
         loadingState: onActionLoading,
         refreshList: _initLists,
       ),
       PendingListWidget(
-        listOfServers: listServers,
+        listOfServers: _chatsListBloc.serversList,
         listToAdd: _pendingChatList,
         loadingState: onActionLoading,
         refreshList: _initLists,
       ),
       TransferredListWidget(
-        listOfServers: listServers,
+        listOfServers: _chatsListBloc.serversList,
         listToAdd: _transferedChatList,
         loadingState: onActionLoading,
       ),
     ];
 
-    if (_selectedServer != null && _selectedServer.twilioInstalled == true) {
+//TODO
+/*   if (_selectedServer != null && _selectedServer.twilioInstalled == true) {
       tabs.add(Tab(
           child: new ChatNumberIndcator(
-            title: "SMS",
-            offstage: _twilioChatList?.length == 0,
-            number: _twilioChatList?.length.toString(),
-          )));
-      bodyWidgets.add(
-          ActiveListWidget(
-            listOfServers: listServers,
-            listToAdd: _twilioChatList,
-            loadingState: onActionLoading,
-            refreshList: _initLists,
-          )
-      );
+        title: "SMS",
+        offstage: _twilioChatList?.length == 0,
+        number: _twilioChatList?.length.toString(),
+      )));
+      bodyWidgets.add(ActiveListWidget(
+        listOfServers: listServers,
+        chatListStream: _chatsListBloc.twilioChatList$,
+        loadingState: onActionLoading,
+        refreshList: _initLists,
+      ));
     }
-
+*/
     var mainScaffold = DefaultTabController(
       length: tabs.length,
       child: Scaffold(
@@ -201,7 +224,7 @@ class _MainPageState extends State<MainPage>
             title: Text("Chat Lists"),
             bottom: TabBar(tabs: tabs),
           ),
-          drawer: new Drawer(
+          drawer: Drawer(
               child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -386,7 +409,7 @@ class _MainPageState extends State<MainPage>
               ],
             ),
           )),
-          body: new Stack(children: <Widget>[
+          body: Stack(children: <Widget>[
             new TabBarView(children: bodyWidgets),
             Center(child: loadingIndicator),
           ]),
@@ -414,7 +437,7 @@ class _MainPageState extends State<MainPage>
           )),
     );
 
-    var _asyncLoader = new AsyncLoader(
+    /* var _asyncLoader = new AsyncLoader(
       key: _mainAsyncLoaderState,
       initState: () async {
         //TODO added return (might not be needed)
@@ -429,28 +452,70 @@ class _MainPageState extends State<MainPage>
       renderSuccess: ({data}) {
         return mainScaffold;
       },
-    );
+    ); */
 
-    return _asyncLoader;
+    var streamBuilder = StreamBuilder(
+        stream: _chatsListBloc.serversList$,
+        builder: (BuildContext context, AsyncSnapshot<List<Server>> snapshot) {
+          if (!snapshot.hasData)
+            return Container(
+              decoration: BoxDecoration(color: Colors.white),
+              child: Center(
+                child: CircularProgressIndicator(),
+              ),
+            );
+
+          if (snapshot.hasError)
+            return Center(child: Text('Error: ${snapshot.error}'));
+
+          switch (snapshot.connectionState) {
+            case ConnectionState.none:
+            case ConnectionState.waiting:
+              break;
+            case ConnectionState.active:
+            case ConnectionState.done:
+              int count = snapshot.data.length;
+              if (count > 0)
+                return mainScaffold;
+              else {
+                // _loadManageServerPage();
+              }
+          }
+          return Container(
+            color: Colors.white,
+            decoration: BoxDecoration(color: Colors.white),
+          );
+        });
+
+    return streamBuilder;
+  }
+
+  void _addList(List<Chat> chatList, List<Chat> toAdd) {
+    //Remove deleted chats
+    chatList.removeWhere((chat) {
+      return !(toAdd.any((toChat) =>
+          (chat.id == toChat.id && chat.serverid == toChat.serverid)));
+    });
   }
 
   Timer myTimer(int seconds) {
     //fetch list first
 
-    return new Timer.periodic(new Duration(seconds: seconds),
-        (Timer timer) => _getChatList(istimer: true));
+    return new Timer.periodic(
+        new Duration(seconds: seconds), (Timer timer) {}); //_getChatList()
   }
 
   void onActionLoading(bool val) {
-    if (mounted) {
+    /*  if (mounted) {
       setState(() {
         _actionLoading = val;
       });
     }
+    */
   }
 
   bool _isServerLoggedIn() {
-    return _selectedServer?.loggedIn() ?? false ? true : false;
+    return _selectedServer?.loggedIn ?? false ? true : false;
   }
 
   // TODO Remove
@@ -465,10 +530,11 @@ class _MainPageState extends State<MainPage>
     }
   }
 
-  Future<Null> _getChatList({istimer = false}) async {
+/*
+  Future<Null> _getChatList(List<Server> listOfServers) async {
     if (!_actionLoading && initialized) {
       // No logged in server
-      if (listServers.length > 0) {
+      if (listOfServers.length > 0) {
         if (!istimer) onActionLoading(true);
         // TODO remove this line
         // await _getSavedServers();
@@ -478,7 +544,7 @@ class _MainPageState extends State<MainPage>
         List<Chat> twilioLists = [];
 
         await Future.forEach(listServers, (Server server) async {
-          if (server.loggedIn()) {
+          if (server.loggedIn) {
             var srvr = await _serverRequest.getChatLists(server);
             if (srvr.activeChatList != null && srvr.activeChatList.length > 0) {
               activeLists.addAll(srvr.activeChatList);
@@ -539,7 +605,7 @@ class _MainPageState extends State<MainPage>
                 isTwilioActive = true;
               });
 
-              var svr2 = await _serverRequest.getTwilioChats(server);
+              var svr2 = await _twilioService.getTwilioChats(server);
 
               if (svr2.twilioChatList != null &&
                   svr2.twilioChatList.length > 0) {
@@ -559,7 +625,6 @@ class _MainPageState extends State<MainPage>
                 }
               }
             }
-
           } else {
             if (mounted) {
               setState(() {
@@ -600,7 +665,7 @@ class _MainPageState extends State<MainPage>
       onActionLoading(false);
     }
   }
-
+*/
   Future<bool> _checkTwilio(Server server) async {
     return await _serverRequest.isExtensionInstalled(server, "twilio");
   }
@@ -742,7 +807,9 @@ class _MainPageState extends State<MainPage>
   }
 
   Future<Null> _getTwilioStatus() async {
-    _serverRequest.isExtensionInstalled(_selectedServer,"twilio").then((isInstalled) {
+    _serverRequest
+        .isExtensionInstalled(_selectedServer, "twilio")
+        .then((isInstalled) {
       setState(() {
         _selectedServer.twilioInstalled = isInstalled;
       });
@@ -877,14 +944,13 @@ class _MainPageState extends State<MainPage>
   }
 
   SpeedDial _speedDial() {
-
     var children = [
-    SpeedDialChild(
-        child: Icon(Icons.refresh),
-        backgroundColor: Theme.of(context).primaryColor,
-        label: 'Reload list',
-        labelStyle: TextStyle(fontSize: 18.0),
-        onTap: () => _initLists())
+      SpeedDialChild(
+          child: Icon(Icons.refresh),
+          backgroundColor: Theme.of(context).primaryColor,
+          label: 'Reload list',
+          labelStyle: TextStyle(fontSize: 18.0),
+          onTap: () => _initLists())
     ];
 
     if (_selectedServer != null && _selectedServer.twilioInstalled == true) {
@@ -896,42 +962,41 @@ class _MainPageState extends State<MainPage>
         onTap: () async {
           onActionLoading(true);
           Navigator.of(context).push(FadeRoute(
-              builder: (BuildContext context) => TwilioSMSChat(
-                server: _selectedServer,
-                refreshList: _initLists,
-              ),
-              settings: new RouteSettings(
-                name: AppRoutes.twilio,
-              ),
+            builder: (BuildContext context) => TwilioSMSChat(
+              server: _selectedServer,
+              refreshList: _initLists,
+            ),
+            settings: new RouteSettings(
+              name: AppRoutes.twilio,
+            ),
           ));
         },
       ));
     }
 
     return SpeedDial(
-      // both default to 16
-      marginRight: 18,
-      marginBottom: 20,
-      animatedIcon: AnimatedIcons.menu_close,
-      animatedIconTheme: IconThemeData(size: 22.0),
-      // this is ignored if animatedIcon is non null
-      // child: Icon(Icons.add),
-      visible: true,
-      // If true user is forced to close dial manually
-      // by tapping main button and overlay is not rendered.
-      closeManually: false,
-      curve: Curves.bounceIn,
-      overlayColor: Colors.black,
-      overlayOpacity: 0.5,
-      onOpen: () {},
-      onClose: () {},
-      tooltip: 'Actions',
-      heroTag: 'speed-dial-hero-tag',
-      backgroundColor: Theme.of(context).primaryColor,
-      foregroundColor: Colors.white,
-      elevation: 8.0,
-      shape: CircleBorder(),
-      children: children
-    );
+        // both default to 16
+        marginRight: 18,
+        marginBottom: 20,
+        animatedIcon: AnimatedIcons.menu_close,
+        animatedIconTheme: IconThemeData(size: 22.0),
+        // this is ignored if animatedIcon is non null
+        // child: Icon(Icons.add),
+        visible: true,
+        // If true user is forced to close dial manually
+        // by tapping main button and overlay is not rendered.
+        closeManually: false,
+        curve: Curves.bounceIn,
+        overlayColor: Colors.black,
+        overlayOpacity: 0.5,
+        onOpen: () {},
+        onClose: () {},
+        tooltip: 'Actions',
+        heroTag: 'speed-dial-hero-tag',
+        backgroundColor: Theme.of(context).primaryColor,
+        foregroundColor: Colors.white,
+        elevation: 8.0,
+        shape: CircleBorder(),
+        children: children);
   }
 }

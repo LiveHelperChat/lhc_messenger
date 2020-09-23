@@ -8,7 +8,7 @@ import 'package:livehelp/model/server.dart';
 import 'package:livehelp/pages/loginForm.dart';
 import 'package:livehelp/pages/main_page.dart';
 import 'package:livehelp/utils/routes.dart' as LHCRouter;
-import 'package:livehelp/utils/server_requests.dart';
+import 'package:livehelp/services/server_requests.dart';
 import 'package:livehelp/pages/token_inherited_widget.dart';
 import 'package:livehelp/widget/server_item_widget.dart';
 import 'package:livehelp/utils/enum_menu_options.dart';
@@ -119,7 +119,7 @@ class ServersManageState extends State<ServersManage> {
           }
           ),
         onTap:(){
-              if(server.loggedIn()){
+              if(server.loggedIn){
                 if(widget.manage){
                   Navigator.of(context).pop();
                 }
@@ -206,6 +206,7 @@ class ServersManageState extends State<ServersManage> {
     setState(() {
      listServers.clear(); 
     });
+    
     List<Map> savedRecs = await dbHelper.fetchAll(Server.tableName, "${Server.columns['db_id']}  ASC",null,null);
         
     if (savedRecs != null && savedRecs.length > 0) {

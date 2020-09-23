@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 
-import 'package:livehelp/utils/server_requests.dart';
+import 'package:livehelp/services/chat_messages_service.dart';
 
 import 'package:livehelp/model/server.dart';
 import 'package:livehelp/model/chat.dart';
@@ -33,14 +33,14 @@ class ActiveListWidget extends StatefulWidget {
 }
 
 class _ActiveListWidgetState extends State<ActiveListWidget> {
-  ServerRequest _serverRequest;
+  ChatMessagesService _serverRequest;
   List<Chat> _listToAdd;
 
   @override
   void initState() {
     super.initState();
 
-    _serverRequest = new ServerRequest();
+    _serverRequest = new ChatMessagesService();
     _listToAdd = widget.listToAdd;
   }
 
@@ -232,7 +232,6 @@ class _ActiveListWidgetState extends State<ActiveListWidget> {
                 onTap: () {
                   Navigator.of(context).pop();
                   widget.loadingState(true);
-                  // TODO transfer here
                   _transferToUser(srvr, chat, int.parse(operator['id']));
                 },
               );
