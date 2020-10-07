@@ -1,9 +1,8 @@
-import 'package:equatable/equatable.dart';
-
-import 'package:livehelp/model/chat.dart';
+import 'package:livehelp/model/model.dart';
 import 'package:livehelp/utils/widget_utils.dart';
 
-class Server extends Equatable {
+// ignore_for_file: non_constant_identifier_names
+class Server {
   //Tablename
   static final String tableName = "server";
   static final int LOGGED_OUT = 0;
@@ -30,7 +29,7 @@ class Server extends Equatable {
     'db_all_departments': "all_departments",
     'db_departments_ids': "departments_ids",
     "db_user_online": "user_online",
-    'db_fcmtoken': "fcm_token"
+    'db_twilio_installed': "twilio_installed"
   };
   bool get appendIndexToUrl => _urlhasindex != 0;
   set appendIndexToUrl(bool value) =>
@@ -58,7 +57,6 @@ class Server extends Equatable {
       job_title,
       operatoremail,
       departments_ids;
-  //  fcm_token;
 
   List<Chat> pendingChatList;
   List<Chat> activeChatList;
@@ -84,8 +82,14 @@ class Server extends Equatable {
       this.departments_ids,
       this.operatoremail,
       this.user_online,
-      urlHasIndex})
-      : _urlhasindex = urlHasIndex;
+      this.twilioInstalled,
+      int urlHasIndex}) {
+    _urlhasindex = urlHasIndex;
+    pendingChatList = List<Chat>();
+    activeChatList = List<Chat>();
+    transferChatList = List<Chat>();
+    twilioChatList = List<Chat>();
+  }
 
   String getUrl() => appendIndexToUrl ? url + "/index.php" : url;
 
@@ -131,37 +135,20 @@ class Server extends Equatable {
       columns['db_all_departments']: all_departments,
       columns['db_departments_ids']: departments_ids,
       columns['db_user_online']: user_online,
-      columns['db_urlhasindex']: appendIndexToUrl
+      columns['db_urlhasindex']: appendIndexToUrl,
+      'twilio_installed': twilioInstalled
     };
   }
-
-  @override
-  List<Object> get props => [
-        id,
-        userid,
-        isloggedin,
-        rememberme,
-        soundnotify,
-        vibrate,
-        installationid,
-        servername,
-        url,
-        username,
-        password,
-        firstname,
-        surname,
-        job_title,
-        all_departments,
-        departments_ids,
-        operatoremail,
-        user_online
-      ];
 
   void addChatsToList(List<dynamic> newChatList, String list) {
     switch (list) {
       case "active":
         this.activeChatList ??= new List<Chat>();
         this.activeChatList = _cleanUpLists(this.activeChatList, newChatList);
+        //Sort list by last message time
+        this
+            .activeChatList
+            .sort((a, b) => b.last_msg_time.compareTo(a.last_msg_time));
         break;
       case "pending":
         this.pendingChatList ??= new List<Chat>();
@@ -246,5 +233,30 @@ class Server extends Equatable {
         this.transferChatList.removeWhere((chat) => chat.id == id);
         break;
     }
+  }
+
+  List<Chat> removeMissingFromList(
+      List<Chat> toBeCleaned, List<Chat> incomingList) {
+    //List<Chat> toBeCleaned = chatToClean;
+    List<int> removedIndices = new List();
+
+    toBeCleaned.forEach((chat) {
+      if (this.id == chat.serverid) {
+        if (!incomingList.any((map) => map.id != chat.id)) {
+          int index = toBeCleaned.indexOf(chat);
+          print("Index ${index.toString()}");
+          removedIndices.add(index);
+        }
+      }
+    });
+
+    //remove the chats
+    if (removedIndices.length > 0) {
+      removedIndices.sort();
+      removedIndices.reversed.toList().forEach(toBeCleaned.removeAt);
+      removedIndices.clear();
+    }
+
+    return toBeCleaned;
   }
 }

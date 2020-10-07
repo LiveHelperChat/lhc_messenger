@@ -1,12 +1,15 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:livehelp/bloc/bloc.dart';
 
-import 'package:livehelp/model/server.dart';
-import 'package:livehelp/model/chat.dart';
+import 'package:livehelp/model/model.dart';
+import 'package:livehelp/services/server_repository.dart';
 import 'package:livehelp/widget/chat_item_widget.dart';
 import 'package:livehelp/pages/chat/chat_page.dart';
 import 'package:livehelp/utils/routes.dart';
-import 'package:livehelp/services/server_requests.dart';
+import 'package:livehelp/services/server_api_client.dart';
 
 import 'package:livehelp/utils/enum_menu_options.dart';
 
@@ -14,15 +17,13 @@ class PendingListWidget extends StatefulWidget {
   PendingListWidget(
       {Key key,
       this.listOfServers,
-      this.listToAdd,
-      this.loadingState,
+      @required this.callBackDeleteChat,
       this.refreshList})
       : super(key: key);
 
-  final List<Chat> listToAdd;
   final List<Server> listOfServers;
+  final Function(Server, Chat) callBackDeleteChat;
 
-  final ValueChanged<bool> loadingState;
   final VoidCallback refreshList;
 
   @override
@@ -30,25 +31,69 @@ class PendingListWidget extends StatefulWidget {
 }
 
 class _PendingListWidgetState extends State<PendingListWidget> {
-  ServerRequest _serverRequest;
+  ServerRepository _serverRepository;
 
   List<Chat> _listToAdd;
 
   @override
   void initState() {
     super.initState();
-    _serverRequest = new ServerRequest();
-    _listToAdd = widget.listToAdd;
+    _serverRepository = context.repository<ServerRepository>();
   }
 
   @override
   Widget build(BuildContext context) {
-    return new Scaffold(
-        body: new RefreshIndicator(
-      onRefresh: _onRefresh,
-      child: new ListView.builder(
-          itemCount: _listToAdd.length, itemBuilder: _itemBuilder),
-    ));
+    return BlocBuilder<ChatslistBloc, ChatListState>(builder: (context, state) {
+      if (state is ChatslistInitial) {
+        return Center(child: CircularProgressIndicator());
+      }
+
+      if (state is ChatListLoaded) {
+        return ListView.builder(
+            itemCount: state.pendingChatList.length,
+            itemBuilder: (BuildContext context, int index) {
+              Chat chat = state.pendingChatList.reversed.toList()[index];
+              Server server = widget.listOfServers.firstWhere(
+                  (srvr) => srvr.id == chat.serverid,
+                  orElse: () => null);
+
+              return GestureDetector(
+                child: ChatItemWidget(
+                  server: server,
+                  chat: chat,
+                  menuBuilder: _itemMenuBuilder(),
+                  onMenuSelected: (selectedOption) {
+                    onItemSelected(context, server, chat, selectedOption);
+                  },
+                ),
+                onTap: () {
+                  var route = FadeRoute(
+                    settings: RouteSettings(name: AppRoutes.chatPage),
+                    builder: (BuildContext context) =>
+                        BlocProvider<ChatMessagesBloc>(
+                            create: (context) => ChatMessagesBloc(
+                                serverRepository: _serverRepository),
+                            child: ChatPage(
+                              server: server,
+                              chat: chat,
+                              isNewChat: true,
+                              refreshList: widget.refreshList,
+                            )),
+                  );
+                  Navigator.of(context).push(route);
+                },
+              );
+            });
+      }
+      if (state is ChatListLoadError) {
+        return Text("An error occurred: ${state.message}");
+      }
+      return ListView.builder(
+          itemCount: 1,
+          itemBuilder: (BuildContext context, int index) {
+            return Text("No list available");
+          });
+    });
   }
 
   List<PopupMenuEntry<ChatItemMenuOption>> _itemMenuBuilder() {
@@ -64,81 +109,32 @@ class _PendingListWidgetState extends State<PendingListWidget> {
     ];
   }
 
-  Widget _itemBuilder(BuildContext context, int index) {
-    List<Chat> reversedList = _listToAdd.reversed.toList();
-
-    Chat chat = reversedList[index];
-    Server server = widget.listOfServers
-        .firstWhere((srvr) => srvr.id == chat.serverid, orElse: () => null);
-    return server == null
-        ? Text("Server not found")
-        : GestureDetector(
-            child: ChatItemWidget(
-              server: server,
-              chat: chat,
-              menuBuilder: _itemMenuBuilder(),
-              onMenuSelected: (selectedOption) {
-                onItemSelected(server, chat, selectedOption);
-              },
-            ),
-            onTap: () {
-              var route = FadeRoute(
-                settings: RouteSettings(name: AppRoutes.chatPage),
-                builder: (BuildContext context) => new ChatPage(
-                  server: server,
-                  chat: chat,
-                  isNewChat: true,
-                  refreshList: widget.refreshList,
-                ),
-              );
-              Navigator.of(context).push(route);
-            },
-          );
-  }
-
-  void onItemSelected(Server srvr, Chat chat, ChatItemMenuOption selectedMenu) {
+  void onItemSelected(BuildContext ctxt, Server srvr, Chat chat,
+      ChatItemMenuOption selectedMenu) {
     switch (selectedMenu) {
       case ChatItemMenuOption.PREVIEW:
         var route = new FadeRoute(
           settings: new RouteSettings(name: AppRoutes.chatPage),
-          builder: (BuildContext context) => new ChatPage(
+          builder: (ctxt) => ChatPage(
             server: srvr,
             chat: chat,
             isNewChat: true,
             refreshList: widget.refreshList,
           ),
         );
-        Navigator.of(context).push(route);
+        Navigator.of(ctxt).push(route);
         break;
       case ChatItemMenuOption.REJECT:
-        widget.loadingState(true);
-        _deleteChat(srvr, chat);
+        widget.callBackDeleteChat(srvr, chat);
         break;
       default:
         break;
     }
-    // print(selectedMenu.value.toString());
-  }
-
-  void _deleteChat(Server srv, Chat chat) async {
-    await _serverRequest.deleteChat(srv, chat, list : 'pending').then((deleted) {
-      widget.loadingState(!deleted);
-//TODO
-      if (deleted) _updateList(chat);
-    });
   }
 
   void _updateList(chat) {
     setState(() {
       _listToAdd.removeWhere((cht) => chat.id == cht.id);
     });
-  }
-
-  Future<Null> _onRefresh() {
-    Completer<Null> completer = new Completer<Null>();
-    Timer timer = new Timer(new Duration(seconds: 3), () {
-      completer.complete();
-    });
-    return completer.future;
   }
 }

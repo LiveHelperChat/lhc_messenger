@@ -2,30 +2,27 @@ import 'dart:async';
 import 'dart:core';
 
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
-import 'package:async_loader/async_loader.dart';
 import 'package:after_layout/after_layout.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+import 'package:livehelp/bloc/bloc.dart';
 
 import 'package:livehelp/data/database.dart';
-import 'package:livehelp/bloc/chat_list_bloc.dart';
-import 'package:livehelp/model/chat.dart';
-import 'package:livehelp/model/server.dart';
-import 'package:livehelp/pages/chat/twilio_sms_chat.dart';
-import 'package:livehelp/services/chat_list_service.dart';
+import 'package:livehelp/model/model.dart';
+import 'package:livehelp/pages/pages.dart';
+import 'package:livehelp/pages/token_inherited_widget.dart';
 import 'package:livehelp/services/twilio_service.dart';
 import 'package:livehelp/utils/routes.dart';
-import 'package:livehelp/services/server_requests.dart';
-import 'package:livehelp/pages/loginForm.dart';
-import 'package:livehelp/pages/token_inherited_widget.dart';
-import 'package:livehelp/pages/servers_manage.dart';
-import 'package:livehelp/pages/lists/chat_list_active.dart';
-import 'package:livehelp/pages/lists/chat_list_pending.dart';
-import 'package:livehelp/pages/lists/chat_list_transferred.dart';
-import 'package:livehelp/pages/config/server_details.dart';
+import 'package:livehelp/services/server_api_client.dart';
 import 'package:livehelp/widget/chat_number_indicator.dart';
 
+import 'lists/chat_list_active.dart';
+
 class MainPage extends StatefulWidget {
+  const MainPage();
+
   @override
   _MainPageState createState() => new _MainPageState();
 }
@@ -38,19 +35,11 @@ class _MainPageState extends State<MainPage>
   // used to track application lifecycle
   AppLifecycleState _lastLifecyleState;
 
-  final GlobalKey<AsyncLoaderState> _mainAsyncLoaderState =
-      new GlobalKey<AsyncLoaderState>();
-
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
-
-  ChatsListBloc _chatsListBloc;
 
   final int extensionVersion = 12; //(0.1.2)
 
-  ServerRequest _serverRequest = new ServerRequest();
-  TwilioService _twilioService = new TwilioService();
-  ChatListService _chatListService = new ChatListService();
-  DatabaseHelper dbHelper;
+  TwilioService _twilioService = new TwilioService(httpClient: http.Client());
 
   List<Server> listServers = new List<Server>();
   List<Chat> _activeChatList = new List<Chat>();
@@ -64,7 +53,7 @@ class _MainPageState extends State<MainPage>
 
   bool _actionLoading = false;
 
-  Timer _timer;
+  Timer _timerChatList;
   String _fcmToken;
   Server _selectedServer;
   bool _user_online;
@@ -73,53 +62,30 @@ class _MainPageState extends State<MainPage>
   bool _showUpdateNotice = false;
   bool initialized = false;
   bool isTwilioActive = false;
+  DatabaseHelper dbHelper = DatabaseHelper();
+  ServerApiClient _serverRequest;
+
+  ChatslistBloc _chatListBloc;
 
   @override
   void initState() {
     super.initState();
+    _serverRequest = ServerApiClient(httpClient: http.Client());
 
     WidgetsBinding.instance.addObserver(this);
 
-    dbHelper = new DatabaseHelper();
     _user_online = false;
-    Future.delayed(const Duration(milliseconds: 300), () async {
-      // _initLists();
-    });
-    _timer = myTimer(15);
 
-    _chatsListBloc = new ChatsListBloc(_chatListService, _twilioService);
-    _initLists();
-  }
+    _chatListBloc = context.bloc<ChatslistBloc>();
 
-  void _initLists() async {
-    _chatsListBloc.serversList.forEach((server) {
-      listServers.add(server);
-    });
-
-    _chatsListBloc.activeChatList$.listen((chats) {
-      if (chats != null && chats.length > 0) {
-        _activeChatList.addAll(chats);
-      } else {
-        _activeChatList.clear();
-      }
-    });
-
-    _chatsListBloc.pendingChatList$.listen((chats) {
-      /*  if (chats.length > 0) {
-        _pendingChatList.addAll(chats);
-      } else {
-        _pendingChatList.clear();
-      } */
-    });
+    _timerChatList = myTimer(5);
   }
 
   @override
   void dispose() {
-    _timer.cancel();
+    _timerChatList.cancel();
 
     WidgetsBinding.instance.removeObserver(this);
-    _serverRequest.dispose();
-    _chatsListBloc.dispose();
     super.dispose();
   }
 
@@ -135,13 +101,13 @@ class _MainPageState extends State<MainPage>
   void _checkState() {
     switch (_lastLifecyleState) {
       case AppLifecycleState.resumed:
-        _initLists();
-        _chatsListBloc.resume();
+        if (!_timerChatList.isActive) {
+          _timerChatList = myTimer(5);
+        }
         break;
       case AppLifecycleState.paused:
       case AppLifecycleState.inactive:
-        if (_timer.isActive) _timer.cancel();
-        _chatsListBloc.pause();
+        if (_timerChatList.isActive) _timerChatList.cancel();
         break;
       default:
         break;
@@ -151,52 +117,90 @@ class _MainPageState extends State<MainPage>
   //final String token;
   @override
   Widget build(BuildContext context) {
-    final tokenInherited = TokenInheritedWidget.of(context);
-    _fcmToken = tokenInherited.token;
+    // context.bloc<ServerBloc>().add(GetServerListFromDB());
+    if (_timerChatList == null) {
+      _timerChatList = new Timer.periodic(
+          new Duration(seconds: 10), (Timer timer) => _loadChatList()); //
+    }
 
     Widget loadingIndicator =
         _actionLoading ? new CircularProgressIndicator() : new Container();
 
     var tabs = <Tab>[
       Tab(
-        child: new ChatNumberIndcator(
-          title: "Active",
-          offstage: _activeChatList.length == 0,
-          number: _activeChatList.length.toString(),
-        ),
+        child: BlocBuilder<ChatslistBloc, ChatListState>(
+            builder: (context, state) {
+          if (state is ChatListLoaded) {
+            return ChatNumberIndcator(
+              title: "Active",
+              offstage: state.activeChatList.length == 0,
+              number: state.activeChatList.length.toString(),
+            );
+          }
+          return ChatNumberIndcator(
+            title: "Active",
+            offstage: true,
+            number: "0",
+          );
+        }),
       ),
       Tab(
-        child: ChatNumberIndcator(
-          title: "New",
-          offstage: _pendingChatList.length == 0,
-          number: _pendingChatList.length.toString(),
-        ),
+        child: BlocBuilder<ChatslistBloc, ChatListState>(
+            builder: (context, state) {
+          if (state is ChatListLoaded) {
+            return ChatNumberIndcator(
+              title: "Pending",
+              offstage: state.pendingChatList.length == 0,
+              number: state.pendingChatList.length.toString(),
+            );
+          }
+          return ChatNumberIndcator(
+            title: "Pending",
+            offstage: true,
+            number: "0",
+          );
+        }),
       ),
       Tab(
-          child: new ChatNumberIndcator(
-        title: "Transfer",
-        offstage: _transferedChatList.length == 0,
-        number: _transferedChatList.length.toString(),
-      ))
+        child: BlocBuilder<ChatslistBloc, ChatListState>(
+            builder: (context, state) {
+          if (state is ChatListLoaded) {
+            return ChatNumberIndcator(
+              title: "Transfer",
+              offstage: state.transferChatList.length == 0,
+              number: state.transferChatList.length.toString(),
+            );
+          }
+          return ChatNumberIndcator(
+            title: "Transfer",
+            offstage: true,
+            number: "0",
+          );
+        }),
+      )
     ];
 
     var bodyWidgets = <Widget>[
       ActiveListWidget(
-        listToAdd: _activeChatList,
-        listOfServers: _chatsListBloc.serversList,
-        loadingState: onActionLoading,
-        refreshList: _initLists,
+        listOfServers: listServers,
+        refreshList: _loadChatList,
+        callbackCloseChat: (server, chat) {
+          _chatListBloc.add(CloseChatMainPage(server: server, chat: chat));
+        },
+        callBackDeleteChat: (server, chat) {
+          _chatListBloc.add(DeleteChatMainPage(server: server, chat: chat));
+        },
       ),
       PendingListWidget(
-        listOfServers: _chatsListBloc.serversList,
-        listToAdd: _pendingChatList,
-        loadingState: onActionLoading,
-        refreshList: _initLists,
+        listOfServers: listServers,
+        refreshList: _loadChatList,
+        callBackDeleteChat: (server, chat) {
+          _chatListBloc.add(DeleteChatMainPage(server: server, chat: chat));
+        },
       ),
       TransferredListWidget(
-        listOfServers: _chatsListBloc.serversList,
-        listToAdd: _transferedChatList,
-        loadingState: onActionLoading,
+        listOfServers: listServers,
+        refreshList: _loadChatList,
       ),
     ];
 
@@ -217,8 +221,9 @@ class _MainPageState extends State<MainPage>
     }
 */
     var mainScaffold = DefaultTabController(
-      length: tabs.length,
-      child: Scaffold(
+        length: tabs.length,
+        child: Scaffold(
+          backgroundColor: Colors.white,
           key: _scaffoldKey,
           appBar: AppBar(
             title: Text("Chat Lists"),
@@ -230,49 +235,53 @@ class _MainPageState extends State<MainPage>
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.max,
               children: <Widget>[
-                new UserAccountsDrawerHeader(
-                  accountName: Text(""),
-                  accountEmail: Container(
-                    child: DropdownButton(
-                        isExpanded: true,
-                        value: _selectedServer,
-                        icon: Icon(
-                          Icons.arrow_drop_down,
-                          color: Colors.white,
-                        ),
-                        items: listServers.map((srvr) {
-                          return new DropdownMenuItem(
-                            value: srvr,
-                            child: new Text(
-                              '${srvr?.servername}',
-                              style: TextStyle(color: Colors.teal.shade900),
+                BlocBuilder<ServerBloc, ServerState>(
+                  builder: (context, state) {
+                    return UserAccountsDrawerHeader(
+                      accountName: Text(""),
+                      accountEmail: Container(
+                        child: DropdownButton(
+                            isExpanded: true,
+                            value: _selectedServer,
+                            icon: Icon(
+                              Icons.arrow_drop_down,
+                              color: Colors.white,
                             ),
-                          );
-                        }).toList(),
-                        onChanged: (srv) {
-                          setState(() {
-                            _selectedServer = srv;
-                            /**Enable when extension version changes */
-                            // showUpdateMsg();
-                          });
-                        }),
-                  ),
-                  currentAccountPicture: GestureDetector(
-                    child: new CircleAvatar(
-                      child: new Text(
-                        _selectedServer?.servername?.substring(0, 1) ?? "",
-                        style: TextStyle(
-                            fontSize: 18.00, fontWeight: FontWeight.bold),
+                            items: listServers.map((srvr) {
+                              return new DropdownMenuItem(
+                                value: srvr,
+                                child: new Text(
+                                  '${srvr?.servername}',
+                                  style: TextStyle(color: Colors.teal.shade900),
+                                ),
+                              );
+                            }).toList(),
+                            onChanged: (srv) {
+                              setState(() {
+                                _selectedServer = srv;
+                                /**Enable when extension version changes */
+                                // showUpdateMsg();
+                              });
+                            }),
                       ),
-                    ),
-                    onTap: () => {},
-                  ),
-                  decoration: new BoxDecoration(
-                      image: new DecorationImage(
-                          image: new AssetImage('graphics/header.jpg'),
-                          fit: BoxFit.fill)),
+                      currentAccountPicture: GestureDetector(
+                        child: new CircleAvatar(
+                          child: new Text(
+                            _selectedServer?.servername?.substring(0, 1) ?? "",
+                            style: TextStyle(
+                                fontSize: 18.00, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        onTap: () => {},
+                      ),
+                      decoration: new BoxDecoration(
+                          image: new DecorationImage(
+                              image: new AssetImage('graphics/header.jpg'),
+                              fit: BoxFit.fill)),
+                    );
+                  },
                 ),
-                new Card(
+                Card(
                   child: new Container(
                     height: 150.0,
                     child: new Column(
@@ -337,21 +346,18 @@ class _MainPageState extends State<MainPage>
                     ),
                   ),
                 ),
-                new Divider(),
-                new ListTile(
-                    title: new Text("Server Details"),
-                    leading: new Icon(Icons.web),
+                Divider(),
+                ListTile(
+                    title: Text("Server Details"),
+                    leading: Icon(Icons.web),
                     onTap: () {
                       if (_isServerLoggedIn()) {
                         Navigator.of(context).pop();
                         Navigator.of(context).push(
-                          new FadeRoute(
-                            builder: (BuildContext context) =>
-                                new TokenInheritedWidget(
-                                    token: _fcmToken,
-                                    child: new ServerDetails(
-                                      server: _selectedServer,
-                                    )),
+                          FadeRoute(
+                            builder: (BuildContext context) => ServerDetails(
+                              server: _selectedServer,
+                            ),
                             settings: new RouteSettings(
                               name: AppRoutes.serverDetails,
                             ),
@@ -363,18 +369,15 @@ class _MainPageState extends State<MainPage>
                       }
                     }),
                 ListTile(
-                  title: new Text("Manage Servers"),
-                  leading: new Icon(Icons.settings),
+                  title: Text("Manage Servers"),
+                  leading: Icon(Icons.settings),
                   onTap: () {
                     Navigator.of(context).pop();
                     Navigator.of(context).push(
-                      new FadeRoute(
-                        builder: (BuildContext context) =>
-                            new TokenInheritedWidget(
-                                token: _fcmToken,
-                                child: new ServersManage(
-                                  manage: true,
-                                )),
+                      FadeRoute(
+                        builder: (BuildContext context) => ServersManage(
+                          manage: true,
+                        ),
                         settings: RouteSettings(
                           name: AppRoutes.serversManage,
                         ),
@@ -382,15 +385,15 @@ class _MainPageState extends State<MainPage>
                     );
                   },
                 ),
-                new Divider(),
+                Divider(),
                 _isServerLoggedIn()
                     ? ListTile(
-                        title: new Text("Logout Server"),
-                        leading: new Icon(Icons.exit_to_app),
+                        title: Text("Logout Server"),
+                        leading: Icon(Icons.exit_to_app),
                         onTap: () {
                           if (_isServerLoggedIn()) {
                             Navigator.pop(context);
-                            _showAlert();
+                            _showAlert(context, _selectedServer);
                           } else {
                             Navigator.of(context).pop();
                             _showSnackBar(
@@ -399,8 +402,8 @@ class _MainPageState extends State<MainPage>
                         },
                       )
                     : ListTile(
-                        title: new Text("Login"),
-                        leading: new Icon(Icons.exit_to_app),
+                        title: Text("Login"),
+                        leading: Icon(Icons.exit_to_app),
                         onTap: () {
                           Navigator.pop(context);
                           _addServer(server: _selectedServer);
@@ -409,85 +412,66 @@ class _MainPageState extends State<MainPage>
               ],
             ),
           )),
-          body: Stack(children: <Widget>[
-            new TabBarView(children: bodyWidgets),
-            Center(child: loadingIndicator),
-          ]),
-          floatingActionButton: _speedDial(),
-          bottomNavigationBar: Offstage(
-            child: GestureDetector(
-              onTap: () => _showBottomSheet(context),
-              child: PreferredSize(
-                preferredSize: const Size.fromHeight(48.0),
-                child: Theme(
-                  data: Theme.of(context).copyWith(accentColor: Colors.white),
-                  child: Container(
-                    color: Colors.red,
-                    height: 48.0,
-                    alignment: Alignment.center,
-                    child: Text(
-                      'Extension Update: Click me for more details',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            offstage: !_showUpdateNotice,
-          )),
-    );
-
-    /* var _asyncLoader = new AsyncLoader(
-      key: _mainAsyncLoaderState,
-      initState: () async {
-        //TODO added return (might not be needed)
-        // await _getSavedServers();
-        return _initLists();
-      },
-      renderLoad: () => new Scaffold(
-        body: new Center(child: new CircularProgressIndicator()),
-      ),
-      renderError: ([error]) =>
-          new Scaffold(body: new Center(child: new Text('Something is wrong'))),
-      renderSuccess: ({data}) {
-        return mainScaffold;
-      },
-    ); */
-
-    var streamBuilder = StreamBuilder(
-        stream: _chatsListBloc.serversList$,
-        builder: (BuildContext context, AsyncSnapshot<List<Server>> snapshot) {
-          if (!snapshot.hasData)
-            return Container(
-              decoration: BoxDecoration(color: Colors.white),
-              child: Center(
-                child: CircularProgressIndicator(),
-              ),
-            );
-
-          if (snapshot.hasError)
-            return Center(child: Text('Error: ${snapshot.error}'));
-
-          switch (snapshot.connectionState) {
-            case ConnectionState.none:
-            case ConnectionState.waiting:
-              break;
-            case ConnectionState.active:
-            case ConnectionState.done:
-              int count = snapshot.data.length;
-              if (count > 0)
-                return mainScaffold;
-              else {
-                // _loadManageServerPage();
+          body: BlocConsumer<ServerBloc, ServerState>(
+            listener: (context, state) {
+              if (state is UserOnlineStatus) {
+                _selectedServer.user_online = state.isUserOnline ? 1 : 0;
               }
-          }
-          return Container(
-            color: Colors.white,
-            decoration: BoxDecoration(color: Colors.white),
-          );
-        });
+              if (state is ServerListFromDBLoaded) {
+                _selectedServer = state.serverList.elementAt(0);
+                listServers = state.serverList;
+              }
+            },
+            builder: (context, state) {
+              if (state is ServerInitial) {
+                return Center(child: CircularProgressIndicator());
+              }
+              if (state is ServerListFromDBLoaded) {
+                // existing servers
+                if (state.serverList.length > 0) {
+                  print("Servers Length: ${state.serverList.length}");
+                  _selectedServer = state.serverList.elementAt(0);
+                  listServers = state.serverList;
 
-    return streamBuilder;
+                  _loadChatList();
+                } else {
+                  // navigate to server management page if no server exists
+                  Navigator.of(context).pushAndRemoveUntil(
+                      FadeRoute(
+                        builder: (BuildContext context) => ServersManage(
+                          manage: false,
+                        ),
+                        settings: RouteSettings(
+                          name: AppRoutes.server,
+                        ),
+                      ),
+                      (Route<dynamic> route) => false);
+                }
+              }
+
+              return Stack(children: <Widget>[
+                new TabBarView(children: bodyWidgets),
+                BlocBuilder<ChatslistBloc, ChatListState>(
+                    builder: (context, state) {
+                  if (state is ChatListLoaded && state.isLoading) {
+                    return Center(child: loadingIndicator);
+                  }
+                  return Container();
+                })
+              ]);
+            },
+          ),
+          floatingActionButton: _speedDial(context),
+        ));
+
+    return mainScaffold;
+  }
+
+  void _loadChatList() {
+    print("Loading list is called");
+    listServers.forEach((server) {
+      _chatListBloc.add(FetchChatsList(server: server));
+    });
   }
 
   void _addList(List<Chat> chatList, List<Chat> toAdd) {
@@ -502,8 +486,22 @@ class _MainPageState extends State<MainPage>
     //fetch list first
 
     return new Timer.periodic(
-        new Duration(seconds: seconds), (Timer timer) {}); //_getChatList()
+        new Duration(seconds: seconds), (Timer timer) => _loadChatList());
   }
+/*
+  void _closeChat(Server srv, Chat chat) async {
+   // await _serverRepository.closeChat(srv, chat).then((loaded) {
+      //TODO Update List
+   // });
+  } */
+
+/*
+  void deleteChat(Server srv, Chat chat) async {
+    await _serverRequest.deleteChat(srv, chat).then((loaded) {
+      //  widget.chatRemoved()
+      //TODO Update List;
+    });
+  }  */
 
   void onActionLoading(bool val) {
     /*  if (mounted) {
@@ -670,108 +668,7 @@ class _MainPageState extends State<MainPage>
     return await _serverRequest.isExtensionInstalled(server, "twilio");
   }
 
-  List<Chat> cleanUpLists(
-      List<Chat> chatToClean, List<dynamic> listFromServer) {
-    listFromServer.map((map) => new Chat.fromMap(map));
-    listFromServer.forEach((map) {
-      // print("ListMessage: " + message.toMap().toString());
-      if (chatToClean
-          .any((chat) => chat.id == map.id && chat.serverid == map.serverid)) {
-        int index = chatToClean.indexWhere(
-            (chat) => chat.id == map.id && chat.serverid == map.serverid);
-        chatToClean[index] = map;
-      } else {
-        chatToClean.add(map);
-      }
-    });
-    return chatToClean;
-  }
-
-  /*Remove chats which have been closed from another device */
-  List<Chat> _removeMissing(List<Chat> chatToClean, List<Chat> longList) {
-    if (chatToClean.length > 0 && longList.length > 0) {
-      List<int> removedIndices = new List();
-      chatToClean.forEach((chat) {
-        if (!longList
-            .any((map) => map.id == chat.id && map.serverid == chat.serverid)) {
-          int index = chatToClean.indexOf(chat);
-          // print("index: " + index.toString());
-          removedIndices.add(index);
-        }
-      });
-
-      //remove the chats
-      if (removedIndices != null && removedIndices.length > 0) {
-        removedIndices.sort();
-        removedIndices.reversed.toList().forEach(chatToClean.removeAt);
-        removedIndices.clear();
-      }
-    }
-    return chatToClean;
-  }
-
-  Future<Null> _getSavedServers() async {
-    // get logged in servers
-    List<Map> savedRecs = await dbHelper.fetchAll(Server.tableName,
-        "${Server.columns['db_id']}  ASC", "isloggedin=?", [1]);
-
-    if (savedRecs != null && savedRecs.length > 0) {
-      savedRecs.forEach((item) {
-        if (!(listServers.any((serv) =>
-            serv.servername == item['servername'] &&
-            serv.url == item['url'] &&
-            serv.username == item['username']))) {
-          if (mounted) {
-            setState(() {
-              listServers.add(new Server.fromMap(item));
-            });
-          }
-        }
-        if (_selectedServer == null) {
-          setState(() {
-            _selectedServer = listServers.elementAt(0);
-          });
-          _getOnlineStatus();
-          _getTwilioStatus();
-
-          //TODO Remove in future updates
-          // check extension update
-          //showUpdateMsg();
-        }
-      });
-    } else {
-      if (mounted) {
-        setState(() {
-          listServers.clear();
-        });
-      }
-    }
-  }
-
-  Future<Server> _logout() async {
-    await _serverRequest.fetchInstallationId(
-        _selectedServer, _fcmToken, "logout");
-    _selectedServer.isloggedin = 0;
-    return await dbHelper
-        .upsertServer(_selectedServer, "id=?", [_selectedServer.id]);
-  }
-
-  void _loadManageServerPage() {
-    Navigator.of(context).pushAndRemoveUntil(
-        FadeRoute(
-          builder: (BuildContext context) => new TokenInheritedWidget(
-              token: _fcmToken,
-              child: new ServersManage(
-                manage: false,
-              )),
-          settings: RouteSettings(
-            name: AppRoutes.server,
-          ),
-        ),
-        (Route<dynamic> route) => false);
-  }
-
-  void _showAlert() {
+  void _showAlert(BuildContext context, Server server) {
     AlertDialog dialog = new AlertDialog(
       content: new Text(
         "Do you want to logout of the server? \n\nYou will not receive notifications for chats.",
@@ -781,10 +678,10 @@ class _MainPageState extends State<MainPage>
         new MaterialButton(
             child: new Text("Yes"),
             onPressed: () async {
-              var sv = await _logout();
+              context.bloc<LoginformBloc>().add(ServerLogout(
+                  server: server,
+                  fcmToken: context.bloc<FcmTokenBloc>().token));
               Navigator.of(context).pop();
-              _selectedServer = sv;
-              _initLists();
             }),
         MaterialButton(
             child: new Text("No"),
@@ -798,8 +695,7 @@ class _MainPageState extends State<MainPage>
   }
 
   void _showSnackBar(String text) {
-    _scaffoldKey.currentState
-        .showSnackBar(new SnackBar(content: new Text(text)));
+    _scaffoldKey.currentState.showSnackBar(SnackBar(content: Text(text)));
   }
 
   Future<bool> _deleteServer() async {
@@ -855,7 +751,7 @@ class _MainPageState extends State<MainPage>
 
   void _addServer({Server server}) {
     Navigator.of(context).push(FadeRoute(
-      builder: (BuildContext context) => new TokenInheritedWidget(
+      builder: (BuildContext context) => TokenInheritedWidget(
           token: _fcmToken,
           child: LoginForm(
             isNew: true,
@@ -865,65 +761,6 @@ class _MainPageState extends State<MainPage>
         name: AppRoutes.login,
       ),
     ));
-  }
-
-  showUpdateMsg() async {
-    // fetch extension version from Database
-    Map<String, dynamic> configs =
-        await dbHelper.fetchItem(dbHelper.configTable, null, null);
-
-    String storedVS =
-        configs != null ? configs[dbHelper.extVersionColumn] : null;
-
-    _serverRequest.fetchVersionExt(_selectedServer).then((version) {
-      if (version != null) {
-        if (storedVS != null) {
-          if (storedVS.isNotEmpty) {
-            // returned format is 0.1.2
-            // remove the . and parse to int and compare
-            num installVersion = num.tryParse(_parseVersion(version));
-            num oldVersion = num.tryParse(_parseVersion(storedVS));
-
-            if (installVersion != null && installVersion >= oldVersion) {
-              // print(vss.toString());
-              _showUpdateNotice = false;
-            } else {
-              _showUpdateNotice = true;
-              //_showBottomSheet(version);
-            }
-          }
-        } else {
-          var vsMap = {dbHelper.extVersionColumn: version};
-          // Upsert config table
-          dbHelper.upsertGeneral(dbHelper.configTable, vsMap);
-        }
-      } else {
-        // _showUpdateNotice = true;
-      }
-    });
-  }
-
-  String _parseVersion(String vs) {
-    return vs.replaceAll(new RegExp(r'\.'), '');
-  }
-
-  _showBottomSheet(BuildContext ctx) {
-    showModalBottomSheet<void>(
-        context: ctx,
-        builder: (BuildContext context) {
-          return Container(
-            padding: EdgeInsets.all(10.0),
-            height: 300.0,
-            color: Colors.green,
-            child: Center(
-              child: new Text(
-                "You can now receive notifications when the app is active.\n\nPlease update the Extension on your server to receive notifications. You can simply replace all the content in \'/extension/gcm\' with the new one from github. \n\n Visit: \n https://github.com/samapraku/lhc_gcm_extension \n\n\nDon't forget to clear your LHC cache for the update to reflect.",
-                style: TextStyle(color: Colors.white),
-                softWrap: true,
-              ),
-            ),
-          );
-        });
   }
 
   void _showAlertMsg(String title, String msg) {
@@ -943,14 +780,14 @@ class _MainPageState extends State<MainPage>
     showDialog(context: context, builder: (BuildContext context) => dialog);
   }
 
-  SpeedDial _speedDial() {
+  SpeedDial _speedDial(BuildContext context) {
     var children = [
       SpeedDialChild(
           child: Icon(Icons.refresh),
           backgroundColor: Theme.of(context).primaryColor,
           label: 'Reload list',
           labelStyle: TextStyle(fontSize: 18.0),
-          onTap: () => _initLists())
+          onTap: () => _loadChatList())
     ];
 
     if (_selectedServer != null && _selectedServer.twilioInstalled == true) {
@@ -964,7 +801,7 @@ class _MainPageState extends State<MainPage>
           Navigator.of(context).push(FadeRoute(
             builder: (BuildContext context) => TwilioSMSChat(
               server: _selectedServer,
-              refreshList: _initLists,
+              refreshList: () {},
             ),
             settings: new RouteSettings(
               name: AppRoutes.twilio,

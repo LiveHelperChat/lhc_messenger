@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 import 'dart:async';
 
-import 'package:livehelp/model/server.dart';
+import 'package:livehelp/model/model.dart';
 
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
@@ -50,8 +50,7 @@ class NotificationHelper {
       // Handle notification message
       final dynamic notification = message['notification'];
     }
-
-    // Or do other work.
+    return Future<void>.value();
   }
 
   //static final String channelNameUnreadMsg =;

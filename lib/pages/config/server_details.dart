@@ -1,15 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-
+import 'package:http/http.dart' as http;
 import 'package:async_loader/async_loader.dart';
 
 import 'package:livehelp/data/database.dart';
-import 'package:livehelp/model/server.dart';
-import 'package:livehelp/model/department.dart';
+import 'package:livehelp/model/model.dart';
 import 'package:livehelp/utils/routes.dart';
-import 'package:livehelp/services/server_requests.dart';
-import 'package:livehelp/utils/widget_utils.dart';
-import 'package:livehelp/widget/office_time_picker.dart';
+import 'package:livehelp/services/server_api_client.dart';
 import 'package:livehelp/pages/token_inherited_widget.dart';
 
 import 'department_hours.dart';
@@ -23,7 +20,7 @@ class ServerDetails extends StatefulWidget {
 
 class _ServerDetailsState extends State<ServerDetails> {
   DatabaseHelper _dbHelper;
-  ServerRequest _serverRequest;
+  ServerApiClient _serverRequest;
 
   Server _localServer;
   List<Server> listServers = new List<Server>();
@@ -54,8 +51,8 @@ class _ServerDetailsState extends State<ServerDetails> {
   @override
   void initState() {
     super.initState();
-    _dbHelper = new DatabaseHelper();
-    _serverRequest = new ServerRequest();
+    _dbHelper = DatabaseHelper();
+    _serverRequest = ServerApiClient(httpClient: http.Client());
     _localServer = widget.server;
 
     // _syncServerData();

@@ -1,4 +1,7 @@
-class Chat {
+import 'package:equatable/equatable.dart';
+
+// ignore_for_file: non_constant_identifier_names
+class Chat extends Equatable {
   // Database table name
   static final String tableName = "chat";
 
@@ -25,7 +28,7 @@ class Chat {
     "db_user_status_front": "user_status_front",
   };
 
-  int id,
+  final int id,
       serverid,
       time,
       last_msg_id,
@@ -35,7 +38,7 @@ class Chat {
       last_user_msg_time,
       last_op_msg_time,
       user_status_front;
-  String nick,
+  final String nick,
       email,
       ip,
       country_code,
@@ -55,8 +58,10 @@ class Chat {
         return last_user_msg_time;
     } else if (last_user_msg_time != null) {
       return last_user_msg_time;
-    } else
+    } else if (last_op_msg_time != null) {
       return last_op_msg_time;
+    } else
+      return 0;
   }
 
   Chat(
@@ -80,8 +85,53 @@ class Chat {
       this.last_user_msg_time,
       this.last_op_msg_time,
       this.phone,
-      this.user_status_front
-      });
+      this.user_status_front});
+
+  Chat copyWith(
+      {int id,
+      int serverid,
+      String status,
+      String nick,
+      String email,
+      String ip,
+      int time,
+      int last_msg_id,
+      int user_id,
+      String country_code,
+      String country_name,
+      String referrer,
+      String uagent,
+      String department_name,
+      String user_typing_txt,
+      String owner,
+      has_unread_messages,
+      last_user_msg_time,
+      last_op_msg_time,
+      String phone,
+      String user_status_front}) {
+    return Chat(
+        id: id ?? this.id,
+        serverid: serverid ?? this.serverid,
+        status: status ?? this.status,
+        nick: nick ?? this.nick,
+        email: email ?? this.email,
+        ip: ip ?? this.ip,
+        time: time ?? this.time,
+        last_msg_id: last_msg_id ?? this.last_msg_id,
+        user_id: user_id ?? this.user_id,
+        country_code: country_code ?? this.country_code,
+        country_name: country_name ?? this.country_name,
+        referrer: referrer ?? this.referrer,
+        uagent: uagent ?? this.uagent,
+        department_name: department_name ?? this.department_name,
+        user_typing_txt: user_typing_txt ?? this.user_typing_txt,
+        owner: owner ?? this.owner,
+        has_unread_messages: has_unread_messages ?? this.has_unread_messages,
+        last_user_msg_time: last_user_msg_time ?? this.last_user_msg_time,
+        last_op_msg_time: last_op_msg_time ?? this.last_op_msg_time,
+        phone: phone ?? this.phone,
+        user_status_front: user_status_front ?? this.user_status_front);
+  }
 
   static int checkInt(dynamic value) {
     if (value == null) return null;
@@ -108,7 +158,7 @@ class Chat {
           owner: map[columns['db_owner']],
           has_unread_messages: checkInt(map[columns['db_has_unread_messages']]),
           last_user_msg_time: checkInt(map['last_user_msg_time']),
-          last_op_msg_time: checkInt(map['last_user_msg_time']),
+          last_op_msg_time: checkInt(map['last_op_msg_time']),
           phone: map['phone'] ?? "",
           user_status_front: map['user_status_front'] ?? 0,
         );
@@ -137,4 +187,29 @@ class Chat {
       columns['db_user_status_front']: user_status_front,
     };
   }
+
+  @override
+  List<Object> get props => [
+    id,
+    serverid,
+    status,
+    nick,
+    email,
+    ip,
+    time,
+    last_msg_id,
+    user_id,
+    country_code,
+    country_name,
+    referrer,
+    uagent,
+    department_name,
+    user_typing_txt,
+    owner,
+    has_unread_messages,
+    last_user_msg_time,
+    last_op_msg_time,
+    phone,
+    user_status_front
+      ];
 }

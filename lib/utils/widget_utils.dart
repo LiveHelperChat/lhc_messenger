@@ -29,4 +29,5 @@ class WidgetUtils{
     if(value is bool) return value ? 1 : 0 ;
     return value is int ? value : int.parse(value);
   }
+
 }

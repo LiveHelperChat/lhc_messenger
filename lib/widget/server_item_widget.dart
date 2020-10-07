@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import 'package:flutter/material.dart';
-import 'package:livehelp/model/server.dart';
+import 'package:livehelp/model/model.dart';
 import 'package:livehelp/utils/enum_menu_options.dart';
 
 class ServerItemWidget extends StatelessWidget {

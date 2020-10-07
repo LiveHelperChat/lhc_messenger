@@ -1,9 +1,10 @@
-import 'package:livehelp/model/TwilioPhone.dart';
-import 'package:livehelp/model/server.dart';
-import 'package:livehelp/services/server_requests.dart';
+import 'package:livehelp/model/model.dart';
+import 'package:livehelp/services/server_api_client.dart';
+import 'package:http/http.dart' as http;
 
-class TwilioService extends ServerRequest {
-  TwilioService(): super();
+class TwilioService extends ServerApiClient {
+  final http.Client httpClient;
+  TwilioService({this.httpClient}) : super(httpClient: httpClient);
 
   Future<Server> getTwilioChats(Server server) async {
     // check for twilio extention
@@ -33,7 +34,7 @@ class TwilioService extends ServerRequest {
 
     return server;
   }
-  
+
   Future<List<TwilioPhone>> getTwilioPhones(Server server) async {
     var resp = await apiGet(server, "/restapi/twilio_phones");
     List<TwilioPhone> phonesList = List<TwilioPhone>();
@@ -50,5 +51,4 @@ class TwilioService extends ServerRequest {
     }
     return phonesList;
   }
-
 }

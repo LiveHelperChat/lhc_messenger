@@ -1,24 +1,26 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:http/http.dart' as http;
+import 'package:livehelp/bloc/bloc.dart';
 
-import 'package:livehelp/model/server.dart';
-import 'package:livehelp/model/chat.dart';
+import 'package:livehelp/model/model.dart';
 import 'package:livehelp/widget/chat_item_widget.dart';
 import 'package:livehelp/pages/chat/chat_page.dart';
 import 'package:livehelp/utils/routes.dart';
-import 'package:livehelp/services/server_requests.dart';
+import 'package:livehelp/services/server_api_client.dart';
 
 import 'package:livehelp/utils/enum_menu_options.dart';
 
 class TransferredListWidget extends StatefulWidget {
-  TransferredListWidget(
-      {Key key, this.listOfServers, this.listToAdd, this.loadingState})
-      : super(key: key);
+  TransferredListWidget({
+    Key key,
+    this.listOfServers,
+    this.refreshList,
+  }) : super(key: key);
 
-  final List<Chat> listToAdd;
   final List<Server> listOfServers;
-
-  final ValueChanged<bool> loadingState;
+  final VoidCallback refreshList;
 
   @override
   _TransferredListWidgetState createState() =>
@@ -26,22 +28,52 @@ class TransferredListWidget extends StatefulWidget {
 }
 
 class _TransferredListWidgetState extends State<TransferredListWidget> {
-  ServerRequest _serverRequest;
+  ServerApiClient _serverRequest;
 
   @override
   void initState() {
     super.initState();
-    _serverRequest = new ServerRequest();
+    _serverRequest = ServerApiClient(httpClient: http.Client());
   }
 
   @override
   Widget build(BuildContext context) {
-    return new Scaffold(
-        body: new RefreshIndicator(
-      onRefresh: _onRefresh,
-      child: new ListView.builder(
-          itemCount: widget.listToAdd.length, itemBuilder: _itemBuilder),
-    ));
+    return BlocBuilder<ChatslistBloc, ChatListState>(builder: (context, state) {
+      if (state is ChatslistInitial) {
+        return Center(child: CircularProgressIndicator());
+      }
+
+      if (state is ChatListLoaded) {
+        return ListView.builder(
+            itemCount: state.transferChatList.length,
+            itemBuilder: (BuildContext context, int index) {
+              Chat chat = state.transferChatList[index];
+              Server server = widget.listOfServers.firstWhere(
+                  (srvr) => srvr.id == chat.serverid,
+                  orElse: () => null);
+
+              return GestureDetector(
+                child: new ChatItemWidget(
+                  server: server,
+                  chat: chat,
+                  menuBuilder: _itemMenuBuilder(),
+                  onMenuSelected: (selectedOption) {
+                    onItemSelected(server, chat, selectedOption);
+                  },
+                ),
+                onTap: () {},
+              );
+            });
+      }
+      if (state is ChatListLoadError) {
+        return Text("An error occurred: ${state.message}");
+      }
+      return ListView.builder(
+          itemCount: 1,
+          itemBuilder: (BuildContext context, int index) {
+            return Text("No list available");
+          });
+    });
   }
 
   List<PopupMenuEntry<ChatItemMenuOption>> _itemMenuBuilder() {
@@ -57,27 +89,9 @@ class _TransferredListWidgetState extends State<TransferredListWidget> {
     ];
   }
 
-  Widget _itemBuilder(BuildContext context, int index) {
-    Chat chat = widget.listToAdd[index];
-    Server server =
-        widget.listOfServers.firstWhere((srvr) => srvr.id == chat.serverid);
-    return new GestureDetector(
-      child: new ChatItemWidget(
-        server: server,
-        chat: chat,
-        menuBuilder: _itemMenuBuilder(),
-        onMenuSelected: (selectedOption) {
-          onItemSelected(server, chat, selectedOption);
-        },
-      ),
-      onTap: () {},
-    );
-  }
-
   void onItemSelected(Server srvr, Chat chat, ChatItemMenuOption selectedMenu) {
     switch (selectedMenu) {
       case ChatItemMenuOption.ACCEPT:
-        widget.loadingState(true);
         _acceptChat(srvr, chat);
         break;
       default:
@@ -86,28 +100,17 @@ class _TransferredListWidgetState extends State<TransferredListWidget> {
   }
 
   void _acceptChat(Server srv, Chat chat) async {
-    //TODO accept chat
-    await _serverRequest.acceptChatTransfer(srv, chat).then((loaded) {
-      widget.loadingState(false);
+    await _serverRequest.acceptChatTransfer(srv, chat);
+    widget.refreshList();
+    var route = new FadeRoute(
+      settings: new RouteSettings(name: AppRoutes.chatPage),
+      builder: (BuildContext context) => new ChatPage(
+        server: srv,
+        chat: chat,
+        isNewChat: false,
+      ),
+    );
 
-      var route = new FadeRoute(
-        settings: new RouteSettings(name: AppRoutes.chatPage),
-        builder: (BuildContext context) => new ChatPage(
-          server: srv,
-          chat: chat,
-          isNewChat: false,
-        ),
-      );
-
-      Navigator.of(context).push(route);
-    });
-  }
-
-  Future<Null> _onRefresh() {
-    Completer<Null> completer = new Completer<Null>();
-    Timer timer = new Timer(new Duration(seconds: 3), () {
-      completer.complete();
-    });
-    return completer.future;
+    Navigator.of(context).push(route);
   }
 }

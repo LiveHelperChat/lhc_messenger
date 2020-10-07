@@ -1,3 +1,4 @@
+// ignore_for_file: non_constant_identifier_names
 class Message {
   static final String tableName = "message";
   static final Map<String, String> columns = {

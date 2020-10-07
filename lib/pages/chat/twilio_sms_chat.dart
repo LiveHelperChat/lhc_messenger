@@ -3,14 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'package:flutter/services.dart';
-import 'package:livehelp/model/TwilioPhone.dart';
+import 'package:livehelp/model/model.dart';
 
-import 'package:livehelp/model/server.dart';
-import 'package:livehelp/services/server_requests.dart';
 import 'package:livehelp/data/database.dart';
 import 'package:livehelp/services/twilio_service.dart';
 
-const TIMEOUT = const Duration(seconds: 5);
 
 class TwilioSMSChat extends StatefulWidget {
   TwilioSMSChat({Key key, this.server, this.refreshList}) : super(key: key);
@@ -238,7 +235,6 @@ class TwilioSMSChatState extends State<TwilioSMSChat> {
   void _getTwilioPhones() async {
     setState(() => _isLoading = true);
     twilioPhonesList?.clear();
-    //print("SERver: " + _currentServer.toMap().toString());
     var phones = await _twilioService.getTwilioPhones(_currentServer);
     setState(() => _isLoading = false);
     if (phones != null && phones.length > 0) {

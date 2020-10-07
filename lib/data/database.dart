@@ -7,13 +7,12 @@ import 'package:synchronized/synchronized.dart';
 
 import 'package:path_provider/path_provider.dart';
 
-import 'package:livehelp/model/server.dart';
-import 'package:livehelp/model/chat.dart';
+import 'package:livehelp/model/model.dart';
 
 class DatabaseHelper {
   static DatabaseHelper _livehelpDatabase;
 
-  final int dbVersion = 2; // previous 1
+  final int dbVersion = 3; // previous 1
   final String configTable = "app_config";
   final String tokenColumn = "fcm_token";
   final String extVersionColumn = "ext_version";
@@ -57,7 +56,8 @@ class DatabaseHelper {
         "${Server.columns['db_job_title']} TEXT,"
         "${Server.columns['db_all_departments']} BIT,"
         "${Server.columns['db_departments_ids']} TEXT,"
-        "${Server.columns['db_user_online']} BIT"
+        "${Server.columns['db_user_online']} BIT,"
+        "${Server.columns['db_twilio_installed']} BIT"
         ")");
 /*
       await db.execute(
@@ -119,8 +119,12 @@ class DatabaseHelper {
 
   Future _upgradeDB(Database db, int oldVersion, int newVersion) async {
     print("oLD " + oldVersion.toString() + " new " + newVersion.toString());
-    if (oldVersion < newVersion) {
+    if (oldVersion < 2) {
       db.execute("ALTER TABLE $configTable ADD COLUMN $extVersionColumn TEXT;");
+    }
+    if (oldVersion < 3) {
+      db.execute(
+          "ALTER TABLE ${Server.tableName} ADD COLUMN ${Server.columns['db_twilio_installed']} BIT;");
     }
   }
 
@@ -164,18 +168,21 @@ class DatabaseHelper {
   }
 
   Future upsertChat(Chat chat) async {
+    Chat newChat = chat;
     var db = await getDb();
     var count = Sqflite.firstIntValue(await db.rawQuery(
         "SELECT COUNT(*) FROM ${Chat.tableName}"
         " WHERE id = ? and status= ? and serverid= ?",
         [chat.id, chat.status, chat.serverid]));
     if (count == 0) {
-      chat.id = await db.insert(Chat.tableName, chat.toMap());
+      int id = await db.insert(Chat.tableName, chat.toMap());
+      newChat = chat.copyWith(id: id);
     } else {
-      await db.update(Chat.tableName, chat.toMap(),
+      int id = await db.update(Chat.tableName, chat.toMap(),
           where: "id = ?", whereArgs: [chat.id]);
+      newChat = chat.copyWith(id: id);
     }
-    return chat;
+    return newChat;
   }
 
   Future countRecords(String tableName, String condition, List whereArg) async {
@@ -281,5 +288,25 @@ class DatabaseHelper {
         .then((rows) {
       return rows > 0 ? true : false;
     });
+  }
+
+  Future<List<Server>> getServers(bool onlyLoggedIn) async {
+    String condition;
+    List args = [];
+    if (onlyLoggedIn) {
+      condition = "isloggedin=?";
+      int loggedIn = onlyLoggedIn ? 1 : 0;
+      args = [loggedIn];
+    }
+    List<Map> savedservers = await fetchAll(
+        Server.tableName, "${Server.columns['db_id']}  ASC", condition, args);
+    List<Server> serversList = [];
+    if (savedservers != null && savedservers.length > 0) {
+      savedservers.forEach((item) {
+        Server newServer = new Server.fromMap(item);
+        serversList.add(newServer);
+      });
+    }
+    return serversList;
   }
 }
