@@ -51,3 +51,13 @@ class SetUserOnlineStatus extends ServerEvent {
   @override
   List<Object> get props => [server];
 }
+
+class LogoutServer extends ServerEvent {
+  final Server server;
+  final String fcmToken;
+  final bool deleteServer;
+
+  const LogoutServer(
+      {@required this.server, this.fcmToken, this.deleteServer = false})
+      : assert(server != null);
+}

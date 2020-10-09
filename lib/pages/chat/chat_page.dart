@@ -15,7 +15,7 @@ import 'package:livehelp/services/server_repository.dart';
 import 'package:rxdart/rxdart.dart';
 
 import 'package:livehelp/model/model.dart';
-import 'package:livehelp/widget/chat_bubble.dart';
+import 'package:livehelp/widget/widget.dart';
 
 import 'package:livehelp/utils/enum_menu_options.dart';
 

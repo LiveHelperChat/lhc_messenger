@@ -1,15 +1,12 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:livehelp/bloc/bloc.dart';
 
 import 'package:livehelp/model/model.dart';
 import 'package:livehelp/services/server_repository.dart';
-import 'package:livehelp/widget/chat_item_widget.dart';
+import 'package:livehelp/widget/widget.dart';
 import 'package:livehelp/pages/chat/chat_page.dart';
 import 'package:livehelp/utils/routes.dart';
-import 'package:livehelp/services/server_api_client.dart';
 
 import 'package:livehelp/utils/enum_menu_options.dart';
 
@@ -85,9 +82,17 @@ class _PendingListWidgetState extends State<PendingListWidget> {
               );
             });
       }
+
       if (state is ChatListLoadError) {
-        return Text("An error occurred: ${state.message}");
+        return ErrorReloadButton(
+          message: "An error occurred: ${state.message}",
+          actionText: 'Reload',
+          onButtonPress: () {
+            context.bloc<ChatslistBloc>().add(ChatListInitialise());
+          },
+        );
       }
+
       return ListView.builder(
           itemCount: 1,
           itemBuilder: (BuildContext context, int index) {

@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:livehelp/model/model.dart';
 import 'package:livehelp/services/server_repository.dart';
-import 'package:livehelp/widget/chat_item_widget.dart';
+import 'package:livehelp/widget/widget.dart';
 import 'package:livehelp/pages/chat/chat_page.dart';
 import 'package:livehelp/utils/routes.dart';
 import 'package:livehelp/bloc/bloc.dart';
@@ -49,39 +49,51 @@ class _ActiveListWidgetState extends State<ActiveListWidget> {
         return ListView.builder(
             itemCount: state.activeChatList.length,
             itemBuilder: (BuildContext context, int index) {
-              Chat chat = state.activeChatList[index];
-              Server server = widget.listOfServers.firstWhere(
-                  (srvr) => srvr.id == chat.serverid,
-                  orElse: () => null);
+              if (state.activeChatList.isNotEmpty) {
+                Chat chat = state.activeChatList[index];
+                Server server = widget.listOfServers.firstWhere(
+                    (srvr) => srvr.id == chat.serverid,
+                    orElse: () => null);
 
-              return server == null
-                  ? Text("No server found")
-                  : new GestureDetector(
-                      child: new ChatItemWidget(
-                        server: server,
-                        chat: chat,
-                        menuBuilder: _itemMenuBuilder(),
-                        onMenuSelected: (selectedOption) {
-                          onItemSelected(context, server, chat, selectedOption);
+                return server == null
+                    ? Text("No server found")
+                    : new GestureDetector(
+                        child: new ChatItemWidget(
+                          server: server,
+                          chat: chat,
+                          menuBuilder: _itemMenuBuilder(),
+                          onMenuSelected: (selectedOption) {
+                            onItemSelected(
+                                context, server, chat, selectedOption);
+                          },
+                        ),
+                        onTap: () {
+                          var route = new FadeRoute(
+                            settings:
+                                new RouteSettings(name: AppRoutes.chatPage),
+                            builder: (BuildContext context) => ChatPage(
+                              server: server,
+                              chat: chat,
+                              isNewChat: false,
+                              refreshList: widget.refreshList,
+                            ),
+                          );
+                          Navigator.of(context).push(route);
                         },
-                      ),
-                      onTap: () {
-                        var route = new FadeRoute(
-                          settings: new RouteSettings(name: AppRoutes.chatPage),
-                          builder: (BuildContext context) => ChatPage(
-                            server: server,
-                            chat: chat,
-                            isNewChat: false,
-                            refreshList: widget.refreshList,
-                          ),
-                        );
-                        Navigator.of(context).push(route);
-                      },
-                    );
+                      );
+              } else
+                return Container();
             });
       }
+
       if (state is ChatListLoadError) {
-        return Text("An error occurred: ${state.message}");
+        return ErrorReloadButton(
+          message: "An error occurred: ${state.message}",
+          actionText: 'Reload',
+          onButtonPress: () {
+            context.bloc<ChatslistBloc>().add(ChatListInitialise());
+          },
+        );
       }
       return ListView.builder(
           itemCount: 1,
@@ -130,14 +142,6 @@ class _ActiveListWidgetState extends State<ActiveListWidget> {
   Future<List<dynamic>> _getOperatorList(
       BuildContext context, Server srvr, Chat chat) async {
     return await _serverRepository.getOperatorsList(srvr);
-  }
-
-  Future<Null> _onRefresh() {
-    Completer<Null> completer = new Completer<Null>();
-    Timer timer = new Timer(new Duration(seconds: 3), () {
-      completer.complete();
-    });
-    return completer.future;
   }
 
   void _showOperatorList(BuildContext context, Server srvr, Chat chat) {

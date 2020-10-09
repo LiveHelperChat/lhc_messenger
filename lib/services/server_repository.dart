@@ -46,8 +46,19 @@ class ServerRepository {
     return dBHelper.fetchItem(tableName, condition, args);
   }
 
-  Future<bool> getUserOnlineStatus(Server server) {
-    return serverApiClient.getUserOnlineStatus(server);
+  Future<Server> getUserOnlineStatus(Server server) async {
+    bool online = await serverApiClient.getUserOnlineStatus(server);
+    int isOnline = online ? 1 : 0;
+
+    server.user_online = isOnline;
+    return saveServerToDB(server, "id=?", [server.id]);
+  }
+
+  Future<Server> setUserOnlineStatus(Server server) async {
+    var online = await serverApiClient.setUserOnlineStatus(server);
+    server.user_online = online ? 1 : 0;
+    server = await saveServerToDB(server, "id=?", [server.id]);
+    return server;
   }
 
   Future<Map<String, dynamic>> syncMessages(
@@ -79,5 +90,9 @@ class ServerRepository {
 
   Future<bool> transferChatUser(Server server, Chat chat, int userId) {
     return serverApiClient.transferChatUser(server, chat, userId);
+  }
+
+  Future<bool> deleteServer(Server srvr) async {
+    return dBHelper.deleteItem(Server.tableName, "id=?", [srvr.id]);
   }
 }

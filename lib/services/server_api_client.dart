@@ -164,7 +164,7 @@ class ServerApiClient {
   Future<Server> getChatLists(Server server) async {
     ParsedResponse response = await makeRequest(server, "/xml/lists", null);
 
-    if (response.isOk()) {
+    if (response.isOk() && (response.body.isNotEmpty) ?? false) {
       int activeSize = response.body['active_chats']['size'];
       if (activeSize > 0) {
         // activeList = Map.castFrom(activeJson).values.toList();
@@ -438,7 +438,7 @@ class ServerApiClient {
         ? chat.id.toString()
         : chat.id.toString() + '|' + lastMsgId.toString();
     ParsedResponse response =
-    await makeRequest(server, "/xml/chatssynchro", params);
+        await makeRequest(server, "/xml/chatssynchro", params);
 
     Map<String, dynamic> messagesChatStatus = new Map<String, dynamic>();
     List<Message> listToMsgs = new List<Message>();
@@ -468,19 +468,18 @@ class ServerApiClient {
     return messagesChatStatus;
   }
 
-
   Future<bool> postMesssage(Server server, Chat chat, String msg) async {
     Map params = {};
     params["msg"] = msg;
     ParsedResponse response =
-    await makeRequest(server, "/xml/addmsgadmin/${chat.id}", params);
+        await makeRequest(server, "/xml/addmsgadmin/${chat.id}", params);
 
     return response.isOk() ? true : false;
   }
 
   Future<Map<String, dynamic>> chatData(Server server, Chat chat) async {
     ParsedResponse response =
-    await makeRequest(server, "/xml/chatdata/${chat.id}", null);
+        await makeRequest(server, "/xml/chatdata/${chat.id}", null);
 
     Map<String, dynamic> chatData;
 

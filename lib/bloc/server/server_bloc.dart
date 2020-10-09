@@ -19,29 +19,72 @@ class ServerBloc extends Bloc<ServerEvent, ServerState> {
   Stream<ServerState> mapEventToState(
     ServerEvent event,
   ) async* {
+    final currentState = state;
     if (event is InitializeServers) {
-      yield (ServerListFromDBLoading());
-    }
-    if (event is GetServerListFromDB) {
-      var servers = await serverRepository.getServersFromDB(
-          onlyLoggedIn: event.onlyLoggedIn);
-      yield ServerListFromDBLoaded(serverList: servers);
+      yield (ServerInitial());
+    } else if (event is GetServerListFromDB) {
+      yield* mapGetListToState(event, state);
     } else if (event is SelectServer) {
-      yield ServerSelected(server: event.server);
+      if (currentState is ServerListFromDBLoaded) {
+        yield (state as ServerListFromDBLoaded)
+            .copyWith(selectedServer: event.server);
+      }
+    } else if (event is SetUserOnlineStatus) {
+      yield* mapSetOnlineToState(event, state);
     } else if (event is GetUserOnlineStatus) {
-      bool online = await serverRepository.getUserOnlineStatus(event.server);
-      int isOnline = online ? 1 : 0;
+      if (state is ServerListFromDBLoaded) {
+        var server = await serverRepository.getUserOnlineStatus(event.server);
 
-      event.server.user_online = isOnline;
-      await serverRepository
-          .saveServerToDB(event.server, "id=?", [event.server.id]);
-      yield UserOnlineStatus(isUserOnline: online);
+        yield (state as ServerListFromDBLoaded).copyWith(
+            isUserOnline: server.userOnline,
+            selectedServer: event.server,
+            isActionLoading: false);
+      }
+    } else if (event is LogoutServer) {
+      var servr = await _logout(event.server, event.fcmToken);
+      if (event.deleteServer) {
+        await _deleteServer(servr);
+      }
+      yield ServerLoggedOut(server: servr);
     }
   }
 
   Future<Server> _logout(Server server, String fcmToken) async {
     await serverRepository.fetchInstallationId(server, fcmToken, "logout");
     server.isloggedin = 0;
-    return await serverRepository.saveServerToDB(server, "id=?", [server.id]);
+    return serverRepository.saveServerToDB(server, "id=?", [server.id]);
+  }
+
+  Future<bool> _deleteServer(Server server) async {
+    return serverRepository.deleteServer(server);
+  }
+
+  Stream<ServerState> mapGetListToState(
+      GetServerListFromDB event, ServerState currentState) async* {
+    var servers = await serverRepository.getServersFromDB(
+        onlyLoggedIn: event.onlyLoggedIn);
+    if (servers.length > 0)
+      yield ServerListFromDBLoaded(
+          serverList: servers, selectedServer: servers.elementAt(0));
+    else
+      yield ServerListFromDBLoaded();
+  }
+
+  Stream<ServerState> mapSetOnlineToState(
+      SetUserOnlineStatus event, ServerState currentState) async* {
+    if (state is ServerListFromDBLoaded) {
+      if (state is ServerListFromDBLoaded) {
+        yield (state as ServerListFromDBLoaded).copyWith(isActionLoading: true);
+        try {
+          var server = await serverRepository.setUserOnlineStatus(event.server);
+          yield (state as ServerListFromDBLoaded).copyWith(
+              isUserOnline: server.userOnline,
+              selectedServer: server,
+              isActionLoading: false);
+        } catch (ex) {
+          yield ServerFromDBLoadError(message: "${ex?.message}");
+        }
+      }
+    }
   }
 }

@@ -45,7 +45,7 @@ class ChatListLoaded extends ChatListState {
         pendingChatList: pendingChatList ?? this.pendingChatList,
         transferChatList: transferChatList ?? this.transferChatList,
         twilioChatList: twilioChatList ?? this.twilioChatList,
-        isLoading: isLoading);
+        isLoading: isLoading ?? this.isLoading);
   }
 
   @override

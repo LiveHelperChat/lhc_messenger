@@ -9,12 +9,12 @@ import 'package:livehelp/pages/login_form.dart';
 import 'package:livehelp/utils/routes.dart' as LHCRouter;
 import 'package:livehelp/services/server_api_client.dart';
 import 'package:livehelp/pages/token_inherited_widget.dart';
-import 'package:livehelp/widget/server_item_widget.dart';
+import 'package:livehelp/widget/widget.dart';
 import 'package:livehelp/utils/enum_menu_options.dart';
 
 class ServersManage extends StatefulWidget {
-  ServersManage({this.manage: false});
-  final bool manage;
+  ServersManage({this.returnToList = false});
+  final bool returnToList;
   @override
   ServersManageState createState() => new ServersManageState();
 }
@@ -60,6 +60,9 @@ class ServersManageState extends State<ServersManage> {
           listener: (context, state) {
             if (state is ServerInitial || state is ServerListFromDBLoading) {
               context.bloc<ServerBloc>().add(GetServerListFromDB());
+            }
+            if (state is ServerLoggedOut) {
+              context.bloc<ServerBloc>().add(InitializeServers());
             }
           },
           builder: _bodyBuilder),
@@ -115,15 +118,14 @@ class ServersManageState extends State<ServersManage> {
                   onMenuSelected: (selectedOption) {}),
               onTap: () {
                 if (server.loggedIn) {
-                  if (widget.manage) {
+                  if (widget.returnToList) {
                     Navigator.of(context).pop();
                   } else {
                     Navigator.of(context).pop();
                     Navigator.of(context).pushReplacement(
                         LHCRouter.Router.generateRoute(new RouteSettings(
                             name: LHCRouter.AppRoutes.main,
-                            arguments:
-                                new LHCRouter.RouteArguments(_fcmToken))));
+                            arguments: LHCRouter.RouteArguments())));
                   }
                 } else {
                   _showAlertMsg("Not Logged In",
@@ -138,10 +140,6 @@ class ServersManageState extends State<ServersManage> {
           });
     }
     return Container();
-  }
-
-  Future<Null> _logout(Server sv) async {
-    await _serverRequest.fetchInstallationId(sv, _fcmToken, "logout");
   }
 
   void _addServer({Server svr}) {
@@ -232,12 +230,12 @@ class ServersManageState extends State<ServersManage> {
       actions: <Widget>[
         new MaterialButton(
             child: new Text("Yes"),
-            onPressed: () {
-              _logout(srvr).then((_) {
-                _deleteServer(srvr);
-                context.bloc<ServerBloc>().add(GetServerListFromDB());
-                Navigator.of(context).pop();
-              });
+            onPressed: () async {
+              String fcmToken = context.bloc<FcmTokenBloc>().token;
+              //TODO: Show loading indicator
+              context.bloc<ServerBloc>().add(LogoutServer(
+                  server: srvr, fcmToken: fcmToken, deleteServer: true));
+              Navigator.of(context).pop();
             }),
         MaterialButton(
             child: new Text("No"),

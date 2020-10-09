@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -210,14 +211,16 @@ class LoginFormState extends State<LoginForm> {
         _currentServer = state.server;
       }
       if (state is ServerLoginSuccess) {
-        Navigator.of(context).pushAndRemoveUntil(
-            FadeRoute(
-              builder: (BuildContext context) => MainPage(),
-              settings: RouteSettings(
-                name: AppRoutes.main,
+        SchedulerBinding.instance.addPostFrameCallback((_) {
+          Navigator.of(context).pushAndRemoveUntil(
+              FadeRoute(
+                builder: (BuildContext context) => MainPage(),
+                settings: RouteSettings(
+                  name: AppRoutes.main,
+                ),
               ),
-            ),
-            (Route<dynamic> route) => false);
+              (Route<dynamic> route) => false);
+        });
       }
     }, builder: (context, state) {
       return scaffoldLoginForm;

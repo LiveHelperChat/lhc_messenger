@@ -36,6 +36,13 @@ class Server {
       _urlhasindex = WidgetUtils.checkInt(value);
 
   bool get loggedIn => this.isloggedin == Server.LOGGED_IN;
+  bool get userOnline => this.user_online == 1;
+  set userOnline(bool val) {
+    if (val)
+      this.user_online = 1;
+    else
+      this.user_online = 0;
+  }
 
   bool twilioInstalled = false, extensionsSynced;
   int id,

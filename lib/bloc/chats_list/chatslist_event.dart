@@ -4,9 +4,13 @@ abstract class ChatslistEvent extends Equatable {
   const ChatslistEvent();
 }
 
+class ChatListInitialise extends ChatslistEvent {
+  @override
+  List<Object> get props => [];
+}
+
 class GetChatList extends ChatslistEvent {
   @override
-  // TODO: implement props
   List<Object> get props => [];
 }
 

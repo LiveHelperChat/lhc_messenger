@@ -20,20 +20,19 @@ class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
     ChatslistEvent event,
   ) async* {
     final currentState = state;
-
-    if (event is FetchChatsList) {
+    if (event is ChatListInitialise) {
+      yield ChatslistInitial();
+    } else if (event is FetchChatsList) {
       yield* _mapChatListLoadedToState(event, state);
     } else if (event is CloseChatMainPage || event is DeleteChatMainPage) {
-      var closed = false;
       if (currentState is ChatListLoaded) {
         yield currentState.copyWith(isLoading: true);
         try {
           if (event is CloseChatMainPage) {
-            closed = await serverRepository.closeChat(event.server, event.chat);
+            await serverRepository.closeChat(event.server, event.chat);
             add(FetchChatsList(server: event.server));
           } else if (event is DeleteChatMainPage) {
-            closed =
-                await serverRepository.deleteChat(event.server, event.chat);
+            await serverRepository.deleteChat(event.server, event.chat);
             add(FetchChatsList(server: event.server));
           }
           yield currentState.copyWith(isLoading: false);
@@ -51,10 +50,17 @@ class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
   ) async* {
     try {
       if (currentState is ChatslistInitial) {
-        var serverinit = await serverRepository.fetchChatList(event.server);
+        try {
+          var server = await serverRepository.fetchChatList(event.server);
 
-        //TODO: Add pending and other lists
-        yield ChatListLoaded(activeChatList: serverinit.activeChatList);
+          yield ChatListLoaded(
+              activeChatList: server.activeChatList,
+              pendingChatList: server.pendingChatList,
+              transferChatList: server.transferChatList,
+              twilioChatList: server.twilioChatList);
+        } catch (ex) {
+          yield ChatListLoadError(message: "${ex?.message}");
+        }
       }
 
       if (currentState is ChatListLoaded) {
