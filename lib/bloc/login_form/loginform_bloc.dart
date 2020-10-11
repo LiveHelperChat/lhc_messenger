@@ -56,7 +56,7 @@ class LoginformBloc extends Bloc<LoginformEvent, LoginformState> {
 
       yield ServerLoginFinished();
 
-      if (srv.loggedIn) {
+      if (srv.isLoggedIn) {
         if (await serverRepository.isExtensionInstalled(srv, "twilio")) {
           srv.twilioInstalled = true;
         }

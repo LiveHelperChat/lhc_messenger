@@ -20,7 +20,7 @@ class ServerBloc extends Bloc<ServerEvent, ServerState> {
     ServerEvent event,
   ) async* {
     final currentState = state;
-    if (event is InitializeServers) {
+    if (event is InitServers) {
       yield (ServerInitial());
     } else if (event is GetServerListFromDB) {
       yield* mapGetListToState(event, state);
@@ -51,7 +51,7 @@ class ServerBloc extends Bloc<ServerEvent, ServerState> {
 
   Future<Server> _logout(Server server, String fcmToken) async {
     await serverRepository.fetchInstallationId(server, fcmToken, "logout");
-    server.isloggedin = 0;
+    server.isLoggedIn = false;
     return serverRepository.saveServerToDB(server, "id=?", [server.id]);
   }
 
@@ -82,7 +82,7 @@ class ServerBloc extends Bloc<ServerEvent, ServerState> {
               selectedServer: server,
               isActionLoading: false);
         } catch (ex) {
-          yield ServerFromDBLoadError(message: "${ex?.message}");
+          yield ServerListLoadError(message: "${ex?.message}");
         }
       }
     }

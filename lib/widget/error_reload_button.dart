@@ -3,15 +3,15 @@ import 'package:flutter/material.dart';
 
 ///ErrorReloadButton(String message, String actionText, void Function() buttonAction)
 ///@message Error message to display, @actionText text to display on button
-///@buttonAction function to execute on button press
+///@onButtonPress function to execute on button press
 ///
 class ErrorReloadButton extends StatelessWidget {
-  final String message;
+  final Widget child;
   final String actionText;
   final Function onButtonPress;
   ErrorReloadButton(
       {Key key,
-      this.message,
+      this.child,
       @required this.onButtonPress,
       @required this.actionText})
       : super(key: key);
@@ -19,12 +19,14 @@ class ErrorReloadButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-        child: Column(children: <Widget>[
-      Text(message ?? ''),
-      MaterialButton(
-        child: Text(actionText),
-        onPressed: onButtonPress(),
-      ),
-    ]));
+        child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+          child ?? Container(),
+          RaisedButton(
+            child: Text(actionText),
+            onPressed: onButtonPress,
+          ),
+        ]));
   }
 }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import 'package:livehelp/pages/main_page.dart';
-import 'package:livehelp/pages/token_inherited_widget.dart';
 
 class AppRoutes {
   static const String login = "/login";
@@ -13,9 +12,8 @@ class AppRoutes {
   static const String twilio = "/main/twilio";
 }
 
-/**
- * Serves as a class to pass arguments to routes
- */
+///
+/// Serves as a class to pass arguments to routes
 class RouteArguments {
   RouteArguments();
 }

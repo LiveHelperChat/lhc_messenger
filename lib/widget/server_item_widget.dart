@@ -44,7 +44,7 @@ class ServerItemWidget extends StatelessWidget {
                             fontSize: 18.00,
                           ),
                         ),
-                        server.loggedIn
+                        server.isLoggedIn
                             ? Text("Logged In",
                                 style: TextStyle(color: Colors.green))
                             : Text("Logged Out",

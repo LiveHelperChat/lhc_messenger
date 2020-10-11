@@ -12,13 +12,12 @@ import 'package:livehelp/bloc/bloc.dart';
 import 'package:livehelp/data/database.dart';
 import 'package:livehelp/model/model.dart';
 import 'package:livehelp/pages/pages.dart';
-import 'package:livehelp/pages/token_inherited_widget.dart';
 import 'package:livehelp/services/twilio_service.dart';
 import 'package:livehelp/utils/routes.dart';
 import 'package:livehelp/services/server_api_client.dart';
 import 'package:livehelp/widget/widget.dart';
 
-import 'lists/chat_list_active.dart';
+import 'package:livehelp/globals.dart' as globals;
 
 class MainPage extends StatefulWidget {
   const MainPage();
@@ -31,7 +30,8 @@ class _MainPageState extends State<MainPage>
     with
         SingleTickerProviderStateMixin,
         WidgetsBindingObserver,
-        AfterLayoutMixin<MainPage> {
+        AfterLayoutMixin<MainPage>,
+        RouteAware {
   // used to track application lifecycle
   AppLifecycleState _lastLifecyleState;
 
@@ -42,24 +42,15 @@ class _MainPageState extends State<MainPage>
   TwilioService _twilioService = new TwilioService(httpClient: http.Client());
 
   List<Server> listServers = new List<Server>();
-  List<Chat> _activeChatList = new List<Chat>();
-  List<Chat> _pendingChatList = new List<Chat>();
-  List<Chat> _transferedChatList = new List<Chat>();
-  List<Chat> _twilioChatList = new List<Chat>();
 
   List<dynamic> activeChatStore = new List();
   List<dynamic> pendingChatStore = new List();
   List<dynamic> transferChatStore = new List();
 
-  bool _actionLoading = false;
-
   Timer _timerChatList;
-  String _fcmToken;
   Server _selectedServer;
-  bool _user_online;
   bool _userOnlineLoading = false;
 
-  bool _showUpdateNotice = false;
   bool initialized = false;
   bool isTwilioActive = false;
   DatabaseHelper dbHelper = DatabaseHelper();
@@ -71,15 +62,14 @@ class _MainPageState extends State<MainPage>
   @override
   void initState() {
     super.initState();
+
     _serverRequest = ServerApiClient(httpClient: http.Client());
 
     WidgetsBinding.instance.addObserver(this);
 
-    _user_online = false;
-
-    _serverBloc = context.bloc<ServerBloc>();
-    _serverBloc.add(GetServerListFromDB(onlyLoggedIn: true));
-    _chatListBloc = context.bloc<ChatslistBloc>();
+    _serverBloc = context.bloc<ServerBloc>()
+      ..add(GetServerListFromDB(onlyLoggedIn: true));
+    _chatListBloc = context.bloc<ChatslistBloc>()..add(ChatListInitialise());
     _loadChatList();
 
     _timerChatList = myTimer(5);
@@ -90,7 +80,27 @@ class _MainPageState extends State<MainPage>
     _timerChatList.cancel();
 
     WidgetsBinding.instance.removeObserver(this);
+    globals.routeObserver.unsubscribe(this);
     super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    globals.routeObserver.subscribe(this, ModalRoute.of(context));
+  }
+
+// Called when the current route has been pushed.
+  @override
+  void didPush() {
+    _init();
+  }
+
+  @override
+  // Called when the top route has been popped off, and the current route shows up.
+  void didPopNext() {
+    _init();
   }
 
   @override
@@ -116,6 +126,11 @@ class _MainPageState extends State<MainPage>
       default:
         break;
     }
+  }
+
+  void _init() {
+    _serverBloc.add(GetServerListFromDB(onlyLoggedIn: true));
+    _loadChatList();
   }
 
   //final String token;
@@ -201,6 +216,7 @@ class _MainPageState extends State<MainPage>
         child:
             BlocConsumer<ServerBloc, ServerState>(listener: (context, state) {
           if (state is ServerInitial) {
+            _serverBloc.add(GetServerListFromDB(onlyLoggedIn: true));
             _chatListBloc.add(ChatListInitialise());
           }
 
@@ -211,6 +227,10 @@ class _MainPageState extends State<MainPage>
             } else {
               _loadServerManage(context);
             }
+          }
+
+          if (state is ServerLoggedOut) {
+            _serverBloc.add(InitServers());
           }
         }, builder: (context, state) {
           if (state is ServerListFromDBLoaded) {
@@ -233,16 +253,16 @@ class _MainPageState extends State<MainPage>
                         child: DropdownButton(
                             isExpanded: true,
                             value: state.serverList.isNotEmpty
-                                ? state.serverList.elementAt(0)
+                                ? state.selectedServer
                                 : null,
                             icon: Icon(
                               Icons.arrow_drop_down,
                               color: Colors.white,
                             ),
                             items: listServers.map((srvr) {
-                              return new DropdownMenuItem(
+                              return DropdownMenuItem(
                                 value: srvr,
-                                child: new Text(
+                                child: Text(
                                   '${srvr?.servername}',
                                   style: TextStyle(color: Colors.teal.shade900),
                                 ),
@@ -263,7 +283,7 @@ class _MainPageState extends State<MainPage>
                         ),
                         onTap: () => {},
                       ),
-                      decoration: new BoxDecoration(
+                      decoration: BoxDecoration(
                           image: new DecorationImage(
                               image: new AssetImage('graphics/header.jpg'),
                               fit: BoxFit.fill)),
@@ -286,7 +306,8 @@ class _MainPageState extends State<MainPage>
                                       maxLines: 2,
                                       softWrap: true,
                                     ),
-                              subtitle: state.selectedServer?.loggedIn ?? false
+                              subtitle: state.selectedServer?.isLoggedIn ??
+                                      false
                                   ? Text("Logged In",
                                       style: TextStyle(color: Colors.green))
                                   : Text("Logged Out",
@@ -320,7 +341,7 @@ class _MainPageState extends State<MainPage>
                                               color: Colors.red,
                                             ),
                                       onPressed: () {
-                                        if ((state.selectedServer?.loggedIn ??
+                                        if ((state.selectedServer?.isLoggedIn ??
                                             false)) {
                                           _serverBloc.add(SetUserOnlineStatus(
                                               server: state.selectedServer));
@@ -341,7 +362,7 @@ class _MainPageState extends State<MainPage>
                         title: Text("Server Details"),
                         leading: Icon(Icons.web),
                         onTap: () {
-                          if (state.selectedServer.loggedIn) {
+                          if (state.selectedServer.isLoggedIn) {
                             Navigator.of(context).pop();
                             Navigator.of(context).push(
                               FadeRoute(
@@ -378,12 +399,12 @@ class _MainPageState extends State<MainPage>
                       },
                     ),
                     Divider(),
-                    _isServerLoggedIn()
+                    state.selectedServer?.isLoggedIn ?? false
                         ? ListTile(
                             title: Text("Logout Server"),
                             leading: Icon(Icons.exit_to_app),
                             onTap: () {
-                              if (_isServerLoggedIn()) {
+                              if (state.selectedServer.isLoggedIn) {
                                 Navigator.pop(context);
                                 _showAlert(context, state.selectedServer);
                               } else {
@@ -408,8 +429,21 @@ class _MainPageState extends State<MainPage>
               floatingActionButton: _speedDial(context),
             );
           }
-
-          return Text("No active Server");
+          if (state is ServerListLoadError) {
+            return ErrorReloadButton(
+                child: Text(state.message),
+                onButtonPress: () {
+                  _serverBloc.add(InitServers());
+                },
+                actionText: 'Reload');
+          }
+          return Scaffold(
+              body: ErrorReloadButton(
+                  child: Text("No Active Server"),
+                  onButtonPress: () {
+                    _serverBloc.add(InitServers());
+                  },
+                  actionText: 'Reload'));
         }));
 
     return mainScaffold;
@@ -447,16 +481,14 @@ class _MainPageState extends State<MainPage>
 
     if (state is ServerListFromDBLoaded) {
       if (state.serverList?.isNotEmpty ?? false) {
-        print("Servers Length: ${state.serverList.length}");
-        // _selectedServer = state.serverList.elementAt(0);
         listServers = state.serverList;
 
         // _loadChatList();
       }
     }
-    if (state is ServerFromDBLoadError) {
+    if (state is ServerListLoadError) {
       return ErrorReloadButton(
-          message: state.message,
+          child: Text(state.message),
           onButtonPress: () {
             _loadChatList();
           },
@@ -476,7 +508,9 @@ class _MainPageState extends State<MainPage>
 
   void _loadChatList() {
     listServers.forEach((server) {
-      _chatListBloc.add(FetchChatsList(server: server));
+      if (server.isLoggedIn) {
+        _chatListBloc.add(FetchChatsList(server: server));
+      }
     });
   }
 
@@ -492,14 +526,6 @@ class _MainPageState extends State<MainPage>
           ),
         ),
         (Route<dynamic> route) => false);
-  }
-
-  void _addList(List<Chat> chatList, List<Chat> toAdd) {
-    //Remove deleted chats
-    chatList.removeWhere((chat) {
-      return !(toAdd.any((toChat) =>
-          (chat.id == toChat.id && chat.serverid == toChat.serverid)));
-    });
   }
 
   Timer myTimer(int seconds) {
@@ -532,38 +558,23 @@ class _MainPageState extends State<MainPage>
     */
   }
 
-  bool _isServerLoggedIn() {
-    return _selectedServer?.loggedIn ?? false ? true : false;
-  }
-
-  // TODO Remove
-  void onChatRemoved(Chat chat) {
-    assert(chat != null);
-    switch (chat.status.toString()) {
-      case '1':
-        setState(() {
-          this._activeChatList.removeWhere((cht) => cht.id == chat.id);
-        });
-        break;
-    }
-  }
-
   Future<bool> _checkTwilio(Server server) async {
     return await _serverRequest.isExtensionInstalled(server, "twilio");
   }
 
   void _showAlert(BuildContext context, Server server) {
     AlertDialog dialog = new AlertDialog(
-      content: new Text(
+      content: Text(
         "Do you want to logout of the server? \n\nYou will not receive notifications for chats.",
-        style: new TextStyle(fontSize: 14.0),
+        style: TextStyle(fontSize: 14.0),
       ),
       actions: <Widget>[
         new MaterialButton(
             child: new Text("Yes"),
-            onPressed: () async {
-              context.bloc<LoginformBloc>().add(ServerLogout(
+            onPressed: () {
+              _serverBloc.add(LogoutServer(
                   server: server,
+                  deleteServer: false,
                   fcmToken: context.bloc<FcmTokenBloc>().token));
               Navigator.of(context).pop();
             }),
@@ -580,10 +591,6 @@ class _MainPageState extends State<MainPage>
 
   void _showSnackBar(String text) {
     _scaffoldKey.currentState.showSnackBar(SnackBar(content: Text(text)));
-  }
-
-  Future<bool> _deleteServer() async {
-    return dbHelper.deleteItem(Server.tableName, "id=?", [_selectedServer.id]);
   }
 
   Future<Null> _getTwilioStatus() async {
@@ -607,12 +614,10 @@ class _MainPageState extends State<MainPage>
 
   void _addServer({Server server}) {
     Navigator.of(context).push(FadeRoute(
-      builder: (BuildContext context) => TokenInheritedWidget(
-          token: _fcmToken,
-          child: LoginForm(
-            isNew: true,
-            server: server,
-          )),
+      builder: (BuildContext context) => LoginForm(
+        isNew: true,
+        server: server,
+      ),
       settings: new RouteSettings(
         name: AppRoutes.login,
       ),

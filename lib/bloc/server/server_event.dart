@@ -7,8 +7,8 @@ abstract class ServerEvent extends Equatable {
   List<Object> get props => [];
 }
 
-class InitializeServers extends ServerEvent {
-  const InitializeServers();
+class InitServers extends ServerEvent {
+  const InitServers();
 
   @override
   List<Object> get props => [];
@@ -60,4 +60,7 @@ class LogoutServer extends ServerEvent {
   const LogoutServer(
       {@required this.server, this.fcmToken, this.deleteServer = false})
       : assert(server != null);
+
+  @override
+  List<Object> get props => [server, fcmToken, deleteServer];
 }

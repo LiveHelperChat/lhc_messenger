@@ -19,17 +19,6 @@ class ServerLogin extends LoginformEvent {
   List<Object> get props => [server];
 }
 
-class ServerLogout extends LoginformEvent {
-  final Server server;
-  final String fcmToken;
-
-  const ServerLogout({@required this.server, this.fcmToken})
-      : assert(server != null);
-
-  @override
-  List<Object> get props => [server];
-}
-
 class SetServerLoginError extends LoginformEvent {
   final String message;
 

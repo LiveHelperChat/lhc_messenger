@@ -88,7 +88,7 @@ class _ActiveListWidgetState extends State<ActiveListWidget> {
 
       if (state is ChatListLoadError) {
         return ErrorReloadButton(
-          message: "An error occurred: ${state.message}",
+          child: Text("An error occurred: ${state.message}"),
           actionText: 'Reload',
           onButtonPress: () {
             context.bloc<ChatslistBloc>().add(ChatListInitialise());

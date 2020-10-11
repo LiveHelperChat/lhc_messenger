@@ -30,8 +30,6 @@ class PendingListWidget extends StatefulWidget {
 class _PendingListWidgetState extends State<PendingListWidget> {
   ServerRepository _serverRepository;
 
-  List<Chat> _listToAdd;
-
   @override
   void initState() {
     super.initState();
@@ -85,7 +83,7 @@ class _PendingListWidgetState extends State<PendingListWidget> {
 
       if (state is ChatListLoadError) {
         return ErrorReloadButton(
-          message: "An error occurred: ${state.message}",
+          child: Text("An error occurred: ${state.message}"),
           actionText: 'Reload',
           onButtonPress: () {
             context.bloc<ChatslistBloc>().add(ChatListInitialise());
@@ -135,11 +133,5 @@ class _PendingListWidgetState extends State<PendingListWidget> {
       default:
         break;
     }
-  }
-
-  void _updateList(chat) {
-    setState(() {
-      _listToAdd.removeWhere((cht) => chat.id == cht.id);
-    });
   }
 }

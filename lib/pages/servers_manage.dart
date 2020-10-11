@@ -1,145 +1,149 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:livehelp/bloc/bloc.dart';
-import 'package:livehelp/data/database.dart';
 import 'package:livehelp/model/model.dart';
 import 'package:livehelp/pages/login_form.dart';
+import 'package:livehelp/pages/pages.dart';
 import 'package:livehelp/utils/routes.dart' as LHCRouter;
-import 'package:livehelp/services/server_api_client.dart';
-import 'package:livehelp/pages/token_inherited_widget.dart';
 import 'package:livehelp/widget/widget.dart';
 import 'package:livehelp/utils/enum_menu_options.dart';
 
+import 'package:livehelp/globals.dart' as globals;
+
 class ServersManage extends StatefulWidget {
   ServersManage({this.returnToList = false});
+  // used to determine whether page was opened from MainPage
   final bool returnToList;
   @override
   ServersManageState createState() => new ServersManageState();
 }
 
-class ServersManageState extends State<ServersManage> {
-  DatabaseHelper dbHelper;
-  ServerApiClient _serverRequest;
-
-  List<Server> listServers = List<Server>();
-
+class ServersManageState extends State<ServersManage> with RouteAware {
   GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
 
   ValueChanged<TimeOfDay> selectTime;
 
   TimeOfDay selectedTime;
-
-  String _fcmToken;
+  ServerBloc _serverBloc;
 
   var _tapPosition;
 
   @override
   void initState() {
     super.initState();
+    _serverBloc = context.bloc<ServerBloc>()
+      ..add(GetServerListFromDB(onlyLoggedIn: false));
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    globals.routeObserver.subscribe(this, ModalRoute.of(context));
+  }
+
+  // Called when the current route has been pushed.
+  @override
+  void didPush() {
+    _serverBloc.add(GetServerListFromDB());
+  }
+
+  @override
+  // Called when the top route has been popped off, and the current route shows up.
+  void didPopNext() {
+    _serverBloc.add(GetServerListFromDB());
+  }
+
+  @override
+  void dispose() {
+    globals.routeObserver.unsubscribe(this);
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final tokenInherited = TokenInheritedWidget.of(context);
-    setState(() {
-      _fcmToken = tokenInherited?.token;
-    });
-
-    var scaffold = new Scaffold(
-      backgroundColor: Colors.grey.shade300,
-      key: _scaffoldKey,
-      appBar: new AppBar(
-        title: Text("Manage Servers"),
-        elevation:
-            Theme.of(context).platform == TargetPlatform.android ? 6.0 : 0.0,
-        actions: <Widget>[],
-      ),
-      body: BlocConsumer<ServerBloc, ServerState>(
-          listener: (context, state) {
-            if (state is ServerInitial || state is ServerListFromDBLoading) {
-              context.bloc<ServerBloc>().add(GetServerListFromDB());
-            }
-            if (state is ServerLoggedOut) {
-              context.bloc<ServerBloc>().add(InitializeServers());
-            }
-          },
-          builder: _bodyBuilder),
-      floatingActionButton: new FloatingActionButton(
-        child: new Icon(Icons.add),
-        onPressed: () {
-          _addServer();
+    var scaffold = BlocConsumer<ServerBloc, ServerState>(
+        listener: (context, state) {
+          if (state is ServerInitial || state is ServerListLoading) {
+            _serverBloc.add(GetServerListFromDB(onlyLoggedIn: false));
+          }
+          if (state is ServerLoggedOut) {
+            _serverBloc.add(GetServerListFromDB(onlyLoggedIn: false));
+            _serverBloc.add(InitServers());
+          }
         },
-      ),
-    );
-/*
-    var _asyncLoader = new AsyncLoader(
-      key: _asyncLoaderState,
-      initState: () async =>  await _alreadyLoggedIn(),
-      renderLoad: () => new Scaffold(
-            body: new Center(child: new CircularProgressIndicator()),
-          ),
-      renderError: ([error]) => new Scaffold(
-            body: new Center(
-              child: new Text('Something is wrong'),
-            ),
-          ),
-      renderSuccess: ({data}) {
-         if (data == 0 || data == null || widget.manage) {
-          return scaff;
-        } else {
-          return new TokenInheritedWidget(
-              token: _fcmToken, child: new MainPage());
-        }
-       
-      },
-    );
-    */
+        builder: _bodyBuilder);
 
     return scaffold;
   }
 
   Widget _bodyBuilder(BuildContext context, ServerState state) {
-    if (state is ServerInitial || state is ServerListFromDBLoading) {
-      return Center(
+    if (state is ServerInitial || state is ServerListLoading) {
+      return Scaffold(
+          body: Center(
         child: CircularProgressIndicator(),
-      );
+      ));
     }
     if (state is ServerListFromDBLoaded) {
-      return new ListView.builder(
-          itemCount: state.serverList.length,
-          itemBuilder: (context, index) {
-            Server server = state.serverList[index];
-            return new GestureDetector(
-              child: ServerItemWidget(
-                  server: server,
-                  menuBuilder: _itemMenuBuilder(),
-                  onMenuSelected: (selectedOption) {}),
-              onTap: () {
-                if (server.loggedIn) {
-                  if (widget.returnToList) {
-                    Navigator.of(context).pop();
+      //If any server is logged in
+      if (state.serverList.any((server) => server.isLoggedIn) &&
+          !widget.returnToList) {
+        return MainPage();
+      }
+      return Scaffold(
+        backgroundColor: Colors.grey.shade300,
+        key: _scaffoldKey,
+        appBar: new AppBar(
+          title: Text("Manage Servers"),
+          elevation:
+              Theme.of(context).platform == TargetPlatform.android ? 6.0 : 0.0,
+          actions: <Widget>[],
+        ),
+        body: ListView.builder(
+            itemCount: state.serverList.length,
+            itemBuilder: (context, index) {
+              Server server = state.serverList[index];
+              return new GestureDetector(
+                child: ServerItemWidget(
+                    server: server,
+                    menuBuilder: _itemMenuBuilder(),
+                    onMenuSelected: (selectedOption) {}),
+                onTap: () {
+                  if (server.isLoggedIn) {
+                    if (widget.returnToList) {
+                      Navigator.of(context).pop();
+                    } else {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).pushReplacement(
+                          LHCRouter.Router.generateRoute(RouteSettings(
+                              name: LHCRouter.AppRoutes.main,
+                              arguments: LHCRouter.RouteArguments())));
+                    }
                   } else {
-                    Navigator.of(context).pop();
-                    Navigator.of(context).pushReplacement(
-                        LHCRouter.Router.generateRoute(new RouteSettings(
-                            name: LHCRouter.AppRoutes.main,
-                            arguments: LHCRouter.RouteArguments())));
+                    _showAlertMsg("Not Logged In",
+                        "You are logged out of this server.\n\nLongPress Server for options");
                   }
-                } else {
-                  _showAlertMsg("Not Logged In",
-                      "You are logged out of this server.\n\nLongPress Server for options");
-                }
-              },
-              onLongPress: () {
-                _showCustomMenu(server);
-              },
-              onTapDown: _storePosition,
-            );
-          });
+                },
+                onLongPress: () {
+                  _showCustomMenu(server);
+                },
+                onTapDown: _storePosition,
+              );
+            }),
+        floatingActionButton: new FloatingActionButton(
+          child: new Icon(Icons.add),
+          onPressed: () {
+            _addServer();
+          },
+        ),
+      );
     }
-    return Container();
+    return ErrorReloadButton(
+        onButtonPress: () {
+          _serverBloc.add(InitServers());
+        },
+        actionText: "Reload");
   }
 
   void _addServer({Server svr}) {
@@ -185,29 +189,6 @@ class ServersManageState extends State<ServersManage> {
     _tapPosition = details.globalPosition;
   }
 
-/*
-  Future<Null> _getSavedServers() async {
-    setState(() {
-      listServers.clear();
-    });
-
-    List<Map> savedRecs = await dbHelper.fetchAll(
-        Server.tableName, "${Server.columns['db_id']}  ASC", null, null);
-
-    if (savedRecs != null && savedRecs.length > 0) {
-      savedRecs.forEach((item) {
-        if (!(listServers.any((serv) =>
-            serv.servername == item['servername'] &&
-            serv.url == item['url'] &&
-            serv.username == item['username']))) {
-          setState(() {
-            listServers.add(new Server.fromMap(item));
-          });
-        }
-      });
-    }
-  }  */
-
   List<PopupMenuEntry<ServerItemMenuOption>> _itemMenuBuilder() {
     return <PopupMenuEntry<ServerItemMenuOption>>[
       const PopupMenuItem<ServerItemMenuOption>(
@@ -246,10 +227,6 @@ class ServersManageState extends State<ServersManage> {
     );
 
     showDialog(context: context, builder: (BuildContext context) => dialog);
-  }
-
-  Future<bool> _deleteServer(Server srvr) async {
-    return dbHelper.deleteItem(Server.tableName, "id=?", [srvr.id]);
   }
 
   void _showAlertMsg(String title, String msg) {

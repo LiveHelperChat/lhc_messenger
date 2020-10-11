@@ -9,7 +9,7 @@ abstract class ServerState extends Equatable {
 
 class ServerInitial extends ServerState {}
 
-class ServerListFromDBLoading extends ServerState {}
+class ServerListLoading extends ServerState {}
 
 class ServerListFromDBLoaded extends ServerState {
   final List<Server> serverList;
@@ -40,9 +40,9 @@ class ServerListFromDBLoaded extends ServerState {
       [serverList, isUserOnline, selectedServer, isActionLoading];
 }
 
-class ServerFromDBLoadError extends ServerState {
+class ServerListLoadError extends ServerState {
   final String message;
-  const ServerFromDBLoadError({this.message});
+  const ServerListLoadError({this.message});
 
   @override
   List<Object> get props => [message];
@@ -54,13 +54,4 @@ class ServerLoggedOut extends ServerState {
 
   @override
   List<Object> get props => [server];
-}
-
-class UserOnlineStatus extends ServerState {
-  final bool isUserOnline;
-
-  const UserOnlineStatus({this.isUserOnline = false});
-
-  @override
-  List<Object> get props => [isUserOnline];
 }

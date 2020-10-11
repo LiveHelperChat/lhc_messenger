@@ -2,6 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:async_loader/async_loader.dart';
+import 'package:livehelp/bloc/bloc.dart';
+
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:livehelp/data/database.dart';
 import 'package:livehelp/model/model.dart';
@@ -32,13 +35,6 @@ class _ServerDetailsState extends State<ServerDetails> {
       new GlobalKey<AsyncLoaderState>();
 
   bool _onlineHoursActive = false;
-  bool _sundayHoursActive = false;
-  bool _mondayHoursActive = false;
-  bool _tuesdayHoursActive = false;
-  bool _wednesdayHoursActive = false;
-  bool _thursdayHoursActive = false;
-  bool _fridayHoursActive = false;
-  bool _saturdayHoursActive = false;
 
   bool _isLoading = false;
 
@@ -60,8 +56,7 @@ class _ServerDetailsState extends State<ServerDetails> {
 
   @override
   Widget build(BuildContext context) {
-    final tokenInherited = TokenInheritedWidget.of(context);
-    _fcmToken = tokenInherited?.token;
+    _fcmToken = context.bloc<FcmTokenBloc>().token;
     // print('$_fcmToken');
 
     Widget loadingIndicator =
@@ -222,17 +217,6 @@ class _ServerDetailsState extends State<ServerDetails> {
     setState(() {
       _onlineHoursActive = _department.online_hours_active;
     });
-  }
-
-  _onDeptListChanged(Department dept) {
-    setState(() => _department = dept);
-    _checkActiveHours();
-  }
-
-  Future<TimeOfDay> _selectTime(BuildContext context) async {
-    final TimeOfDay picked = await showTimePicker(
-        context: context, initialTime: new TimeOfDay.now());
-    return picked ?? 00;
   }
 
   void _refreshServerData() {

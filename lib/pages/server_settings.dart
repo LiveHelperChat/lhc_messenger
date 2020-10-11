@@ -8,7 +8,6 @@ import 'package:http/http.dart' as http;
 import 'package:livehelp/data/database.dart';
 import 'package:livehelp/model/model.dart';
 import 'package:livehelp/services/server_api_client.dart';
-import 'package:livehelp/pages/token_inherited_widget.dart';
 
 class ServerSettings extends StatefulWidget {
   ServerSettings({@required this.server});
@@ -30,15 +29,6 @@ class _ServerSettingsState extends State<ServerSettings> {
   final GlobalKey<AsyncLoaderState> _asyncLoaderState =
       new GlobalKey<AsyncLoaderState>();
 
-  bool _onlineHoursActive = false;
-  bool _sundayHoursActive = false;
-  bool _mondayHoursActive = false;
-  bool _tuesdayHoursActive = false;
-  bool _wednesdayHoursActive = false;
-  bool _thursdayHoursActive = false;
-  bool _fridayHoursActive = false;
-  bool _saturdayHoursActive = false;
-
   bool _isLoading = false;
 
   ValueChanged<TimeOfDay> selectTime;
@@ -50,8 +40,8 @@ class _ServerSettingsState extends State<ServerSettings> {
   @override
   void initState() {
     super.initState();
-    _dbHelper = new DatabaseHelper();
-    _serverRequest = new ServerApiClient(httpClient: http.Client());
+    _dbHelper = DatabaseHelper();
+    _serverRequest = ServerApiClient(httpClient: http.Client());
     _localServer = widget.server;
 
     /*
@@ -88,11 +78,8 @@ class _ServerSettingsState extends State<ServerSettings> {
 
   @override
   Widget build(BuildContext context) {
-    final tokenInherited = TokenInheritedWidget.of(context);
-    _fcmToken = tokenInherited?.token;
-
     Widget loadingIndicator =
-        _isLoading ? new CircularProgressIndicator() : new Container();
+        _isLoading ? CircularProgressIndicator() : Container();
     var scaff = new Scaffold(
         key: _scaffoldKey,
         appBar: new AppBar(

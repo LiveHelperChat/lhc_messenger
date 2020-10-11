@@ -217,10 +217,10 @@ class ServerApiClient {
     var response = await makeRequest(server, "/xml/checklogin", null);
 
     if (response.isOk() && response.body["result"].toString() == "true") {
-      server.isloggedin = Server.LOGGED_IN;
+      server.isLoggedIn = true;
       return server;
     } else {
-      server.isloggedin = Server.LOGGED_OUT;
+      server.isLoggedIn = false;
       return server;
     }
   }
@@ -263,13 +263,13 @@ class ServerApiClient {
   }
 
   // returns a list of chats as maps
-  List<dynamic> chatListToMap(int server_id, List jsonList) {
+  List<dynamic> chatListToMap(int serverId, List jsonList) {
     // dynamically pick the fields from the json returned
     // matching the database columns
     var listToStore = new List<Map<dynamic, dynamic>>();
     jsonList.forEach((k) {
       // Add Server id to chat
-      k["${Chat.columns['db_serverid']}"] = server_id;
+      k["${Chat.columns['db_serverid']}"] = serverId;
 
       Map<String, dynamic> chatsToStore = {};
       Chat.columns.values.forEach((val) {

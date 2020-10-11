@@ -35,19 +35,16 @@ class Server {
   set appendIndexToUrl(bool value) =>
       _urlhasindex = WidgetUtils.checkInt(value);
 
-  bool get loggedIn => this.isloggedin == Server.LOGGED_IN;
+  bool get isLoggedIn => this._loggedin == Server.LOGGED_IN;
+  set isLoggedIn(bool val) => this._loggedin = (val) ? 1 : 0;
+
   bool get userOnline => this.user_online == 1;
-  set userOnline(bool val) {
-    if (val)
-      this.user_online = 1;
-    else
-      this.user_online = 0;
-  }
+  set userOnline(bool val) => this.user_online = (val) ? 1 : 0;
 
   bool twilioInstalled = false, extensionsSynced;
   int id,
       userid,
-      isloggedin,
+      _loggedin,
       rememberme,
       soundnotify,
       vibrate,
@@ -73,7 +70,7 @@ class Server {
   Server(
       {this.id,
       this.userid,
-      this.isloggedin = 0,
+      bool loggedIn = false,
       this.rememberme = 0,
       this.soundnotify = 1,
       this.vibrate = 0,
@@ -92,6 +89,7 @@ class Server {
       this.twilioInstalled,
       int urlHasIndex}) {
     _urlhasindex = urlHasIndex;
+    _loggedin = loggedIn ? 1 : 0;
     pendingChatList = List<Chat>();
     activeChatList = List<Chat>();
     transferChatList = List<Chat>();
@@ -104,7 +102,7 @@ class Server {
       : this(
             id: WidgetUtils.checkInt(map[columns['db_id']]),
             userid: WidgetUtils.checkInt(map[columns['db_userid']]),
-            isloggedin: map[columns['db_isloggedin']],
+            loggedIn: map[columns['db_isloggedin']] == 1,
             rememberme: map[columns['db_rememberme']],
             soundnotify: map[columns['db_soundnotify']],
             vibrate: map[columns['db_vibrate']],
@@ -131,7 +129,7 @@ class Server {
       columns['db_url']: url,
       columns['db_username']: username,
       columns['db_password']: password,
-      columns['db_isloggedin']: isloggedin,
+      columns['db_isloggedin']: isLoggedIn,
       columns['db_rememberme']: rememberme,
       columns['db_soundnotify']: soundnotify,
       columns['db_vibrate']: vibrate,

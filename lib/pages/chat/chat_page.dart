@@ -8,7 +8,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:livehelp/bloc/bloc.dart';
 
-import 'package:livehelp/services/chat_messages_service.dart';
 import 'package:livehelp/services/server_api_client.dart';
 import 'package:livehelp/services/server_repository.dart';
 
@@ -67,7 +66,7 @@ class ChatPageState extends State<ChatPage>
 
   List<MsgHandler> _msgsHandlerList = <MsgHandler>[];
   TextEditingController _textController = TextEditingController();
-  ServerApiClient _chatMessagesService;
+  ServerApiClient _serverApiClient;
 
   List<PopupMenuEntry<ChatItemMenuOption>> menuBuilder;
 
@@ -94,13 +93,14 @@ class ChatPageState extends State<ChatPage>
     WidgetsBinding.instance.addObserver(this);
     _chatCopy = widget.chat; // copy chat so that we can update it later
     _isNewChat = widget.isNewChat;
-    _chatMessagesService = new ChatMessagesService(httpClient: http.Client());
-
-    _serverRepository = context.repository<ServerRepository>();
+    _serverApiClient = ServerApiClient(httpClient: http.Client());
 
     //subject.stream.debounce(new Duration(milliseconds: 300)).listen(_textChanged);
     _writingSubject.stream.listen(_textChanged);
 
+    _serverRepository = context.repository<ServerRepository>();
+
+    // Chat page creates and manages it's own bloc.
     _chatPageBloc = ChatMessagesBloc(serverRepository: _serverRepository);
     _syncMessages();
     _msgsTimer = _syncMsgsTimer(5);
@@ -573,20 +573,21 @@ class ChatPageState extends State<ChatPage>
   }
 
   void _acceptChat() async {
-    _chatMessagesService.chatData(widget.server, _chatCopy).then((chatData) {
+    _serverApiClient.chatData(widget.server, _chatCopy).then((chatData) {
       if (chatData != null) {
         setState(() {
           var newChat = new Chat.fromMap(chatData["chat"]);
+          // update chat with new data
           _chatCopy = newChat.copyWith(owner: chatData["ownerstring"]);
 
-          _chatOwner = chatData["ownerstring"];
+          //_chatOwner = chatData["ownerstring"];
           _operator = chatData["operator"];
           _cannedMsgs =
               Map.castFrom(chatData["canned_messages"]).values.toList();
 
           _isNewChat = false;
-          _isOwnerOfChat = chatData['chat']['user_id'].toString() ==
-              widget.server.userid.toString();
+          _isOwnerOfChat =
+              _chatCopy.user_id.toString() == widget.server.userid.toString();
 
           _cancelAccept();
         });
@@ -627,7 +628,7 @@ class ChatPageState extends State<ChatPage>
   }
 
   void _operatorTyping() async {
-    await _chatMessagesService.setOperatorTyping(
+    await _serverApiClient.setOperatorTyping(
         widget.server, _chatCopy.id, _isWriting);
   }
 

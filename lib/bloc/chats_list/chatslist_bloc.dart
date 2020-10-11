@@ -101,7 +101,7 @@ class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
 
     if (listServers.length > 0) {
       await Future.forEach(listServers, (Server server) async {
-        if (server.loggedIn) {
+        if (server.isLoggedIn) {
           var srvr = await serverRepository.fetchChatList(server);
 
           if (server.twilioInstalled == true) {
