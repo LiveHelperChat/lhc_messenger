@@ -24,12 +24,11 @@ class FcmTokenBloc extends Bloc<FcmTokenEvent, FcmTokenState> {
 
     _initFCM();
   }
-  void _initFCM(){
-
+  void _initFCM() {
     _firebaseMessaging.configure(
       onBackgroundMessage: NotificationHelper.backgroundMessageHandler,
       onMessage: (Map<String, dynamic> message) async {
-        _showNotification(message);
+        this.add(MessageReceivedEvent(fcmToken: token, message: message));
       },
       onLaunch: (Map<String, dynamic> message) {
         // @todo Navigate to proper window on click
@@ -65,15 +64,25 @@ class FcmTokenBloc extends Bloc<FcmTokenEvent, FcmTokenState> {
   Stream<FcmTokenState> mapEventToState(
     FcmTokenEvent event,
   ) async* {
+    final currentState = state;
     if (event is FcmTokenReceive) {
       yield FcmTokenReceived(token: event.fcmToken);
-    }
-    if (event is FcmTokenRefresh) {
+    } else if (event is FcmTokenRefresh) {
       yield FcmTokenReceived(token: event.fcmToken);
+    } else if (event is ChatOpenedEvent) {
+      yield ChatOpenedState(chat: event.chat, token: token);
+    } else if (event is ChatClosedEvent) {
+      yield ChatClosedState(chat: event.chat, token: token);
+    } else if (event is MessageReceivedEvent) {
+      if (currentState is ChatOpenedState) {
+        _showNotification(event.message, openedChat: currentState.chat);
+      } else {
+        _showNotification(event.message);
+      }
     }
   }
 
-  _showNotification(Map<String, dynamic> msg) async {
+  _showNotification(Map<String, dynamic> msg, {Chat openedChat}) async {
     if (msg['data'].isEmpty) return;
     var data = msg['data'];
 
@@ -91,7 +100,9 @@ class FcmTokenBloc extends Bloc<FcmTokenEvent, FcmTokenState> {
           Server srv = new Server.fromMap(server);
           Map<String, dynamic> chat = json.decode(data["chat"].toString());
 
-          if (data['chat_type'].toString() == 'new_msg') {
+          bool isChatOpened = openedChat != null && openedChat.id == chat['id'];
+
+          if (data['chat_type'].toString() == 'new_msg' && !isChatOpened) {
             NotificationHelper.showNotification(
                 srv,
                 'new_msg',

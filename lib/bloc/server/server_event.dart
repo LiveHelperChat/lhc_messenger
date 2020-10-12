@@ -35,7 +35,7 @@ class SelectServer extends ServerEvent {
 class GetUserOnlineStatus extends ServerEvent {
   final Server server;
 
-  const GetUserOnlineStatus({@required this.server}) : assert(server != null);
+  const GetUserOnlineStatus({this.server});
 
   @override
   List<Object> get props => [server];

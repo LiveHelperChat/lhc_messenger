@@ -33,12 +33,24 @@ class ServerBloc extends Bloc<ServerEvent, ServerState> {
       yield* mapSetOnlineToState(event, state);
     } else if (event is GetUserOnlineStatus) {
       if (state is ServerListFromDBLoaded) {
-        var server = await serverRepository.getUserOnlineStatus(event.server);
+        if (event.server != null) {
+          var server = await serverRepository.getUserOnlineStatus(event.server);
 
-        yield (state as ServerListFromDBLoaded).copyWith(
-            isUserOnline: server.userOnline,
-            selectedServer: event.server,
-            isActionLoading: false);
+          yield (state as ServerListFromDBLoaded)
+              .copyWith(selectedServer: server, isActionLoading: false);
+        } else {
+          List<Server> listServer = await Future.wait(
+              (state as ServerListFromDBLoaded).serverList.map((server) async {
+            if (server.isLoggedIn) {
+              return await serverRepository.getUserOnlineStatus(server);
+            } else
+              return server;
+          }).toList());
+          yield (state as ServerListFromDBLoaded).copyWith(
+              serverList: listServer,
+              isActionLoading: false,
+              selectedServer: listServer.elementAt(0));
+        }
       }
     } else if (event is LogoutServer) {
       var servr = await _logout(event.server, event.fcmToken);
@@ -77,10 +89,8 @@ class ServerBloc extends Bloc<ServerEvent, ServerState> {
         yield (state as ServerListFromDBLoaded).copyWith(isActionLoading: true);
         try {
           var server = await serverRepository.setUserOnlineStatus(event.server);
-          yield (state as ServerListFromDBLoaded).copyWith(
-              isUserOnline: server.userOnline,
-              selectedServer: server,
-              isActionLoading: false);
+          yield (state as ServerListFromDBLoaded)
+              .copyWith(selectedServer: server, isActionLoading: false);
         } catch (ex) {
           yield ServerListLoadError(message: "${ex?.message}");
         }

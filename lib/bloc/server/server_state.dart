@@ -13,31 +13,27 @@ class ServerListLoading extends ServerState {}
 
 class ServerListFromDBLoaded extends ServerState {
   final List<Server> serverList;
-  final bool isUserOnline;
   final Server selectedServer;
   final bool isActionLoading;
 
   ServerListFromDBLoaded(
       {this.serverList = const [],
-      this.isUserOnline = false,
       this.selectedServer,
       this.isActionLoading = false});
 
   ServerListFromDBLoaded copyWith(
       {List<Server> serverList,
-      bool isUserOnline,
       Server selectedServer,
       bool isActionLoading}) {
     return ServerListFromDBLoaded(
         serverList: serverList ?? this.serverList,
-        isUserOnline: isUserOnline ?? this.isUserOnline,
         selectedServer: selectedServer ?? this.selectedServer,
         isActionLoading: isActionLoading ?? this.isActionLoading);
   }
 
   @override
   List<Object> get props =>
-      [serverList, isUserOnline, selectedServer, isActionLoading];
+      [serverList, selectedServer, isActionLoading];
 }
 
 class ServerListLoadError extends ServerState {

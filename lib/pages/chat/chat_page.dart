@@ -61,6 +61,7 @@ class ChatPageState extends State<ChatPage>
 
   ChatMessagesBloc _chatPageBloc;
   ServerRepository _serverRepository;
+  FcmTokenBloc _fcmTokenBloc;
 
   List<dynamic> _cannedMsgs = new List();
 
@@ -100,22 +101,18 @@ class ChatPageState extends State<ChatPage>
 
     _serverRepository = context.repository<ServerRepository>();
 
+    // stop sending notifications for this chat
+    _fcmTokenBloc = context.bloc<FcmTokenBloc>()
+      ..add(ChatOpenedEvent(chat: _chatCopy));
+
     // Chat page creates and manages it's own bloc.
     _chatPageBloc = ChatMessagesBloc(serverRepository: _serverRepository);
+
     _syncMessages();
     _msgsTimer = _syncMsgsTimer(5);
     if (!_isNewChat) {
       _acceptChat();
     }
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    setState(() {
-      _lastLifecyleState = state;
-    });
-
-    _checkState();
   }
 
   @override
@@ -132,19 +129,32 @@ class ChatPageState extends State<ChatPage>
     _writingSubject.close();
     _isWritingSubject.close();
     _isActionLoadingSubject.close();
-
+    _fcmTokenBloc.add(ChatClosedEvent(chat: _chatCopy));
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    setState(() {
+      _lastLifecyleState = state;
+    });
+
+    _checkState();
   }
 
   void _checkState() {
     switch (_lastLifecyleState) {
       case AppLifecycleState.resumed:
+        // stop sending notifications for this chat
+        _fcmTokenBloc.add(ChatOpenedEvent(chat: _chatCopy));
         _syncMessages();
         _msgsTimer = _syncMsgsTimer(5);
         break;
       case AppLifecycleState.paused:
       case AppLifecycleState.inactive:
+        //allow showing notifications for this chat
+        _fcmTokenBloc.add(ChatClosedEvent(chat: _chatCopy));
         if (_msgsTimer.isActive) _msgsTimer.cancel();
         if (_operatorTimer != null && _operatorTimer.isActive)
           _operatorTimer.cancel();

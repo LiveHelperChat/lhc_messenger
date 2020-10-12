@@ -24,3 +24,49 @@ class FcmTokenRefresh extends FcmTokenEvent {
   @override
   List<Object> get props => [fcmToken];
 }
+
+class MessageReceivedEvent extends FcmTokenEvent {
+  final String fcmToken;
+  final Map<String, dynamic> message;
+
+  const MessageReceivedEvent({this.fcmToken, this.message});
+
+  @override
+  List<Object> get props => [fcmToken, message];
+}
+
+class OnLaunchedEvent extends FcmTokenEvent {
+  final String fcmToken;
+  final Map<String, dynamic> message;
+
+  const OnLaunchedEvent({this.fcmToken, this.message});
+
+  @override
+  List<Object> get props => [fcmToken, message];
+}
+
+class OnResumeEvent extends FcmTokenEvent {
+  final String fcmToken;
+  final Map<String, dynamic> message;
+
+  const OnResumeEvent({this.fcmToken, this.message});
+
+  @override
+  List<Object> get props => [fcmToken, message];
+}
+
+class ChatOpenedEvent extends FcmTokenEvent {
+  final Chat chat;
+  const ChatOpenedEvent({this.chat});
+
+  @override
+  List<Object> get props => [chat];
+}
+
+class ChatClosedEvent extends FcmTokenEvent {
+  final Chat chat;
+  const ChatClosedEvent({this.chat});
+
+  @override
+  List<Object> get props => [chat];
+}
