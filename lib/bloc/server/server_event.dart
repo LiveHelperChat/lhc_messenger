@@ -34,11 +34,12 @@ class SelectServer extends ServerEvent {
 
 class GetUserOnlineStatus extends ServerEvent {
   final Server server;
+  final bool isActionLoading;
 
-  const GetUserOnlineStatus({this.server});
+  const GetUserOnlineStatus({this.server, this.isActionLoading = false});
 
   @override
-  List<Object> get props => [server];
+  List<Object> get props => [server, isActionLoading];
 }
 
 class SetUserOnlineStatus extends ServerEvent {

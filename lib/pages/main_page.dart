@@ -67,12 +67,11 @@ class _MainPageState extends State<MainPage>
 
     WidgetsBinding.instance.addObserver(this);
 
-    _serverBloc = context.bloc<ServerBloc>()
-      ..add(GetServerListFromDB(onlyLoggedIn: true));
+    _serverBloc = context.bloc<ServerBloc>();
     _chatListBloc = context.bloc<ChatslistBloc>()..add(ChatListInitialise());
-    _loadChatList();
+    _init();
 
-    _timerChatList = myTimer(5);
+    _timerChatList = _chatListTimer(5);
   }
 
   @override
@@ -115,8 +114,8 @@ class _MainPageState extends State<MainPage>
   void _checkState() {
     switch (_lastLifecyleState) {
       case AppLifecycleState.resumed:
-        if (!_timerChatList.isActive) {
-          _timerChatList = myTimer(5);
+        if (!(_timerChatList?.isActive ?? false)) {
+          _timerChatList = _chatListTimer(5);
         }
         break;
       case AppLifecycleState.paused:
@@ -130,16 +129,17 @@ class _MainPageState extends State<MainPage>
 
   void _init() {
     _serverBloc.add(GetServerListFromDB(onlyLoggedIn: true));
+    _serverBloc.add(GetUserOnlineStatus());
     _loadChatList();
   }
 
-  //final String token;
   @override
   Widget build(BuildContext context) {
+    /*
     if (_timerChatList == null) {
       _timerChatList = new Timer.periodic(
           new Duration(seconds: 10), (Timer timer) => _loadChatList()); //
-    }
+    } */
 
     var tabs = <Tab>[
       Tab(
@@ -268,8 +268,9 @@ class _MainPageState extends State<MainPage>
                                 ),
                               );
                             }).toList(),
-                            onChanged: (srv) {
-                              _serverBloc.add(SelectServer(server: srv));
+                            onChanged: (srvr) {
+                              //_serverBloc.add(SelectServer(server: srv));
+                              _serverBloc.add(GetUserOnlineStatus(server: srvr, isActionLoading: true));
                             }),
                       ),
                       currentAccountPicture: GestureDetector(
@@ -483,7 +484,7 @@ class _MainPageState extends State<MainPage>
       if (state.serverList?.isNotEmpty ?? false) {
         listServers = state.serverList;
 
-        // _loadChatList();
+        _loadChatList();
       }
     }
     if (state is ServerListLoadError) {
@@ -528,34 +529,11 @@ class _MainPageState extends State<MainPage>
         (Route<dynamic> route) => false);
   }
 
-  Timer myTimer(int seconds) {
+  Timer _chatListTimer(int seconds) {
     //fetch list first
 
     return new Timer.periodic(
         new Duration(seconds: seconds), (Timer timer) => _loadChatList());
-  }
-/*
-  void _closeChat(Server srv, Chat chat) async {
-   // await _serverRepository.closeChat(srv, chat).then((loaded) {
-      //TODO Update List
-   // });
-  } */
-
-/*
-  void deleteChat(Server srv, Chat chat) async {
-    await _serverRequest.deleteChat(srv, chat).then((loaded) {
-      //  widget.chatRemoved()
-      //TODO Update List;
-    });
-  }  */
-
-  void onActionLoading(bool val) {
-    /*  if (mounted) {
-      setState(() {
-        _actionLoading = val;
-      });
-    }
-    */
   }
 
   Future<bool> _checkTwilio(Server server) async {
@@ -658,7 +636,6 @@ class _MainPageState extends State<MainPage>
         label: 'Twilio SMS/Chat',
         labelStyle: TextStyle(fontSize: 18.0),
         onTap: () async {
-          onActionLoading(true);
           Navigator.of(context).push(FadeRoute(
             builder: (BuildContext context) => TwilioSMSChat(
               server: _selectedServer,

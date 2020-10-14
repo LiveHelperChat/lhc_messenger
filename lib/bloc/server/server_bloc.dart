@@ -26,32 +26,12 @@ class ServerBloc extends Bloc<ServerEvent, ServerState> {
       yield* mapGetListToState(event, state);
     } else if (event is SelectServer) {
       if (currentState is ServerListFromDBLoaded) {
-        yield (state as ServerListFromDBLoaded)
-            .copyWith(selectedServer: event.server);
+        yield currentState.copyWith(selectedServer: event.server);
       }
     } else if (event is SetUserOnlineStatus) {
       yield* mapSetOnlineToState(event, state);
     } else if (event is GetUserOnlineStatus) {
-      if (state is ServerListFromDBLoaded) {
-        if (event.server != null) {
-          var server = await serverRepository.getUserOnlineStatus(event.server);
-
-          yield (state as ServerListFromDBLoaded)
-              .copyWith(selectedServer: server, isActionLoading: false);
-        } else {
-          List<Server> listServer = await Future.wait(
-              (state as ServerListFromDBLoaded).serverList.map((server) async {
-            if (server.isLoggedIn) {
-              return await serverRepository.getUserOnlineStatus(server);
-            } else
-              return server;
-          }).toList());
-          yield (state as ServerListFromDBLoaded).copyWith(
-              serverList: listServer,
-              isActionLoading: false,
-              selectedServer: listServer.elementAt(0));
-        }
-      }
+      yield* mapGetUserOnlineStatusToState(event, state);
     } else if (event is LogoutServer) {
       var servr = await _logout(event.server, event.fcmToken);
       if (event.deleteServer) {
@@ -69,6 +49,33 @@ class ServerBloc extends Bloc<ServerEvent, ServerState> {
 
   Future<bool> _deleteServer(Server server) async {
     return serverRepository.deleteServer(server);
+  }
+
+  Stream<ServerState> mapGetUserOnlineStatusToState(
+      GetUserOnlineStatus event, ServerState currentState) async* {
+    if (currentState is ServerListFromDBLoaded) {
+      if (event.isActionLoading) {
+        yield currentState.copyWith(isActionLoading: true);
+      }
+      if (event.server != null) {
+        var server = await serverRepository.getUserOnlineStatus(event.server);
+
+        yield currentState.copyWith(
+            selectedServer: server, isActionLoading: false);
+      } else {
+        List<Server> listServer =
+            await Future.wait(currentState.serverList.map((server) async {
+          if (server.isLoggedIn) {
+            return await serverRepository.getUserOnlineStatus(server);
+          } else
+            return server;
+        }).toList());
+        yield currentState.copyWith(
+            serverList: listServer,
+            isActionLoading: false,
+            selectedServer: listServer.elementAt(0));
+      }
+    }
   }
 
   Stream<ServerState> mapGetListToState(
