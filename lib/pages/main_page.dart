@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:core';
 
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:flutter/scheduler.dart';
 
 import 'package:after_layout/after_layout.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -11,10 +11,11 @@ import 'package:livehelp/bloc/bloc.dart';
 
 import 'package:livehelp/data/database.dart';
 import 'package:livehelp/model/model.dart';
+import 'package:livehelp/pages/lists/chat_list_twilio.dart';
 import 'package:livehelp/pages/pages.dart';
-import 'package:livehelp/services/twilio_service.dart';
-import 'package:livehelp/utils/routes.dart';
-import 'package:livehelp/services/server_api_client.dart';
+import 'package:livehelp/services/server_repository.dart';
+import 'package:livehelp/utils/utils.dart';
+import 'package:livehelp/utils/routes.dart' as LHCRouter;
 import 'package:livehelp/widget/widget.dart';
 
 import 'package:livehelp/globals.dart' as globals;
@@ -37,10 +38,6 @@ class _MainPageState extends State<MainPage>
 
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
 
-  final int extensionVersion = 12; //(0.1.2)
-
-  TwilioService _twilioService = new TwilioService(httpClient: http.Client());
-
   List<Server> listServers = new List<Server>();
 
   List<dynamic> activeChatStore = new List();
@@ -49,12 +46,10 @@ class _MainPageState extends State<MainPage>
 
   Timer _timerChatList;
   Server _selectedServer;
-  bool _userOnlineLoading = false;
 
   bool initialized = false;
   bool isTwilioActive = false;
   DatabaseHelper dbHelper = DatabaseHelper();
-  ServerApiClient _serverRequest;
 
   ChatslistBloc _chatListBloc;
   ServerBloc _serverBloc;
@@ -62,8 +57,6 @@ class _MainPageState extends State<MainPage>
   @override
   void initState() {
     super.initState();
-
-    _serverRequest = ServerApiClient(httpClient: http.Client());
 
     WidgetsBinding.instance.addObserver(this);
 
@@ -141,78 +134,12 @@ class _MainPageState extends State<MainPage>
           new Duration(seconds: 10), (Timer timer) => _loadChatList()); //
     } */
 
-    var tabs = <Tab>[
-      Tab(
-        child: BlocBuilder<ChatslistBloc, ChatListState>(
-            builder: (context, state) {
-          if (state is ChatListLoaded) {
-            return ChatNumberIndcator(
-              title: "Active",
-              offstage: state.activeChatList.length == 0,
-              number: state.activeChatList.length.toString(),
-            );
+    var mainScaffold = BlocListener<FcmTokenBloc, FcmTokenState>(
+        listener: (context, state) {
+          if (state is NotificationClicked) {
+            _navigateToPage(state.notification);
           }
-          return ChatNumberIndcator(
-            title: "Active",
-            offstage: true,
-            number: "0",
-          );
-        }),
-      ),
-      Tab(
-        child: BlocBuilder<ChatslistBloc, ChatListState>(
-            builder: (context, state) {
-          if (state is ChatListLoaded) {
-            return ChatNumberIndcator(
-              title: "Pending",
-              offstage: state.pendingChatList.length == 0,
-              number: state.pendingChatList.length.toString(),
-            );
-          }
-          return ChatNumberIndcator(
-            title: "Pending",
-            offstage: true,
-            number: "0",
-          );
-        }),
-      ),
-      Tab(
-        child: BlocBuilder<ChatslistBloc, ChatListState>(
-            builder: (context, state) {
-          if (state is ChatListLoaded) {
-            return ChatNumberIndcator(
-              title: "Transfer",
-              offstage: state.transferChatList.length == 0,
-              number: state.transferChatList.length.toString(),
-            );
-          }
-          return ChatNumberIndcator(
-            title: "Transfer",
-            offstage: true,
-            number: "0",
-          );
-        }),
-      )
-    ];
-
-//TODO
-/*   if (_selectedServer != null && _selectedServer.twilioInstalled == true) {
-      tabs.add(Tab(
-          child: new ChatNumberIndcator(
-        title: "SMS",
-        offstage: _twilioChatList?.length == 0,
-        number: _twilioChatList?.length.toString(),
-      )));
-      bodyWidgets.add(ActiveListWidget(
-        listOfServers: listServers,
-        chatListStream: _chatsListBloc.twilioChatList$,
-        loadingState: onActionLoading,
-        refreshList: _initLists,
-      ));
-    }
-*/
-    var mainScaffold = DefaultTabController(
-        length: tabs.length,
+        },
         child:
             BlocConsumer<ServerBloc, ServerState>(listener: (context, state) {
           if (state is ServerInitial) {
@@ -223,7 +150,10 @@ class _MainPageState extends State<MainPage>
           if (state is ServerListFromDBLoaded) {
             listServers = state.serverList;
             if (state.serverList?.isNotEmpty ?? false) {
-              _selectedServer = state.serverList.elementAt(0);
+              if (_selectedServer == null ||
+                  state.serverList.any((sv) => sv.id != _selectedServer.id)) {
+                _selectedServer = state.serverList.elementAt(0);
+              }
             } else {
               _loadServerManage(context);
             }
@@ -233,248 +163,420 @@ class _MainPageState extends State<MainPage>
             _serverBloc.add(InitServers());
           }
         }, builder: (context, state) {
+          var tabs = <Tab>[
+            Tab(
+              child: BlocBuilder<ChatslistBloc, ChatListState>(
+                  builder: (context, state) {
+                if (state is ChatListLoaded) {
+                  return ChatNumberIndcator(
+                    title: "Active",
+                    offstage: state.activeChatList.length == 0,
+                    number: state.activeChatList.length.toString(),
+                  );
+                }
+                return ChatNumberIndcator(
+                  title: "Active",
+                  offstage: true,
+                  number: "0",
+                );
+              }),
+            ),
+            Tab(
+              child: BlocBuilder<ChatslistBloc, ChatListState>(
+                  builder: (context, state) {
+                if (state is ChatListLoaded) {
+                  return ChatNumberIndcator(
+                    title: "Pending",
+                    offstage: state.pendingChatList.length == 0,
+                    number: state.pendingChatList.length.toString(),
+                  );
+                }
+                return ChatNumberIndcator(
+                  title: "Pending",
+                  offstage: true,
+                  number: "0",
+                );
+              }),
+            ),
+            Tab(
+              child: BlocBuilder<ChatslistBloc, ChatListState>(
+                  builder: (context, state) {
+                if (state is ChatListLoaded) {
+                  return ChatNumberIndcator(
+                    title: "Transfer",
+                    offstage: state.transferChatList.length == 0,
+                    number: state.transferChatList.length.toString(),
+                  );
+                }
+                return ChatNumberIndcator(
+                  title: "Transfer",
+                  offstage: true,
+                  number: "0",
+                );
+              }),
+            )
+          ];
+
+          var bodyWidgets = <Widget>[
+            ActiveListWidget(
+              listOfServers: listServers,
+              refreshList: _loadChatList,
+              callbackCloseChat: (server, chat) {
+                _chatListBloc
+                    .add(CloseChatMainPage(server: server, chat: chat));
+              },
+              callBackDeleteChat: (server, chat) {
+                _chatListBloc
+                    .add(DeleteChatMainPage(server: server, chat: chat));
+              },
+            ),
+            PendingListWidget(
+              listOfServers: listServers,
+              refreshList: _loadChatList,
+              callBackDeleteChat: (server, chat) {
+                _chatListBloc
+                    .add(DeleteChatMainPage(server: server, chat: chat));
+              },
+            ),
+            TransferredListWidget(
+              listOfServers: listServers,
+              refreshList: _loadChatList,
+            ),
+          ];
+
           if (state is ServerListFromDBLoaded) {
-            return Scaffold(
-              backgroundColor: Colors.white,
-              key: _scaffoldKey,
-              appBar: AppBar(
-                title: Text("Chat Lists"),
-                bottom: TabBar(tabs: tabs),
-              ),
-              drawer: Drawer(
-                  child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.max,
-                  children: <Widget>[
-                    UserAccountsDrawerHeader(
-                      accountName: Text(""),
-                      accountEmail: Container(
-                        child: DropdownButton(
-                            isExpanded: true,
-                            value: state.serverList.isNotEmpty
-                                ? state.selectedServer
-                                : null,
-                            icon: Icon(
-                              Icons.arrow_drop_down,
-                              color: Colors.white,
-                            ),
-                            items: listServers.map((srvr) {
-                              return DropdownMenuItem(
-                                value: srvr,
-                                child: Text(
-                                  '${srvr?.servername}',
-                                  style: TextStyle(color: Colors.teal.shade900),
-                                ),
-                              );
-                            }).toList(),
-                            onChanged: (srvr) {
-                              //_serverBloc.add(SelectServer(server: srv));
-                              _serverBloc.add(GetUserOnlineStatus(server: srvr, isActionLoading: true));
-                            }),
-                      ),
-                      currentAccountPicture: GestureDetector(
-                        child: new CircleAvatar(
-                          child: new Text(
-                            state.selectedServer?.servername?.substring(0, 1) ??
-                                "",
-                            style: TextStyle(
-                                fontSize: 18.00, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                        onTap: () => {},
-                      ),
-                      decoration: BoxDecoration(
-                          image: new DecorationImage(
-                              image: new AssetImage('graphics/header.jpg'),
-                              fit: BoxFit.fill)),
+            //Add twilio Tabs
+            if (state.selectedServer != null &&
+                state.selectedServer.twilioInstalled == true) {
+              tabs.add(Tab(child: new BlocBuilder<ChatslistBloc, ChatListState>(
+                  builder: (context, state) {
+                if (state is ChatListLoaded) {
+                  return ChatNumberIndcator(
+                    title: "SMS",
+                    offstage: state.twilioChatList.length == 0,
+                    number: state.twilioChatList.length.toString(),
+                  );
+                }
+
+                return ChatNumberIndcator(
+                  title: "Twilio",
+                  offstage: true,
+                  number: "0",
+                );
+              })));
+
+              bodyWidgets.add(TwilioListWidget(
+                listOfServers: listServers,
+                refreshList: _loadChatList,
+                callbackCloseChat: (server, chat) {
+                  _chatListBloc
+                      .add(CloseChatMainPage(server: server, chat: chat));
+                },
+                callBackDeleteChat: (server, chat) {
+                  _chatListBloc
+                      .add(DeleteChatMainPage(server: server, chat: chat));
+                },
+              ));
+            }
+          }
+
+          return DefaultTabController(
+              length: tabs.length,
+              child: BlocBuilder<ServerBloc, ServerState>(
+                  builder: (context, state) {
+                /*
+              if (state is ServerInitial) {
+      _loadChatList();
+      return Center(child: CircularProgressIndicator());
+    }
+
+    if (state is ServerListFromDBLoaded) {
+      if (state.serverList?.isNotEmpty ?? false) {
+        listServers = state.serverList;
+
+        _loadChatList();
+      }
+    }
+    if (state is ServerListLoadError) {
+      return ErrorReloadButton(
+          child: Text(state.message),
+          onButtonPress: () {
+            _loadChatList();
+          },
+          actionText: 'Reload');
+    }  
+              */
+
+                if (state is ServerListFromDBLoaded) {
+                  if (state.serverList?.isNotEmpty ?? false) {
+                    listServers = state.serverList;
+                    _loadChatList();
+                  }
+
+                  return Scaffold(
+                    backgroundColor: Colors.white,
+                    key: _scaffoldKey,
+                    appBar: AppBar(
+                      title: Text("Chats List"),
+                      bottom: TabBar(tabs: tabs),
                     ),
-                    Card(
-                      child: new Container(
-                        height: 150.0,
-                        child: new Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: <Widget>[
-                            ListTile(
-                              title: state.selectedServer?.url == null
-                                  ? Text("")
-                                  : Text(
-                                      "${state.selectedServer?.url}",
-                                      style: TextStyle(fontSize: 11.0),
-                                      textAlign: TextAlign.left,
-                                      overflow: TextOverflow.fade,
-                                      maxLines: 2,
-                                      softWrap: true,
-                                    ),
-                              subtitle: state.selectedServer?.isLoggedIn ??
-                                      false
-                                  ? Text("Logged In",
-                                      style: TextStyle(color: Colors.green))
-                                  : Text("Logged Out",
-                                      style:
-                                          TextStyle(color: Colors.redAccent)),
+                    drawer: Drawer(
+                        child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.max,
+                        children: <Widget>[
+                          UserAccountsDrawerHeader(
+                            accountName: Text(""),
+                            accountEmail: Container(
+                              child: DropdownButton(
+                                  isExpanded: true,
+                                  value: state.serverList.isNotEmpty
+                                      ? state.selectedServer
+                                      : null,
+                                  icon: Icon(
+                                    Icons.arrow_drop_down,
+                                    color: Colors.white,
+                                  ),
+                                  items: listServers.map((srvr) {
+                                    return DropdownMenuItem(
+                                      value: srvr,
+                                      child: Text(
+                                        '${srvr?.servername}',
+                                        style: TextStyle(
+                                            color: Colors.teal.shade900),
+                                      ),
+                                    );
+                                  }).toList(),
+                                  onChanged: (srvr) {
+                                    _selectedServer = srvr;
+                                    _serverBloc.add(SelectServer(server: srvr));
+                                    _serverBloc.add(GetUserOnlineStatus(
+                                        server: srvr, isActionLoading: true));
+                                  }),
                             ),
-                            ListTile(
-                              title: Text(
-                                  "${state.selectedServer?.firstname ?? ""} ${state.selectedServer?.surname ?? ""}"),
-                              subtitle:
-                                  state.selectedServer?.user_online == 1 ??
-                                          false
-                                      ? Text(
-                                          "Operator Online",
-                                          style: new TextStyle(fontSize: 10.0),
-                                        )
-                                      : Text("Operator Offline",
-                                          style: new TextStyle(fontSize: 10.0)),
-                              trailing: state.isActionLoading
-                                  ? CircularProgressIndicator()
-                                  : IconButton(
-                                      icon: state.selectedServer?.user_online ==
-                                                  1 ??
-                                              false
-                                          ? Icon(
-                                              Icons.flash_on,
-                                              color: Colors.green,
-                                            )
-                                          : Icon(
-                                              Icons.flash_off,
-                                              color: Colors.red,
-                                            ),
-                                      onPressed: () {
-                                        if ((state.selectedServer?.isLoggedIn ??
-                                            false)) {
-                                          _serverBloc.add(SetUserOnlineStatus(
-                                              server: state.selectedServer));
+                            currentAccountPicture: GestureDetector(
+                              child: new CircleAvatar(
+                                child: new Text(
+                                  state.selectedServer?.servername
+                                          ?.substring(0, 1) ??
+                                      "",
+                                  style: TextStyle(
+                                      fontSize: 18.00,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              onTap: () => {},
+                            ),
+                            decoration: BoxDecoration(
+                                image: new DecorationImage(
+                                    image:
+                                        new AssetImage('graphics/header.jpg'),
+                                    fit: BoxFit.fill)),
+                          ),
+                          Column(
+                            children: [
+                              Card(
+                                child: new Container(
+                                  child: new Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: <Widget>[
+                                      ListTile(
+                                        title: state.selectedServer?.url == null
+                                            ? Text("")
+                                            : Text(
+                                                "${state.selectedServer?.url}",
+                                                style:
+                                                    TextStyle(fontSize: 11.0),
+                                                textAlign: TextAlign.left,
+                                                overflow: TextOverflow.fade,
+                                                maxLines: 2,
+                                                softWrap: true,
+                                              ),
+                                        subtitle: state.selectedServer
+                                                    ?.isLoggedIn ??
+                                                false
+                                            ? Text("Logged In",
+                                                style: TextStyle(
+                                                    color: Colors.green))
+                                            : Text("Logged Out",
+                                                style: TextStyle(
+                                                    color: Colors.redAccent)),
+                                      ),
+                                      ListTile(
+                                        title: Text(
+                                            "${state.selectedServer?.firstname ?? ""} ${state.selectedServer?.surname ?? ""}"),
+                                        subtitle:
+                                            state.selectedServer?.userOnline ??
+                                                    false
+                                                ? Text(
+                                                    "Operator Online",
+                                                    style: new TextStyle(
+                                                        fontSize: 10.0),
+                                                  )
+                                                : Text("Operator Offline",
+                                                    style: new TextStyle(
+                                                        fontSize: 10.0)),
+                                        trailing: state.isActionLoading
+                                            ? CircularProgressIndicator()
+                                            : IconButton(
+                                                icon: state.selectedServer
+                                                            ?.userOnline ??
+                                                        false
+                                                    ? Icon(
+                                                        Icons.flash_on,
+                                                        color: Colors.green,
+                                                      )
+                                                    : Icon(
+                                                        Icons.flash_off,
+                                                        color: Colors.red,
+                                                      ),
+                                                onPressed: () {
+                                                  if ((state.selectedServer
+                                                          ?.isLoggedIn ??
+                                                      false)) {
+                                                    _serverBloc.add(
+                                                        SetUserOnlineStatus(
+                                                            server: state
+                                                                .selectedServer));
+                                                  } else {
+                                                    Navigator.of(context).pop();
+                                                    _showSnackBar(
+                                                        "You are not logged in to the server");
+                                                  }
+                                                },
+                                              ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              ListTile(
+                                  title: Text("Server Settings"),
+                                  leading: Icon(Icons.settings),
+                                  onTap: () {
+                                    if (state.selectedServer.isLoggedIn) {
+                                      Navigator.of(context).pop();
+                                      Navigator.of(context).push(
+                                        FadeRoute(
+                                          builder: (BuildContext context) =>
+                                              ServerSettings(
+                                            server: state.selectedServer,
+                                          ),
+                                          settings: new RouteSettings(
+                                            name: AppRoutes.serverDetails,
+                                          ),
+                                        ),
+                                      );
+                                    } else {
+                                      Navigator.of(context).pop();
+                                      _showSnackBar(
+                                          "You are not logged in to the server");
+                                    }
+                                  }),
+                              state.selectedServer?.isLoggedIn ?? false
+                                  ? ListTile(
+                                      title: Text("Logout Server"),
+                                      leading: Icon(Icons.exit_to_app),
+                                      onTap: () {
+                                        if (state.selectedServer.isLoggedIn) {
+                                          Navigator.pop(context);
+                                          _showAlert(
+                                              context, state.selectedServer);
                                         } else {
                                           Navigator.of(context).pop();
                                           _showSnackBar(
                                               "You are not logged in to the server");
                                         }
                                       },
+                                    )
+                                  : ListTile(
+                                      title: Text("Login"),
+                                      leading: Icon(Icons.exit_to_app),
+                                      onTap: () {
+                                        Navigator.pop(context);
+                                        _addServer(
+                                            server: state.selectedServer);
+                                      },
                                     ),
-                            ),
-                          ],
-                        ),
+                            ],
+                          ),
+                          Divider(),
+                          ListTile(
+                            title: Text("Manage Servers"),
+                            leading: Icon(Icons.add),
+                            onTap: () {
+                              Navigator.of(context).pop();
+                              Navigator.of(context).push(
+                                FadeRoute(
+                                  builder: (BuildContext context) =>
+                                      ServersManage(
+                                    returnToList: true,
+                                  ),
+                                  settings: RouteSettings(
+                                    name: AppRoutes.serversManage,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
                       ),
-                    ),
-                    Divider(),
-                    ListTile(
-                        title: Text("Server Details"),
-                        leading: Icon(Icons.web),
-                        onTap: () {
-                          if (state.selectedServer.isLoggedIn) {
-                            Navigator.of(context).pop();
-                            Navigator.of(context).push(
-                              FadeRoute(
-                                builder: (BuildContext context) =>
-                                    ServerDetails(
-                                  server: state.selectedServer,
-                                ),
-                                settings: new RouteSettings(
-                                  name: AppRoutes.serverDetails,
-                                ),
-                              ),
-                            );
-                          } else {
-                            Navigator.of(context).pop();
-                            _showSnackBar(
-                                "You are not logged in to the server");
-                          }
-                        }),
-                    ListTile(
-                      title: Text("Manage Servers"),
-                      leading: Icon(Icons.settings),
-                      onTap: () {
-                        Navigator.of(context).pop();
-                        Navigator.of(context).push(
-                          FadeRoute(
-                            builder: (BuildContext context) => ServersManage(
-                              returnToList: true,
-                            ),
-                            settings: RouteSettings(
-                              name: AppRoutes.serversManage,
-                            ),
-                          ),
-                        );
+                    )),
+                    body: Stack(children: <Widget>[
+                      new TabBarView(children: bodyWidgets)
+                    ]),
+                    floatingActionButton: _speedDial(context),
+                  );
+                }
+                if (state is ServerListLoadError) {
+                  return ErrorReloadButton(
+                      child: Text(state.message),
+                      onButtonPress: () {
+                        _serverBloc.add(InitServers());
                       },
-                    ),
-                    Divider(),
-                    state.selectedServer?.isLoggedIn ?? false
-                        ? ListTile(
-                            title: Text("Logout Server"),
-                            leading: Icon(Icons.exit_to_app),
-                            onTap: () {
-                              if (state.selectedServer.isLoggedIn) {
-                                Navigator.pop(context);
-                                _showAlert(context, state.selectedServer);
-                              } else {
-                                Navigator.of(context).pop();
-                                _showSnackBar(
-                                    "You are not logged in to the server");
-                              }
-                            },
-                          )
-                        : ListTile(
-                            title: Text("Login"),
-                            leading: Icon(Icons.exit_to_app),
-                            onTap: () {
-                              Navigator.pop(context);
-                              _addServer(server: state.selectedServer);
-                            },
-                          ),
-                  ],
-                ),
-              )),
-              body: _bodyBuilder(context, state),
-              floatingActionButton: _speedDial(context),
-            );
-          }
-          if (state is ServerListLoadError) {
-            return ErrorReloadButton(
-                child: Text(state.message),
-                onButtonPress: () {
-                  _serverBloc.add(InitServers());
-                },
-                actionText: 'Reload');
-          }
-          return Scaffold(
-              body: ErrorReloadButton(
-                  child: Text("No Active Server"),
-                  onButtonPress: () {
-                    _serverBloc.add(InitServers());
-                  },
-                  actionText: 'Reload'));
+                      actionText: 'Reload');
+                }
+                return Scaffold(
+                    body: ErrorReloadButton(
+                        child: Text("No Active Server"),
+                        onButtonPress: () {
+                          _serverBloc.add(InitServers());
+                        },
+                        actionText: 'Reload'));
+              }));
         }));
-
     return mainScaffold;
   }
 
-  Widget _bodyBuilder(BuildContext context, ServerState state) {
-    var bodyWidgets = <Widget>[
-      ActiveListWidget(
-        listOfServers: listServers,
-        refreshList: _loadChatList,
-        callbackCloseChat: (server, chat) {
-          _chatListBloc.add(CloseChatMainPage(server: server, chat: chat));
-        },
-        callBackDeleteChat: (server, chat) {
-          _chatListBloc.add(DeleteChatMainPage(server: server, chat: chat));
-        },
-      ),
-      PendingListWidget(
-        listOfServers: listServers,
-        refreshList: _loadChatList,
-        callBackDeleteChat: (server, chat) {
-          _chatListBloc.add(DeleteChatMainPage(server: server, chat: chat));
-        },
-      ),
-      TransferredListWidget(
-        listOfServers: listServers,
-        refreshList: _loadChatList,
-      ),
-    ];
+  void _navigateToPage(ReceivedNotification notification) {
+    if (!(notification.server?.isLoggedIn ?? true)) return;
 
+    final routeArgs = RouteArguments(chatId: notification.chat?.id);
+    final routeSettings =
+        RouteSettings(name: AppRoutes.chatPage, arguments: routeArgs);
+    bool isNewChat = notification.type == NotificationType.PENDING;
+
+    var routeChat = LHCRouter.Router.generateRouteChatPage(routeSettings,
+        notification.chat, notification.server, isNewChat, _loadChatList);
+
+    if (notification.type == NotificationType.NEW_MESSAGE ||
+        notification.type == NotificationType.UNREAD) {
+      SchedulerBinding.instance.addPostFrameCallback((_) async {
+        Navigator.of(context).pushRouteIfNotCurrent(routeChat);
+      });
+    } else if (notification.type == NotificationType.PENDING) {
+      Navigator.of(context).popUntil(ModalRoute.withName(AppRoutes.home));
+      SchedulerBinding.instance.addPostFrameCallback((_) async {
+        Navigator.of(context).push(routeChat);
+      });
+    }
+  }
+
+  List<Widget> _bodyBuilder(BuildContext context, ServerState state) {
+/*
     if (state is ServerInitial) {
       _loadChatList();
       return Center(child: CircularProgressIndicator());
@@ -504,7 +606,7 @@ class _MainPageState extends State<MainPage>
         }
         return Container();
       })
-    ]);
+    ]); */
   }
 
   void _loadChatList() {
@@ -534,10 +636,6 @@ class _MainPageState extends State<MainPage>
 
     return new Timer.periodic(
         new Duration(seconds: seconds), (Timer timer) => _loadChatList());
-  }
-
-  Future<bool> _checkTwilio(Server server) async {
-    return await _serverRequest.isExtensionInstalled(server, "twilio");
   }
 
   void _showAlert(BuildContext context, Server server) {
@@ -571,29 +669,16 @@ class _MainPageState extends State<MainPage>
     _scaffoldKey.currentState.showSnackBar(SnackBar(content: Text(text)));
   }
 
-  Future<Null> _getTwilioStatus() async {
-    _serverRequest
-        .isExtensionInstalled(_selectedServer, "twilio")
-        .then((isInstalled) {
-      setState(() {
-        _selectedServer.twilioInstalled = isInstalled;
-      });
-    });
-  }
-
   @override
   void afterFirstLayout(BuildContext context) {
     setState(() {
       initialized = true;
     });
-
-    // if (_selectedServer != null) showUpdateMsg();
   }
 
   void _addServer({Server server}) {
     Navigator.of(context).push(FadeRoute(
       builder: (BuildContext context) => LoginForm(
-        isNew: true,
         server: server,
       ),
       settings: new RouteSettings(
@@ -620,6 +705,7 @@ class _MainPageState extends State<MainPage>
   }
 
   SpeedDial _speedDial(BuildContext context) {
+    var serverRepository = context.repository<ServerRepository>();
     var children = [
       SpeedDialChild(
           child: Icon(Icons.refresh),
@@ -629,24 +715,31 @@ class _MainPageState extends State<MainPage>
           onTap: () => _loadChatList())
     ];
 
-    if (_selectedServer != null && _selectedServer.twilioInstalled == true) {
-      children.add(SpeedDialChild(
-        child: Icon(Icons.sms),
-        backgroundColor: Theme.of(context).primaryColor,
-        label: 'Twilio SMS/Chat',
-        labelStyle: TextStyle(fontSize: 18.0),
-        onTap: () async {
-          Navigator.of(context).push(FadeRoute(
-            builder: (BuildContext context) => TwilioSMSChat(
-              server: _selectedServer,
-              refreshList: () {},
-            ),
-            settings: new RouteSettings(
-              name: AppRoutes.twilio,
-            ),
-          ));
-        },
-      ));
+    if (_serverBloc.state is ServerListFromDBLoaded) {
+      final currentState = _serverBloc.state as ServerListFromDBLoaded;
+      if (currentState.selectedServer != null &&
+          currentState.selectedServer.twilioInstalled == true) {
+        children.add(SpeedDialChild(
+          child: Icon(Icons.sms),
+          backgroundColor: Theme.of(context).primaryColor,
+          label: 'Twilio SMS/Chat',
+          labelStyle: TextStyle(fontSize: 18.0),
+          onTap: () async {
+            Navigator.of(context).push(FadeRoute(
+              builder: (BuildContext context) =>
+                  RepositoryProvider<ServerRepository>(
+                      create: (context) => serverRepository,
+                      child: TwilioSMSChat(
+                        server: _selectedServer,
+                        refreshList: () {},
+                      )),
+              settings: new RouteSettings(
+                name: AppRoutes.twilio,
+              ),
+            ));
+          },
+        ));
+      }
     }
 
     return SpeedDial(

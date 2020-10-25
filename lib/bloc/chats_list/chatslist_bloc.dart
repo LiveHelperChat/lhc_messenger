@@ -162,37 +162,6 @@ class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
     return listToClean;
   }
 
-/*
-  List<Chat> _cleanList(Server server, List<Chat> listToClean) {
-    print("Updating from server");
-    // remove chats from state if no list returned
-    if (server.activeChatList.length == 0) {
-      if(listToClean.length > 0)
-        listToClean.removeWhere((chat) => chat.serverid == server.id);
-    }
-
-    if (server.pendingChatList.length > 0) {
-      _updateList(pendingChatList, server.pendingChatList);
-    } else {
-      this.pendingChatList.removeWhere((chat) => chat.serverid == server.id);
-    }
-    if (server.transferChatList.length > 0) {
-      this.transferChatList.removeWhere((chat) => chat.serverid == server.id);
-    }
-    if (server.transferChatList.length > 0) {
-      _updateList(transferChatList, server.transferChatList);
-    } else {
-      this.transferChatList.removeWhere((chat) => chat.serverid == server.id);
-    }
-    if (server.twilioChatList.length > 0) {
-      _updateList(twilioChatList, server.twilioChatList);
-    } else {
-      this.twilioChatList.removeWhere((chat) => chat.serverid == server.id);
-    }
-  }
-
-  */
-
   Future<List<Chat>> _updateChatList(
       List<Chat> chatToUpdate, List<Chat> listFromServer) async {
     List<Chat> resultList = chatToUpdate;
@@ -206,8 +175,7 @@ class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
         resultList.add(map);
       }
     });
-    //return chatToUpdate;
-    //return resultList;
+
     return await _removeMissingChatFromList(resultList, listFromServer);
   }
 
@@ -229,8 +197,6 @@ class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
             (map) => map.id == chat.id && chat.serverid == chat.serverid)) {
           //assume listToCompare belongs to a single server
           if (chat.serverid == serverIdIncoming) {
-            // int index = resultList.indexOf(chat);
-            // print("index: " + index.toString());
             removedIndices.add(index);
           }
         }

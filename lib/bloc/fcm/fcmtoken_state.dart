@@ -32,6 +32,20 @@ class ChatOpenedState extends FcmTokenState {
   const ChatOpenedState({@required this.token, this.chat})
       : super(token: token);
 
+  ChatOpenedState copyWith({Chat chat, String token}) {
+    return ChatOpenedState(chat: chat ?? this.chat, token: token ?? this.token);
+  }
+
+  @override
+  List<Object> get props => [token, chat];
+}
+
+class ChatPausedState extends ChatOpenedState {
+  final Chat chat;
+  final String token;
+  const ChatPausedState({this.chat, this.token})
+      : super(chat: chat, token: token);
+
   @override
   List<Object> get props => [token, chat];
 }
@@ -66,12 +80,12 @@ class OnLaunchedState extends FcmTokenState {
   List<Object> get props => [fcmToken, message];
 }
 
-class OnResumeState extends FcmTokenState {
-  final String fcmToken;
-  final Map<String, dynamic> message;
+class NotificationClicked extends FcmTokenState {
+  final ReceivedNotification notification;
+  final Chat openedChat;
 
-  const OnResumeState({this.fcmToken, this.message});
+  const NotificationClicked({this.notification, this.openedChat});
 
   @override
-  List<Object> get props => [fcmToken, message];
+  List<Object> get props => [notification, openedChat];
 }

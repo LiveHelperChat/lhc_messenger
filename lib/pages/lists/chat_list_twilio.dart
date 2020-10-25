@@ -10,13 +10,13 @@ import 'package:livehelp/utils/utils.dart';
 
 import 'package:livehelp/utils/routes.dart' as LHCRouter;
 
-class ActiveListWidget extends StatefulWidget {
+class TwilioListWidget extends StatefulWidget {
   final List<Server> listOfServers;
   final VoidCallback refreshList;
   final Function(Server, Chat) callbackCloseChat;
   final Function(Server, Chat) callBackDeleteChat;
 
-  ActiveListWidget(
+  TwilioListWidget(
       {Key key,
       this.listOfServers,
       this.refreshList,
@@ -25,10 +25,10 @@ class ActiveListWidget extends StatefulWidget {
       : super(key: key);
 
   @override
-  _ActiveListWidgetState createState() => new _ActiveListWidgetState();
+  _TwilioListWidgetState createState() => new _TwilioListWidgetState();
 }
 
-class _ActiveListWidgetState extends State<ActiveListWidget> {
+class _TwilioListWidgetState extends State<TwilioListWidget> {
   ServerRepository _serverRepository;
 
   @override
@@ -51,10 +51,10 @@ class _ActiveListWidgetState extends State<ActiveListWidget> {
           );
         } else {
           return ListView.builder(
-              itemCount: state.activeChatList.length,
+              itemCount: state.twilioChatList.length,
               itemBuilder: (BuildContext context, int index) {
-                if (state.activeChatList.isNotEmpty) {
-                  Chat chat = state.activeChatList[index];
+                if (state.twilioChatList.isNotEmpty) {
+                  Chat chat = state.twilioChatList[index];
                   Server server = widget.listOfServers.firstWhere(
                       (srvr) => srvr.id == chat.serverid,
                       orElse: () => null);

@@ -1,8 +1,12 @@
+import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
+import 'package:livehelp/model/model.dart';
 
 import 'package:livehelp/pages/main_page.dart';
+import 'package:livehelp/pages/pages.dart';
 
 class AppRoutes {
+  static const String home = "/";
   static const String login = "/login";
   static const String server = "/server";
   static const String chatPage = "/chats/chat";
@@ -14,8 +18,12 @@ class AppRoutes {
 
 ///
 /// Serves as a class to pass arguments to routes
-class RouteArguments {
-  RouteArguments();
+class RouteArguments extends Equatable {
+  final int chatId;
+  RouteArguments({this.chatId});
+
+  @override
+  List<Object> get props => [chatId];
 }
 
 class FadeRoute<T> extends MaterialPageRoute<T> {
@@ -53,5 +61,46 @@ class Router {
                       child: Text('No route defined for ${settings.name}')),
                 ));
     }
+  }
+
+  static Route<dynamic> generateRouteChatPage(RouteSettings settings, Chat chat,
+      Server server, bool isNewChat, Function refreshList) {
+    return FadeRoute(
+      settings: settings,
+      builder: (BuildContext context) => ChatPage(
+        server: server,
+        chat: chat,
+        isNewChat: isNewChat,
+        refreshList: refreshList,
+      ),
+    );
+  }
+}
+
+extension NavigatorStateExtension on NavigatorState {
+  void pushRouteIfNotCurrent(Route route) async {
+    if (!isCurrent(route)) {
+      // popUntil(ModalRoute.withName(AppRoutes.home));
+      push(route);
+    }
+  }
+
+  bool isCurrent(Route newRoute) {
+    bool isCurrent = false;
+    popUntil((oldRoute) {
+      final RouteArguments oldArgs = oldRoute.settings.arguments;
+      final RouteArguments newArgs = newRoute.settings.arguments;
+      if (oldRoute.settings.name == newRoute.settings.name &&
+          oldArgs?.chatId == newArgs.chatId) {
+        isCurrent = true;
+        return true;
+      }
+      if (oldRoute.settings.name == AppRoutes.home) {
+        return true;
+      }
+
+      return false;
+    });
+    return isCurrent;
   }
 }

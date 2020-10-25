@@ -1,6 +1,6 @@
-class LocalNotification {
+class NotificationMessage {
   final String type;
   final Map data;
 
-  LocalNotification(this.type, this.data);
+  NotificationMessage(this.type, this.data);
 }

@@ -1,9 +1,10 @@
 import 'package:bloc/bloc.dart';
+import 'package:livehelp/bloc/fcm/fcmtoken_bloc.dart';
 
 class SimpleBlocObserver extends BlocObserver {
   @override
   void onEvent(Bloc bloc, Object event) {
-    print('onEvent $event');
+    if (event.toString() == 'MessageReceivedEvent') print('onEvent $event');
     super.onEvent(bloc, event);
   }
 

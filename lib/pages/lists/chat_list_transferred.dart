@@ -5,11 +5,10 @@ import 'package:livehelp/bloc/bloc.dart';
 
 import 'package:livehelp/model/model.dart';
 import 'package:livehelp/widget/widget.dart';
-import 'package:livehelp/pages/chat/chat_page.dart';
-import 'package:livehelp/utils/routes.dart';
+import 'package:livehelp/utils/utils.dart';
 import 'package:livehelp/services/server_api_client.dart';
 
-import 'package:livehelp/utils/enum_menu_options.dart';
+import 'package:livehelp/utils/routes.dart' as LHCRouter;
 
 class TransferredListWidget extends StatefulWidget {
   TransferredListWidget({
@@ -43,26 +42,32 @@ class _TransferredListWidgetState extends State<TransferredListWidget> {
       }
 
       if (state is ChatListLoaded) {
-        return ListView.builder(
-            itemCount: state.transferChatList.length,
-            itemBuilder: (BuildContext context, int index) {
-              Chat chat = state.transferChatList[index];
-              Server server = widget.listOfServers.firstWhere(
-                  (srvr) => srvr.id == chat.serverid,
-                  orElse: () => null);
+        if (state.isLoading) {
+          return Center(
+            child: CircularProgressIndicator(),
+          );
+        } else {
+          return ListView.builder(
+              itemCount: state.transferChatList.length,
+              itemBuilder: (BuildContext context, int index) {
+                Chat chat = state.transferChatList[index];
+                Server server = widget.listOfServers.firstWhere(
+                    (srvr) => srvr.id == chat.serverid,
+                    orElse: () => null);
 
-              return GestureDetector(
-                child: new ChatItemWidget(
-                  server: server,
-                  chat: chat,
-                  menuBuilder: _itemMenuBuilder(),
-                  onMenuSelected: (selectedOption) {
-                    onItemSelected(server, chat, selectedOption);
-                  },
-                ),
-                onTap: () {},
-              );
-            });
+                return GestureDetector(
+                  child: new ChatItemWidget(
+                    server: server,
+                    chat: chat,
+                    menuBuilder: _itemMenuBuilder(),
+                    onMenuSelected: (selectedOption) {
+                      onItemSelected(server, chat, selectedOption);
+                    },
+                  ),
+                  onTap: () {},
+                );
+              });
+        }
       }
 
       if (state is ChatListLoadError) {
@@ -109,14 +114,12 @@ class _TransferredListWidgetState extends State<TransferredListWidget> {
   void _acceptChat(Server srv, Chat chat) async {
     await _serverRequest.acceptChatTransfer(srv, chat);
     widget.refreshList();
-    var route = new FadeRoute(
-      settings: new RouteSettings(name: AppRoutes.chatPage),
-      builder: (BuildContext context) => new ChatPage(
-        server: srv,
-        chat: chat,
-        isNewChat: false,
-      ),
-    );
+
+    final routeArgs = RouteArguments(chatId: chat.id);
+    final routeSettings =
+        RouteSettings(name: AppRoutes.chatPage, arguments: routeArgs);
+    var route = LHCRouter.Router.generateRouteChatPage(
+        routeSettings, chat, srv, false, widget.refreshList);
 
     Navigator.of(context).push(route);
   }

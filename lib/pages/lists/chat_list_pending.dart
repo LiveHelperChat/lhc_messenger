@@ -3,12 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:livehelp/bloc/bloc.dart';
 
 import 'package:livehelp/model/model.dart';
-import 'package:livehelp/services/server_repository.dart';
 import 'package:livehelp/widget/widget.dart';
-import 'package:livehelp/pages/chat/chat_page.dart';
-import 'package:livehelp/utils/routes.dart';
+import 'package:livehelp/utils/utils.dart';
 
-import 'package:livehelp/utils/enum_menu_options.dart';
+import 'package:livehelp/utils/routes.dart' as LHCRouter;
 
 class PendingListWidget extends StatefulWidget {
   PendingListWidget(
@@ -28,12 +26,9 @@ class PendingListWidget extends StatefulWidget {
 }
 
 class _PendingListWidgetState extends State<PendingListWidget> {
-  ServerRepository _serverRepository;
-
   @override
   void initState() {
     super.initState();
-    _serverRepository = context.repository<ServerRepository>();
   }
 
   @override
@@ -44,25 +39,30 @@ class _PendingListWidgetState extends State<PendingListWidget> {
       }
 
       if (state is ChatListLoaded) {
-        return ListView.builder(
-            itemCount: state.pendingChatList.length,
-            itemBuilder: (BuildContext context, int index) {
-              Chat chat = state.pendingChatList.reversed.toList()[index];
-              Server server = widget.listOfServers.firstWhere(
-                  (srvr) => srvr.id == chat.serverid,
-                  orElse: () => null);
+        if (state.isLoading) {
+          return Center(
+            child: CircularProgressIndicator(),
+          );
+        } else {
+          return ListView.builder(
+              itemCount: state.pendingChatList.length,
+              itemBuilder: (BuildContext context, int index) {
+                Chat chat = state.pendingChatList.reversed.toList()[index];
+                Server server = widget.listOfServers.firstWhere(
+                    (srvr) => srvr.id == chat.serverid,
+                    orElse: () => null);
 
-              return GestureDetector(
-                child: ChatItemWidget(
-                  server: server,
-                  chat: chat,
-                  menuBuilder: _itemMenuBuilder(),
-                  onMenuSelected: (selectedOption) {
-                    onItemSelected(context, server, chat, selectedOption);
-                  },
-                ),
-                onTap: () {
-                  var route = FadeRoute(
+                return GestureDetector(
+                  child: ChatItemWidget(
+                    server: server,
+                    chat: chat,
+                    menuBuilder: _itemMenuBuilder(),
+                    onMenuSelected: (selectedOption) {
+                      onItemSelected(context, server, chat, selectedOption);
+                    },
+                  ),
+                  onTap: () {
+                    /* var route = FadeRoute(
                     settings: RouteSettings(name: AppRoutes.chatPage),
                     builder: (BuildContext context) =>
                         BlocProvider<ChatMessagesBloc>(
@@ -74,11 +74,17 @@ class _PendingListWidgetState extends State<PendingListWidget> {
                               isNewChat: true,
                               refreshList: widget.refreshList,
                             )),
-                  );
-                  Navigator.of(context).push(route);
-                },
-              );
-            });
+                  ); */
+                    final routeArgs = RouteArguments(chatId: chat.id);
+                    final routeSettings = RouteSettings(
+                        name: AppRoutes.chatPage, arguments: routeArgs);
+                    var route = LHCRouter.Router.generateRouteChatPage(
+                        routeSettings, chat, server, true, widget.refreshList);
+                    Navigator.of(context).push(route);
+                  },
+                );
+              });
+        }
       }
 
       if (state is ChatListLoadError) {
@@ -116,15 +122,11 @@ class _PendingListWidgetState extends State<PendingListWidget> {
       ChatItemMenuOption selectedMenu) {
     switch (selectedMenu) {
       case ChatItemMenuOption.PREVIEW:
-        var route = new FadeRoute(
-          settings: new RouteSettings(name: AppRoutes.chatPage),
-          builder: (ctxt) => ChatPage(
-            server: srvr,
-            chat: chat,
-            isNewChat: true,
-            refreshList: widget.refreshList,
-          ),
-        );
+        final routeArgs = RouteArguments(chatId: chat.id);
+        final routeSettings =
+            RouteSettings(name: AppRoutes.chatPage, arguments: routeArgs);
+        var route = LHCRouter.Router.generateRouteChatPage(
+            routeSettings, chat, srvr, true, widget.refreshList);
         Navigator.of(ctxt).push(route);
         break;
       case ChatItemMenuOption.REJECT:

@@ -11,15 +11,14 @@ import 'package:livehelp/bloc/bloc.dart';
 import 'package:livehelp/model/model.dart';
 import 'package:livehelp/data/database.dart';
 import 'package:livehelp/services/server_api_client.dart';
-import 'package:livehelp/utils/routes.dart';
+import 'package:livehelp/utils/utils.dart';
 import 'package:livehelp/pages/main_page.dart';
 
 const TIMEOUT = const Duration(seconds: 5);
 
 class LoginForm extends StatefulWidget {
-  LoginForm({Key key, this.isNew = false, this.server}) : super(key: key);
+  LoginForm({Key key, this.server}) : super(key: key);
 
-  final bool isNew;
   final Server server;
 
   @override
@@ -39,25 +38,16 @@ class LoginFormState extends State<LoginForm> {
   final TextEditingController _passwordController = new TextEditingController();
 
   Server _currentServer;
-  List<Server> savedServersList = new List<Server>();
-
-  DatabaseHelper dbHelper;
-
-  String fcmToken = "";
+  DatabaseHelper _dbHelper;
 
   ServerApiClient srvrRequest = new ServerApiClient(httpClient: http.Client());
 
-  bool _isLoading = false;
   bool _checkBoxUrlHasIndex = true;
-  bool _isNewServer;
-
   @override
   initState() {
     super.initState();
     // _resetControllers();
-    dbHelper = new DatabaseHelper();
-
-    _isNewServer = widget?.isNew ?? false;
+    _dbHelper = new DatabaseHelper();
 
     _initServer(widget.server);
   }
@@ -275,25 +265,9 @@ class LoginFormState extends State<LoginForm> {
     });
   }
 
-  Future<Null> _getSavedServers() async {
-    savedServersList?.clear();
-    List<Map> savedRecs = await dbHelper.fetchAll(
-        Server.tableName, "${Server.columns['db_id']}  ASC", null, null);
-    if (savedRecs != null && savedRecs.length > 0) {
-      savedRecs.forEach((item) {
-        setState(() {
-          savedServersList.add(new Server.fromMap(item));
-          _currentServer = savedServersList.elementAt(0);
-        });
-      });
-    } else {}
-
-    return null;
-  }
-
   Future<int> updateToken(String token) async {
     int id = 0;
-    if (token.isNotEmpty) id = await dbHelper.upsertFCMToken(token);
+    if (token.isNotEmpty) id = await _dbHelper.upsertFCMToken(token);
 
     return id;
   }

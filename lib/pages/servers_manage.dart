@@ -5,9 +5,9 @@ import 'package:livehelp/bloc/bloc.dart';
 import 'package:livehelp/model/model.dart';
 import 'package:livehelp/pages/login_form.dart';
 import 'package:livehelp/pages/pages.dart';
+import 'package:livehelp/utils/utils.dart';
 import 'package:livehelp/utils/routes.dart' as LHCRouter;
 import 'package:livehelp/widget/widget.dart';
-import 'package:livehelp/utils/enum_menu_options.dart';
 
 import 'package:livehelp/globals.dart' as globals;
 
@@ -46,13 +46,13 @@ class ServersManageState extends State<ServersManage> with RouteAware {
   // Called when the current route has been pushed.
   @override
   void didPush() {
-    _serverBloc.add(GetServerListFromDB());
+    _serverBloc.add(GetServerListFromDB(onlyLoggedIn: false));
   }
 
   @override
   // Called when the top route has been popped off, and the current route shows up.
   void didPopNext() {
-    _serverBloc.add(GetServerListFromDB());
+    _serverBloc.add(GetServerListFromDB(onlyLoggedIn: false));
   }
 
   @override
@@ -69,8 +69,8 @@ class ServersManageState extends State<ServersManage> with RouteAware {
             _serverBloc.add(GetServerListFromDB(onlyLoggedIn: false));
           }
           if (state is ServerLoggedOut) {
-            _serverBloc.add(GetServerListFromDB(onlyLoggedIn: false));
             _serverBloc.add(InitServers());
+            _serverBloc.add(GetServerListFromDB(onlyLoggedIn: false));
           }
         },
         builder: _bodyBuilder);
@@ -151,7 +151,6 @@ class ServersManageState extends State<ServersManage> with RouteAware {
     Navigator.of(context).push(LHCRouter.FadeRoute(
       builder: (BuildContext context) {
         return LoginForm(
-          isNew: true,
           server: svr,
         );
       },
@@ -213,7 +212,6 @@ class ServersManageState extends State<ServersManage> with RouteAware {
             child: new Text("Yes"),
             onPressed: () async {
               String fcmToken = context.bloc<FcmTokenBloc>().token;
-              //TODO: Show loading indicator
               context.bloc<ServerBloc>().add(LogoutServer(
                   server: srvr, fcmToken: fcmToken, deleteServer: true));
               Navigator.of(context).pop();

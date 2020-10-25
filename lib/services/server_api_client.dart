@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:livehelp/model/model.dart';
 import 'package:http/http.dart' as http;
+import 'package:livehelp/utils/widget_utils.dart';
 
 /// A class similar to http.Response but instead of a String describing the body
 /// it already contains the parsed Dart-Object
@@ -17,7 +18,7 @@ class ParsedResponse<T> {
   }
 }
 
-final int NO_INTERNET = 404;
+const int NO_INTERNET = 404;
 
 class ServerApiClient {
   final http.Client httpClient;
@@ -203,7 +204,7 @@ class ServerApiClient {
 
   // Check whether extension is enabled
   Future<bool> isExtensionInstalled(Server server, String extension) async {
-    var resp = await apiGet(server, "/restapi/extensions");
+    var resp = await makeRequest(server, "/restapi/extensions", null);
     if (resp.isOk()) {
       var response = resp.body;
       if (response['error'] == false) {
@@ -323,7 +324,6 @@ class ServerApiClient {
     List<Department> departments = new List<Department>();
 
     if (response.isOk() && response.body["error"].toString() == "false") {
-      // print("Departments: "+response.body.toString());
       if (response.body['result'] != null) {
         List<dynamic> dept = response.body['result'];
         dept.forEach((map) {
@@ -380,7 +380,6 @@ class ServerApiClient {
     if (response.isOk() && response.body["result"] is List) {
       List<dynamic> llist = response.body["result"];
       llist.forEach((map) {
-        // print("operator: "+map.toString());
         operatorList.add(map);
       });
     }
@@ -487,5 +486,105 @@ class ServerApiClient {
       chatData = Map.castFrom(response.body);
     }
     return chatData;
+  }
+
+  Future<Server> getTwilioChats(Server server) async {
+    // check for twilio extention
+    var twilExt = await isExtensionInstalled(server, "twilio");
+
+    if (twilExt) {
+      String params = "twilio_sms_chat=true&prefill_fields=phone";
+      var resp = await makeRequest(server, "/restapi/chats?" + params, null);
+      if (resp.isOk()) {
+        var response = resp.body;
+        if (response['error'] == false) {
+          var listCount = int.parse(response['list_count'].toString());
+          if (listCount > 0) {
+            var chats = response['list'].toList();
+            /* chats.forEach((chat){
+              chatList.add(Chat.fromMap(chat));
+            });
+            */
+            List<dynamic> newTwilioList = chatListToMap(server.id, chats);
+            if (newTwilioList != null && newTwilioList.length > 0)
+              server.addChatsToList(newTwilioList, 'twilio');
+          } else
+            server.clearList("twilio");
+        }
+      }
+    }
+
+    return server;
+  }
+
+  Future<List<TwilioPhone>> getTwilioPhones(Server server) async {
+    var resp = await makeRequest(server, "/restapi/twilio_phones", null);
+    List<TwilioPhone> phonesList = List<TwilioPhone>();
+    if (resp.isOk()) {
+      var response = resp.body;
+      if (response['error'] == false) {
+        var phones = response['result'].toList();
+        if (phones.length > 0) {
+          phones.forEach((fone) {
+            phonesList.add(TwilioPhone.fromMap(fone));
+          });
+        }
+      }
+    }
+    return phonesList;
+  }
+
+  Future<bool> sendTwilioSMS(Server server, TwilioPhone phone, String toNumber,
+      String message, bool createChat) async {
+    Map<String, dynamic> params = Map<String, dynamic>();
+
+    params.addAll({
+      "twilio_id": phone.id,
+      "phone_number": toNumber,
+      "create_chat": createChat,
+      "msg": message
+    });
+    try {
+      ParsedResponse response =
+          await makeRequest(server, "/restapi/twilio_create_sms", params);
+      if (response.isOk()) {
+        return true;
+      } else
+        return false;
+    } catch (ex) {
+      throw ex;
+    }
+  }
+
+  Future<bool> pushNotificationStatus(Server server, {bool newStatus}) async {
+    Map<String, dynamic> params =
+        newStatus == null ? null : {"status": newStatus.toString()};
+    bool asJson = params != null;
+
+    try {
+      ParsedResponse response = await makeRequest(
+          server, "/restapi/notifications/${server.installationid}", params,
+          asJson: asJson);
+      if (response.isOk()) {
+        return WidgetUtils.checkInt(response.body['status']) == 1 ?? false;
+      } else
+        return false;
+    } catch (ex) {
+      throw Exception(ex);
+    }
+  }
+
+  Future<bool> togglePushNotification(Server server) async {
+    bool enabled = false;
+    try {
+      enabled = await pushNotificationStatus(server);
+    } catch (ex) {
+      throw Exception(ex);
+    }
+    try {
+      return pushNotificationStatus(server, newStatus: !enabled);
+    } catch (ex) {
+      throw Exception(ex);
+    }
   }
 }

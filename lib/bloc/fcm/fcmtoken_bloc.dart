@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:livehelp/utils/utils.dart';
 import 'package:livehelp/model/model.dart';
 import 'package:livehelp/services/server_repository.dart';
 import 'package:meta/meta.dart';
@@ -7,8 +8,6 @@ import 'package:meta/meta.dart';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-
-import 'package:livehelp/utils/notification_helper.dart';
 
 part 'fcmtoken_event.dart';
 part 'fcmtoken_state.dart';
@@ -24,9 +23,10 @@ class FcmTokenBloc extends Bloc<FcmTokenEvent, FcmTokenState> {
 
     _initFCM();
   }
+
   void _initFCM() {
     _firebaseMessaging.configure(
-      onBackgroundMessage: NotificationHelper.backgroundMessageHandler,
+      onBackgroundMessage: LocalNotificationPlugin.backgroundMessageHandler,
       onMessage: (Map<String, dynamic> message) async {
         this.add(MessageReceivedEvent(fcmToken: token, message: message));
       },
@@ -35,29 +35,31 @@ class FcmTokenBloc extends Bloc<FcmTokenEvent, FcmTokenState> {
         return;
       },
       onResume: (Map<String, dynamic> message) {
-        // @todo Navigate to proper window on click
-        //_showNotification(message);
+        this.add(OnResumeEvent(message: message));
         return;
       },
     );
 
     _firebaseMessaging.onTokenRefresh.listen((String fcmtoken) {
       this.token = fcmtoken;
-      add(FcmTokenRefresh(fcmToken: fcmtoken));
+      this.add(FcmTokenRefresh(fcmToken: fcmtoken));
     });
 
     _firebaseMessaging.requestNotificationPermissions(
         const IosNotificationSettings(sound: true, badge: true, alert: true));
     _firebaseMessaging.onIosSettingsRegistered
-        .listen((IosNotificationSettings settings) {
-      // print("Settings registered: $settings");
-    });
+        .listen((IosNotificationSettings settings) {});
 
     _firebaseMessaging.getToken().then((String fcmtoken) {
       assert(fcmtoken != null);
       this.token = fcmtoken;
       add(FcmTokenReceive(fcmToken: fcmtoken));
     });
+
+    // instantiated in LocalNotificationPlugin
+    notificationPlugin
+        .setListenerForLowerVersions(onNotificationInLowerVersions);
+    notificationPlugin.setOnNotificationClick(onNotificationClick);
   }
 
   @override
@@ -71,10 +73,32 @@ class FcmTokenBloc extends Bloc<FcmTokenEvent, FcmTokenState> {
       yield FcmTokenReceived(token: event.fcmToken);
     } else if (event is ChatOpenedEvent) {
       yield ChatOpenedState(chat: event.chat, token: token);
+    } else if (event is ChatPausedEvent) {
+      yield ChatPausedState(chat: event.chat, token: token);
     } else if (event is ChatClosedEvent) {
-      yield ChatClosedState(chat: event.chat, token: token);
+      //Don't yield closedstate if previous chat and current chat are not the same.
+      // Popping a chat page doesn't call dispose right away.
+      // yielding a closed state later affects a newly opened chatstate
+      if (currentState is ChatOpenedState && currentState.chat == event.chat) {
+        yield ChatClosedState(chat: event.chat, token: token);
+      }
+      if (currentState is ChatPausedState && currentState.chat == event.chat) {
+        yield ChatClosedState(chat: event.chat, token: token);
+      }
+    } else if (event is OnResumeEvent) {
+      if (event.message != null) {
+        ReceivedNotification notification =
+            await _prepareNotification(event.message);
+        yield NotificationClicked(notification: notification);
+      }
+    } else if (event is NotificationClick) {
+      if (event.notification != null) {
+        yield NotificationClicked(notification: event.notification);
+      }
     } else if (event is MessageReceivedEvent) {
       if (currentState is ChatOpenedState) {
+        yield currentState.copyWith(
+            chat: currentState.chat, token: currentState.token);
         _showNotification(event.message, openedChat: currentState.chat);
       } else {
         _showNotification(event.message);
@@ -82,49 +106,80 @@ class FcmTokenBloc extends Bloc<FcmTokenEvent, FcmTokenState> {
     }
   }
 
-  _showNotification(Map<String, dynamic> msg, {Chat openedChat}) async {
-    if (msg['data'].isEmpty) return;
+  Future<ReceivedNotification> _prepareNotification(
+      Map<String, dynamic> msg) async {
+    if (msg['data'].isEmpty) return null;
     var data = msg['data'];
-
-    if (data.containsKey("info")) {
-      NotificationHelper.showInfoNotification("Yay!", data["info"].toString());
-    }
 
     if (data.containsKey("chat_type")) {
       // check if server exists on this device
-      serverRepository.fetchItemFromDB(
-          Server.tableName,
-          "installationid=? and isloggedin=?",
-          [data['server_id'], 1]).then((server) {
-        if (server != null) {
-          Server srv = new Server.fromMap(server);
-          Map<String, dynamic> chat = json.decode(data["chat"].toString());
+      var srv = await serverRepository.fetchItemFromDB(Server.tableName,
+          "installationid=? and isloggedin=?", [data['server_id'], 1]);
 
-          bool isChatOpened = openedChat != null && openedChat.id == chat['id'];
+      if (srv != null) {
+        Server server = new Server.fromJson(srv);
+        Map<String, dynamic> chat = jsonDecode(data["chat"].toString());
 
-          if (data['chat_type'].toString() == 'new_msg' && !isChatOpened) {
-            NotificationHelper.showNotification(
-                srv,
-                'new_msg',
-                "New message from " + chat['nick'].toString(),
-                data['msg'].toString());
-          }
-
-          // pending chat
-          if (data["chat_type"].toString() == "pending") {
-            NotificationHelper.showNotification(
-                srv,
-                'pending',
-                "New Chat from " + chat['nick'].toString(),
-                data['msg'].toString());
-          }
-
-          if (data["chat_type"].toString() == "unread") {
-            NotificationHelper.showNotification(srv, 'pending',
-                "Unread message from " + chat['nick'].toString(), "");
-          }
+        if (data['chat_type'].toString() == 'new_msg') {
+          return ReceivedNotification(
+              server: server,
+              chat: Chat.fromJson(chat),
+              type: NotificationType.NEW_MESSAGE,
+              title: "New message from " + chat['nick'].toString(),
+              body: data['msg'].toString());
         }
-      });
+
+        // pending chat
+        if (data["chat_type"].toString() == "pending") {
+          return ReceivedNotification(
+              server: server,
+              chat: Chat.fromJson(chat),
+              type: NotificationType.PENDING,
+              title: "New Chat from " + chat['nick'].toString(),
+              body: data['msg'].toString());
+        }
+
+        if (data["chat_type"].toString() == "unread") {
+          return ReceivedNotification(
+              server: server,
+              chat: Chat.fromJson(chat),
+              type: NotificationType.PENDING,
+              title: "Unread message from " + chat['nick'].toString(),
+              body: "");
+        }
+      }
+    }
+    return null;
+  }
+
+  _showNotification(Map<String, dynamic> msg, {Chat openedChat}) async {
+    if (msg['data'].isEmpty) return null;
+
+    ReceivedNotification received = await _prepareNotification(msg);
+
+    if (received != null) {
+      bool isChatOpened =
+          openedChat != null && openedChat.id == received.chat?.id;
+
+      if (received.type == NotificationType.NEW_MESSAGE && isChatOpened) return;
+
+      notificationPlugin.showNotification(received);
+    }
+  }
+
+  onNotificationInLowerVersions(ReceivedNotification receivedNotification) {
+    if (receivedNotification != null) {
+      add(NotificationClick(notification: receivedNotification));
+    }
+  }
+
+  onNotificationClick(String payload) {
+    if (payload.isNotEmpty) {
+      final payloadMap = jsonDecode(payload) as Map<String, dynamic>;
+
+      ReceivedNotification receivedNotification =
+          ReceivedNotification.fromJson(payloadMap);
+      add(NotificationClick(notification: receivedNotification));
     }
   }
 }

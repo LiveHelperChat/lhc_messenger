@@ -57,9 +57,8 @@ class LoginformBloc extends Bloc<LoginformEvent, LoginformState> {
       yield ServerLoginFinished();
 
       if (srv.isLoggedIn) {
-        if (await serverRepository.isExtensionInstalled(srv, "twilio")) {
-          srv.twilioInstalled = true;
-        }
+        srv.twilioInstalled =
+            await serverRepository.isExtensionInstalled(srv, "twilio");
 
         // we use this to fetch the already saved serverid
         srv = isNew

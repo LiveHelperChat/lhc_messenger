@@ -118,7 +118,7 @@ class DatabaseHelper {
   }
 
   Future _upgradeDB(Database db, int oldVersion, int newVersion) async {
-    print("oLD " + oldVersion.toString() + " new " + newVersion.toString());
+    // print("oLD " + oldVersion.toString() + " new " + newVersion.toString());
     if (oldVersion < 2) {
       db.execute("ALTER TABLE $configTable ADD COLUMN $extVersionColumn TEXT;");
     }
@@ -150,14 +150,12 @@ class DatabaseHelper {
   }
 
   Future<Null> upsertFCMToken(String token) async {
-    // print("Token: $token");
     var db = await getDb();
     Map<String, dynamic> tkn = {};
     tkn[tokenColumn] = token;
 
     List<Map<String, dynamic>> listMap =
         await db.rawQuery("SELECT * FROM $configTable");
-    // print("UpsertFCM "+listMap.toString());
     if (listMap == null || listMap.length == 0) {
       await db.insert(configTable, tkn);
     } else {
@@ -175,10 +173,10 @@ class DatabaseHelper {
         " WHERE id = ? and status= ? and serverid= ?",
         [chat.id, chat.status, chat.serverid]));
     if (count == 0) {
-      int id = await db.insert(Chat.tableName, chat.toMap());
+      int id = await db.insert(Chat.tableName, chat.toJson());
       newChat = chat.copyWith(id: id);
     } else {
-      int id = await db.update(Chat.tableName, chat.toMap(),
+      int id = await db.update(Chat.tableName, chat.toJson(),
           where: "id = ?", whereArgs: [chat.id]);
       newChat = chat.copyWith(id: id);
     }
@@ -201,7 +199,7 @@ class DatabaseHelper {
     bulkRecords.forEach((row) async {
       //Add server id to row
       row['serverid'] = srvr.id;
-      Chat chat = new Chat.fromMap(row);
+      Chat chat = new Chat.fromJson(row);
 
       List<Map<String, dynamic>> listMap = await db.rawQuery(
           "SELECT COUNT(*) FROM chat"
@@ -209,9 +207,9 @@ class DatabaseHelper {
           [chat.id, chat.status, chat.serverid]);
       var count = listMap.first.values.first;
       if (count == 0) {
-        return await db.insert(Chat.tableName, chat.toMap());
+        return await db.insert(Chat.tableName, chat.toJson());
       } else {
-        return await db.update(Chat.tableName, chat.toMap(),
+        return await db.update(Chat.tableName, chat.toJson(),
             where: "id = ?", whereArgs: [chat.id]);
       }
     });
@@ -228,10 +226,10 @@ class DatabaseHelper {
     var count = listMap.first.values.first;
     if (count == 0) {
       //server.id = null;
-      server.id = await db.insert(Server.tableName, server.toMap());
+      server.id = await db.insert(Server.tableName, server.toJson());
       return server;
     } else {
-      await db.update(Server.tableName, server.toMap(),
+      await db.update(Server.tableName, server.toJson(),
           where: "id = ?", whereArgs: [server.id]).then((val) => _resetDb());
       // db.close();
 
@@ -303,7 +301,7 @@ class DatabaseHelper {
     List<Server> serversList = [];
     if (savedservers != null && savedservers.length > 0) {
       savedservers.forEach((item) {
-        Server newServer = new Server.fromMap(item);
+        Server newServer = new Server.fromJson(item);
         serversList.add(newServer);
       });
     }

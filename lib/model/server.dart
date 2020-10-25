@@ -1,5 +1,5 @@
 import 'package:livehelp/model/model.dart';
-import 'package:livehelp/utils/widget_utils.dart';
+import 'package:livehelp/utils/utils.dart';
 
 // ignore_for_file: non_constant_identifier_names
 class Server {
@@ -38,8 +38,10 @@ class Server {
   bool get isLoggedIn => this._loggedin == Server.LOGGED_IN;
   set isLoggedIn(bool val) => this._loggedin = (val) ? 1 : 0;
 
-  bool get userOnline => this.user_online == 1;
-  set userOnline(bool val) => this.user_online = (val) ? 1 : 0;
+  bool get userOnline => this._user_online == 1;
+  set userOnline(bool val) => this._user_online = (val) ? 1 : 0;
+
+  //set twilioInstalled(bool val) =>
 
   bool twilioInstalled = false, extensionsSynced;
   int id,
@@ -49,7 +51,7 @@ class Server {
       soundnotify,
       vibrate,
       all_departments,
-      user_online,
+      _user_online,
       _urlhasindex;
   String installationid,
       servername,
@@ -85,9 +87,10 @@ class Server {
       this.all_departments,
       this.departments_ids,
       this.operatoremail,
-      this.user_online,
+      bool useronline,
       this.twilioInstalled,
       int urlHasIndex}) {
+    _user_online = userOnline ? 1 : 0;
     _urlhasindex = urlHasIndex;
     _loggedin = loggedIn ? 1 : 0;
     pendingChatList = List<Chat>();
@@ -98,7 +101,7 @@ class Server {
 
   String getUrl() => appendIndexToUrl ? url + "/index.php" : url;
 
-  Server.fromMap(Map<String, dynamic> map)
+  Server.fromJson(Map<String, dynamic> map)
       : this(
             id: WidgetUtils.checkInt(map[columns['db_id']]),
             userid: WidgetUtils.checkInt(map[columns['db_userid']]),
@@ -117,10 +120,12 @@ class Server {
             all_departments: map[columns['db_all_departments']],
             departments_ids: map[columns['db_departments_ids']],
             operatoremail: map[columns['db_operatoremail']],
-            user_online: map[columns['db_user_online']],
-            urlHasIndex: map[columns['db_urlhasindex']]);
+            useronline: map[columns['db_user_online']] == 1,
+            urlHasIndex: map[columns['db_urlhasindex']],
+            twilioInstalled:
+                WidgetUtils.checkInt(map[columns['db_twilio_installed']]) == 1);
 
-  Map<String, dynamic> toMap() {
+  Map<String, dynamic> toJson() {
     return {
       columns['db_id']: id,
       columns['db_userid']: userid,
@@ -129,7 +134,7 @@ class Server {
       columns['db_url']: url,
       columns['db_username']: username,
       columns['db_password']: password,
-      columns['db_isloggedin']: isLoggedIn,
+      columns['db_isloggedin']: _loggedin,
       columns['db_rememberme']: rememberme,
       columns['db_soundnotify']: soundnotify,
       columns['db_vibrate']: vibrate,
@@ -139,9 +144,9 @@ class Server {
       columns['db_job_title']: job_title,
       columns['db_all_departments']: all_departments,
       columns['db_departments_ids']: departments_ids,
-      columns['db_user_online']: user_online,
-      columns['db_urlhasindex']: appendIndexToUrl,
-      'twilio_installed': twilioInstalled
+      columns['db_user_online']: _user_online,
+      columns['db_urlhasindex']: _urlhasindex,
+      'twilio_installed': WidgetUtils.checkInt(twilioInstalled)
     };
   }
 
@@ -173,7 +178,7 @@ class Server {
 
   List<Chat> _cleanUpLists(
       List<Chat> chatToClean, List<dynamic> listFromServer) {
-    var incomingList = listFromServer.map((map) => new Chat.fromMap(map));
+    var incomingList = listFromServer.map((map) => new Chat.fromJson(map));
     incomingList.forEach((map) {
       if (chatToClean
           .any((chat) => chat.id == map.id && chat.serverid == map.serverid)) {
@@ -249,7 +254,6 @@ class Server {
       if (this.id == chat.serverid) {
         if (!incomingList.any((map) => map.id != chat.id)) {
           int index = toBeCleaned.indexOf(chat);
-          print("Index ${index.toString()}");
           removedIndices.add(index);
         }
       }

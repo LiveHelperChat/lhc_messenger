@@ -48,15 +48,14 @@ class ServerRepository {
 
   Future<Server> getUserOnlineStatus(Server server) async {
     bool online = await serverApiClient.getUserOnlineStatus(server);
-    int isOnline = online ? 1 : 0;
 
-    server.user_online = isOnline;
+    server.userOnline = online;
     return saveServerToDB(server, "id=?", [server.id]);
   }
 
   Future<Server> setUserOnlineStatus(Server server) async {
     var online = await serverApiClient.setUserOnlineStatus(server);
-    server.user_online = online ? 1 : 0;
+    server.userOnline = online;
     server = await saveServerToDB(server, "id=?", [server.id]);
     return server;
   }
@@ -94,5 +93,27 @@ class ServerRepository {
 
   Future<bool> deleteServer(Server srvr) async {
     return dBHelper.deleteItem(Server.tableName, "id=?", [srvr.id]);
+  }
+
+  Future<Server> getTwilioChats(Server server) async {
+    return serverApiClient.getTwilioChats(server);
+  }
+
+  Future<List<TwilioPhone>> getTwilioPhones(Server server) async {
+    return serverApiClient.getTwilioPhones(server);
+  }
+
+  Future<bool> sendTwilioSMS(Server server, TwilioPhone phone, String toNumber,
+      String message, bool createChat) async {
+    return serverApiClient.sendTwilioSMS(
+        server, phone, toNumber, message, createChat);
+  }
+
+  Future<bool> pushNotification(Server server) async {
+    return serverApiClient.pushNotificationStatus(server);
+  }
+
+  Future<bool> toggleNotification(Server server) async {
+    return serverApiClient.togglePushNotification(server);
   }
 }

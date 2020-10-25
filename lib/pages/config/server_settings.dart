@@ -8,35 +8,33 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:livehelp/data/database.dart';
 import 'package:livehelp/model/model.dart';
-import 'package:livehelp/utils/routes.dart';
+import 'package:livehelp/utils/utils.dart';
 import 'package:livehelp/services/server_api_client.dart';
 import 'package:livehelp/pages/token_inherited_widget.dart';
 
 import 'department_hours.dart';
 
-class ServerDetails extends StatefulWidget {
-  ServerDetails({this.server});
+class ServerSettings extends StatefulWidget {
+  ServerSettings({this.server});
   final Server server;
   @override
   _ServerDetailsState createState() => new _ServerDetailsState();
 }
 
-class _ServerDetailsState extends State<ServerDetails> {
+class _ServerDetailsState extends State<ServerSettings> {
   DatabaseHelper _dbHelper;
   ServerApiClient _serverRequest;
 
   Server _localServer;
   List<Server> listServers = new List<Server>();
   List<Department> userDepartments = new List<Department>();
-  Department _department;
 
   GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   final GlobalKey<AsyncLoaderState> _asyncLoaderState =
       new GlobalKey<AsyncLoaderState>();
 
-  bool _onlineHoursActive = false;
-
   bool _isLoading = false;
+  bool _pushEnabled = false;
 
   ValueChanged<TimeOfDay> selectTime;
 
@@ -51,14 +49,20 @@ class _ServerDetailsState extends State<ServerDetails> {
     _serverRequest = ServerApiClient(httpClient: http.Client());
     _localServer = widget.server;
 
-    // _syncServerData();
+    _getNotification();
+  }
+
+  _getNotification() async {
+    var status = await _notificationStatus();
+    setState(() {
+      _pushEnabled = status;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     _fcmToken = context.bloc<FcmTokenBloc>().token;
-    // print('$_fcmToken');
-
+    
     Widget loadingIndicator =
         _isLoading ? new CircularProgressIndicator() : new Container();
     var scaff = new Scaffold(
@@ -81,9 +85,15 @@ class _ServerDetailsState extends State<ServerDetails> {
                 shape:
                     CircleBorder(side: BorderSide(color: Colors.transparent)),
                 textColor: Colors.white,
-                child: new Text("Re-Sync"),
+                child: _isLoading
+                    ? CircularProgressIndicator(
+                        backgroundColor: Colors.white,
+                      )
+                    : Text("Re-Sync"),
                 onPressed: () {
-                  _isLoading = true;
+                  setState(() {
+                    _isLoading = true;
+                  });
                   _refreshServerData();
                   _initAsyncloader();
                 }),
@@ -145,7 +155,23 @@ class _ServerDetailsState extends State<ServerDetails> {
                         ));
                       },
                     ),
-                  )
+                  ),
+                  Divider(),
+                  /*  ListTile(
+                      title: Text("Push Notification"),
+                      trailing: Switch(
+                        value: _pushEnabled,
+                        onChanged: (value) async {
+                          setState(() {
+                            _isLoading = false;
+                          });
+                          bool status = await _toggleNotification();
+                          setState(() {
+                            _pushEnabled = status;
+                            _isLoading = false;
+                          });
+                        },
+                      )), */
                 ],
               ),
             ),
@@ -176,7 +202,9 @@ class _ServerDetailsState extends State<ServerDetails> {
     _isLoading = true;
     //  await _fetchServerDetails();
     await _syncServerData();
-    _isLoading = false;
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   Future<Null> _syncServerData() async {
@@ -184,51 +212,44 @@ class _ServerDetailsState extends State<ServerDetails> {
       var user = await _serverRequest.getUserFromServer(_localServer);
 
       if (user != null) {
-        setState(() {
-          _localServer.userid = user['id'];
-          _localServer.firstname = user['name'];
-          _localServer.surname = user['surname'];
-          _localServer.operatoremail = user['email'];
-          _localServer.job_title = user['job_title'];
-          _localServer.all_departments = user['all_departments'];
-          _localServer.departments_ids = user['departments_ids'];
-        });
+        if (mounted) {
+          setState(() {
+            _localServer.userid = user['id'];
+            _localServer.firstname = user['name'];
+            _localServer.surname = user['surname'];
+            _localServer.operatoremail = user['email'];
+            _localServer.job_title = user['job_title'];
+            _localServer.all_departments = user['all_departments'];
+            _localServer.departments_ids = user['departments_ids'];
+          });
+        }
       }
 
       await _dbHelper.upsertServer(_localServer, "id=?", [_localServer.id]);
-
-      // fetch departments
-      List<Department> listDepts =
-          await _serverRequest.getUserDepartments(_localServer);
-
-      if (listDepts is List) {
-        setState(() {
-          userDepartments = listDepts;
-          if (userDepartments.length > 0) {
-            _department = userDepartments.elementAt(0);
-            _checkActiveHours();
-          }
-        });
-      }
     }
   }
 
-  void _checkActiveHours() {
+  void _refreshServerData() async {
+    Server server = await _serverRequest.fetchInstallationId(
+        _localServer, _fcmToken, "add");
+
+    var twilioEnabled =
+        await _serverRequest.isExtensionInstalled(server, "twilio");
+    server.twilioInstalled = twilioEnabled;
+    await _dbHelper.upsertServer(
+        server, "${Server.columns['db_id']} = ?", ['${server.id}']);
+
     setState(() {
-      _onlineHoursActive = _department.online_hours_active;
+      _localServer = server;
+      _isLoading = false;
     });
   }
 
-  void _refreshServerData() {
-    _serverRequest
-        .fetchInstallationId(_localServer, _fcmToken, "add")
-        .then((server) {
-      _localServer = server;
-      _dbHelper.upsertServer(_localServer, "${Server.columns['db_id']} = ?",
-          ['${_localServer.id}']);
-      setState(() {
-        _isLoading = false;
-      });
-    });
+  Future<bool> _toggleNotification() async {
+    return _serverRequest.togglePushNotification(_localServer);
+  }
+
+  Future<bool> _notificationStatus() async {
+    return _serverRequest.pushNotificationStatus(_localServer);
   }
 }

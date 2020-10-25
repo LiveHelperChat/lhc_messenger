@@ -16,7 +16,9 @@ import 'package:rxdart/rxdart.dart';
 import 'package:livehelp/model/model.dart';
 import 'package:livehelp/widget/widget.dart';
 
-import 'package:livehelp/utils/enum_menu_options.dart';
+import 'package:livehelp/utils/utils.dart';
+
+import 'package:livehelp/globals.dart' as globals;
 
 /// place: "/chats/chat"
 class ChatPage extends StatefulWidget {
@@ -42,7 +44,8 @@ class ChatPageState extends State<ChatPage>
     with
         TickerProviderStateMixin,
         WidgetsBindingObserver,
-        AfterLayoutMixin<ChatPage> {
+        AfterLayoutMixin<ChatPage>,
+        RouteAware {
   final _writingSubject = new PublishSubject<String>();
 
   // used to track application lifecycle
@@ -54,10 +57,6 @@ class ChatPageState extends State<ChatPage>
   bool _isOwnerOfChat = false;
 
   Chat _chatCopy;
-  String _chatOwner;
-  String _operator;
-  String _chatStatus = "";
-  int _chat_scode = 0;
 
   ChatMessagesBloc _chatPageBloc;
   ServerRepository _serverRepository;
@@ -78,8 +77,6 @@ class ChatPageState extends State<ChatPage>
   BehaviorSubject<bool> _isWritingSubject = BehaviorSubject<bool>.seeded(false);
   BehaviorSubject<bool> _isActionLoadingSubject =
       BehaviorSubject<bool>.seeded(false);
-
-  BuildContext _context;
 
   set _isWriting(bool value) => _isWritingSubject.add(value);
   bool get _isWriting => _isWritingSubject.value;
@@ -131,7 +128,28 @@ class ChatPageState extends State<ChatPage>
     _isActionLoadingSubject.close();
     _fcmTokenBloc.add(ChatClosedEvent(chat: _chatCopy));
     WidgetsBinding.instance.removeObserver(this);
+    globals.routeObserver.unsubscribe(this);
     super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    globals.routeObserver.subscribe(this, ModalRoute.of(context));
+  }
+
+// Called when the current route has been pushed.
+  @override
+  void didPush() {
+    // stop sending notifications for this chat
+    _fcmTokenBloc.add(ChatOpenedEvent(chat: _chatCopy));
+  }
+
+  // Called when the current route has been pushed.
+  @override
+  void didPop() {
+    _fcmTokenBloc.add(ChatClosedEvent(chat: _chatCopy));
   }
 
   @override
@@ -154,7 +172,7 @@ class ChatPageState extends State<ChatPage>
       case AppLifecycleState.paused:
       case AppLifecycleState.inactive:
         //allow showing notifications for this chat
-        _fcmTokenBloc.add(ChatClosedEvent(chat: _chatCopy));
+        _fcmTokenBloc.add(ChatPausedEvent(chat: _chatCopy));
         if (_msgsTimer.isActive) _msgsTimer.cancel();
         if (_operatorTimer != null && _operatorTimer.isActive)
           _operatorTimer.cancel();
@@ -176,8 +194,6 @@ class ChatPageState extends State<ChatPage>
 
   @override
   Widget build(BuildContext context) {
-    _context = context;
-
     TextStyle headerbottom = new TextStyle(
       fontSize: 12.0,
       height: 1,
@@ -586,12 +602,10 @@ class ChatPageState extends State<ChatPage>
     _serverApiClient.chatData(widget.server, _chatCopy).then((chatData) {
       if (chatData != null) {
         setState(() {
-          var newChat = new Chat.fromMap(chatData["chat"]);
+          var newChat = new Chat.fromJson(chatData["chat"]);
           // update chat with new data
           _chatCopy = newChat.copyWith(owner: chatData["ownerstring"]);
 
-          //_chatOwner = chatData["ownerstring"];
-          _operator = chatData["operator"];
           _cannedMsgs =
               Map.castFrom(chatData["canned_messages"]).values.toList();
 

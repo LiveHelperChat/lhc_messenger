@@ -138,7 +138,7 @@ class Chat extends Equatable {
     return value is int ? value : int.parse(value);
   }
 
-  Chat.fromMap(Map<String, dynamic> map)
+  Chat.fromJson(Map<String, dynamic> map)
       : this(
           id: checkInt(map[columns['db_id']]),
           serverid: checkInt(map[columns['db_serverid']]),
@@ -163,7 +163,7 @@ class Chat extends Equatable {
           user_status_front: map['user_status_front'] ?? 0,
         );
 
-  Map<String, dynamic> toMap() {
+  Map<String, dynamic> toJson() {
     return {
       columns['db_id']: id,
       columns['db_serverid']: serverid,
@@ -190,26 +190,26 @@ class Chat extends Equatable {
 
   @override
   List<Object> get props => [
-    id,
-    serverid,
-    status,
-    nick,
-    email,
-    ip,
-    time,
-    last_msg_id,
-    user_id,
-    country_code,
-    country_name,
-    referrer,
-    uagent,
-    department_name,
-    user_typing_txt,
-    owner,
-    has_unread_messages,
-    last_user_msg_time,
-    last_op_msg_time,
-    phone,
-    user_status_front
+        id,
+        serverid,
+        status,
+        nick,
+        email,
+        ip,
+        time,
+        last_msg_id,
+        user_id,
+        country_code,
+        country_name,
+        referrer,
+        uagent,
+        department_name,
+        user_typing_txt,
+        owner,
+        has_unread_messages,
+        last_user_msg_time,
+        last_op_msg_time,
+        phone,
+        user_status_front
       ];
 }
