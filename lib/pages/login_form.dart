@@ -206,7 +206,7 @@ class LoginFormState extends State<LoginForm> {
               FadeRoute(
                 builder: (BuildContext context) => MainPage(),
                 settings: RouteSettings(
-                  name: AppRoutes.main,
+                  name: AppRoutes.home,
                 ),
               ),
               (Route<dynamic> route) => false);

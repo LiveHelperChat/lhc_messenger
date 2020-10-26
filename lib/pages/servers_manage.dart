@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:livehelp/bloc/bloc.dart';
@@ -89,7 +90,16 @@ class ServersManageState extends State<ServersManage> with RouteAware {
       //If any server is logged in
       if (state.serverList.any((server) => server.isLoggedIn) &&
           !widget.returnToList) {
-        return MainPage();
+        SchedulerBinding.instance.addPostFrameCallback((_) {
+          Navigator.of(context).pushAndRemoveUntil(
+              FadeRoute(
+                builder: (BuildContext context) => MainPage(),
+                settings: RouteSettings(
+                  name: AppRoutes.home,
+                ),
+              ),
+              (Route<dynamic> route) => false);
+        });
       }
       return Scaffold(
         backgroundColor: Colors.grey.shade300,
@@ -117,7 +127,7 @@ class ServersManageState extends State<ServersManage> with RouteAware {
                       Navigator.of(context).pop();
                       Navigator.of(context).pushReplacement(
                           LHCRouter.Router.generateRoute(RouteSettings(
-                              name: LHCRouter.AppRoutes.main,
+                              name: LHCRouter.AppRoutes.home,
                               arguments: LHCRouter.RouteArguments())));
                     }
                   } else {

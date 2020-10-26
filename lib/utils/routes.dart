@@ -48,7 +48,7 @@ class Router {
   static Route<dynamic> generateRoute(RouteSettings settings) {
     // final RouteArguments args = settings.arguments;
     switch (settings.name) {
-      case AppRoutes.main:
+      case AppRoutes.home:
         return FadeRoute(
           settings: settings,
           builder: (BuildContext context) => MainPage(),

@@ -575,40 +575,6 @@ class _MainPageState extends State<MainPage>
     }
   }
 
-  List<Widget> _bodyBuilder(BuildContext context, ServerState state) {
-/*
-    if (state is ServerInitial) {
-      _loadChatList();
-      return Center(child: CircularProgressIndicator());
-    }
-
-    if (state is ServerListFromDBLoaded) {
-      if (state.serverList?.isNotEmpty ?? false) {
-        listServers = state.serverList;
-
-        _loadChatList();
-      }
-    }
-    if (state is ServerListLoadError) {
-      return ErrorReloadButton(
-          child: Text(state.message),
-          onButtonPress: () {
-            _loadChatList();
-          },
-          actionText: 'Reload');
-    }
-
-    return Stack(children: <Widget>[
-      new TabBarView(children: bodyWidgets),
-      BlocBuilder<ChatslistBloc, ChatListState>(builder: (context, state) {
-        if (state is ChatListLoaded && state.isLoading) {
-          return Center(child: CircularProgressIndicator());
-        }
-        return Container();
-      })
-    ]); */
-  }
-
   void _loadChatList() {
     listServers.forEach((server) {
       if (server.isLoggedIn) {
