@@ -100,6 +100,7 @@ class ServersManageState extends State<ServersManage> with RouteAware {
                 ),
                     (Route<dynamic> route) => false);
           });
+          callbackAdded = true;
       }
       return Scaffold(
         backgroundColor: Colors.grey.shade300,
