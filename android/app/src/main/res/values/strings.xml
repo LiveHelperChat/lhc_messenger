@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="default_notification_channel_id">lhcmessenger_notification</string>
+    <string name="default_notification_channel_id">com.livehelperchat.chat.channel.lhcmessenger_notification</string>
 </resources>

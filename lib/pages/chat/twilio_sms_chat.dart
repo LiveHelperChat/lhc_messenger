@@ -1,15 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-
 import 'package:flutter/services.dart';
-import 'package:livehelp/model/TwilioPhone.dart';
 
-import 'package:livehelp/model/server.dart';
-import 'package:livehelp/utils/server_requests.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import 'package:livehelp/model/model.dart';
 import 'package:livehelp/data/database.dart';
-
-const TIMEOUT = const Duration(seconds: 5);
+import 'package:livehelp/services/server_repository.dart';
 
 class TwilioSMSChat extends StatefulWidget {
   TwilioSMSChat({Key key, this.server, this.refreshList}) : super(key: key);
@@ -19,9 +17,7 @@ class TwilioSMSChat extends StatefulWidget {
   final VoidCallback refreshList;
 
   @override
-  State<StatefulWidget> createState() {
-    return new TwilioSMSChatState();
-  }
+  State<StatefulWidget> createState() => new TwilioSMSChatState();
 }
 
 class TwilioSMSChatState extends State<TwilioSMSChat> {
@@ -39,7 +35,7 @@ class TwilioSMSChatState extends State<TwilioSMSChat> {
 
   List<TwilioPhone> twilioPhonesList = new List<TwilioPhone>();
   DatabaseHelper dbHelper;
-  ServerRequest _serverRequest = new ServerRequest();
+  ServerRepository _serverRepository;
 
   bool _isLoading = false;
   bool _checkBoxCreateChat = true;
@@ -47,6 +43,7 @@ class TwilioSMSChatState extends State<TwilioSMSChat> {
   @override
   initState() {
     super.initState();
+    _serverRepository = context.repository<ServerRepository>();
     dbHelper = new DatabaseHelper();
     _currentServer = widget.server;
     _getTwilioPhones();
@@ -187,27 +184,16 @@ class TwilioSMSChatState extends State<TwilioSMSChat> {
     _messageController.text = "";
   }
 
-  void _initServer() {
-    setState(() {
-      _resetControllers();
-    });
-  }
-
   Future<Null> _createSMS() async {
-    Map<String, dynamic> params = Map<String, dynamic>();
-
-    params.addAll({
-      "twilio_id": _selectedPhone.id,
-      "phone_number": _phoneNumberController.text,
-      "create_chat": _checkBoxCreateChat,
-      "msg": _messageController.text
-    });
-
     try {
-      var resp = await _serverRequest.apiPost(
-          _currentServer, "/restapi/twilio_create_sms", params);
+      var resp = await _serverRepository.sendTwilioSMS(
+          _currentServer,
+          _selectedPhone,
+          _phoneNumberController.text,
+          _messageController.text,
+          _checkBoxCreateChat);
       setState(() => _isLoading = false);
-      if (resp.statusCode == 200) {
+      if (resp) {
         _showSnackBar("Message sent!.");
         if (_checkBoxCreateChat) {
           widget.refreshList();
@@ -237,8 +223,7 @@ class TwilioSMSChatState extends State<TwilioSMSChat> {
   void _getTwilioPhones() async {
     setState(() => _isLoading = true);
     twilioPhonesList?.clear();
-    //print("SERver: " + _currentServer.toMap().toString());
-    var phones = await _serverRequest.getTwilioPhones(_currentServer);
+    var phones = await _serverRepository.getTwilioPhones(_currentServer);
     setState(() => _isLoading = false);
     if (phones != null && phones.length > 0) {
       phones.forEach((item) {
@@ -251,23 +236,6 @@ class TwilioSMSChatState extends State<TwilioSMSChat> {
       _ackAlert(context);
     }
   }
-}
-
-void _showAlertMsg(String title, String msg, BuildContext context) {
-  SimpleDialog dialog = SimpleDialog(
-    title: Text(
-      title,
-      style: TextStyle(fontSize: 14.0),
-    ),
-    children: <Widget>[
-      new Text(
-        msg,
-        style: TextStyle(fontSize: 14.0),
-      )
-    ],
-  );
-
-  showDialog(context: context, builder: (BuildContext context) => dialog);
 }
 
 Future<void> _ackAlert(BuildContext context) {

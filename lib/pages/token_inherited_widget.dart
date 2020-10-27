@@ -13,8 +13,6 @@ class TokenInheritedWidget extends InheritedWidget {
 
   @override
   bool updateShouldNotify(TokenInheritedWidget old) {
-    // print('In updateShouldNotify');
-
     return token != old.token;
   }
 

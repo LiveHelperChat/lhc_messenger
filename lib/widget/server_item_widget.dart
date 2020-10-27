@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 
 import 'package:flutter/material.dart';
-import 'package:livehelp/model/server.dart';
-import 'package:livehelp/utils/enum_menu_options.dart';
+import 'package:livehelp/model/model.dart';
+import 'package:livehelp/utils/utils.dart';
 
 class ServerItemWidget extends StatelessWidget {
   ServerItemWidget(
@@ -44,7 +44,7 @@ class ServerItemWidget extends StatelessWidget {
                             fontSize: 18.00,
                           ),
                         ),
-                        server.loggedIn()
+                        server.isLoggedIn
                             ? Text("Logged In",
                                 style: TextStyle(color: Colors.green))
                             : Text("Logged Out",

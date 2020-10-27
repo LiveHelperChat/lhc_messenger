@@ -1,55 +1,59 @@
+import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
+import 'package:livehelp/model/model.dart';
 
 import 'package:livehelp/pages/main_page.dart';
-import 'package:livehelp/pages/token_inherited_widget.dart';
-class AppRoutes{
+import 'package:livehelp/pages/pages.dart';
+
+class AppRoutes {
+  static const String home = "/";
   static const String login = "/login";
   static const String server = "/server";
   static const String chatPage = "/chats/chat";
-  static const String main  = "/main";
-  static const String serverDetails  = "/servers/server";
-  static const String serversManage  = "/servers/manage";
+  static const String main = "/main";
+  static const String serverDetails = "/servers/server";
+  static const String serversManage = "/servers/manage";
   static const String twilio = "/main/twilio";
 }
 
-class RouteArguments{
-  String fcmToken;
-  RouteArguments(this.fcmToken);
+///
+/// Serves as a class to pass arguments to routes
+class RouteArguments extends Equatable {
+  final int chatId;
+  RouteArguments({this.chatId});
+
+  @override
+  List<Object> get props => [chatId];
 }
 
 class FadeRoute<T> extends MaterialPageRoute<T> {
   bool isInitialRoute;
-  FadeRoute({ WidgetBuilder builder, RouteSettings settings, this.isInitialRoute = false})
+  FadeRoute(
+      {WidgetBuilder builder,
+      RouteSettings settings,
+      this.isInitialRoute = false})
       : super(builder: builder, settings: settings);
 
   @override
-  Widget buildTransitions(BuildContext context,
-      Animation<double> animation,
-      Animation<double> secondaryAnimation,Widget child) {
-    if (this.isInitialRoute)
-      return child;
+  Widget buildTransitions(BuildContext context, Animation<double> animation,
+      Animation<double> secondaryAnimation, Widget child) {
+    if (this.isInitialRoute) return child;
     // Fades between routes. (If you don't want any animation,
     // just return child.)
-    return new FadeTransition(opacity: animation, child: child);
+    return FadeTransition(opacity: animation, child: child);
   }
 }
 
 class Router {
- static Route<dynamic> generateRoute(RouteSettings settings) {
+  static Route<dynamic> generateRoute(RouteSettings settings) {
+    // final RouteArguments args = settings.arguments;
+    switch (settings.name) {
+      case AppRoutes.home:
+        return FadeRoute(
+          settings: settings,
+          builder: (BuildContext context) => MainPage(),
+        );
 
-      final RouteArguments args = settings.arguments;
-      switch (settings.name) {
-        
-        case AppRoutes.main:
-        return   FadeRoute(
-                        settings: settings,
-                        builder: (BuildContext context) =>
-                            new TokenInheritedWidget(
-                                token: args?.fcmToken,
-                                child: MainPage(
-                                )),
-                      );
-      
       default:
         return MaterialPageRoute(
             builder: (_) => Scaffold(
@@ -58,4 +62,45 @@ class Router {
                 ));
     }
   }
+
+  static Route<dynamic> generateRouteChatPage(RouteSettings settings, Chat chat,
+      Server server, bool isNewChat, Function refreshList) {
+    return FadeRoute(
+      settings: settings,
+      builder: (BuildContext context) => ChatPage(
+        server: server,
+        chat: chat,
+        isNewChat: isNewChat,
+        refreshList: refreshList,
+      ),
+    );
   }
+}
+
+extension NavigatorStateExtension on NavigatorState {
+  void pushRouteIfNotCurrent(Route route) async {
+    if (!isCurrent(route)) {
+      // popUntil(ModalRoute.withName(AppRoutes.home));
+      push(route);
+    }
+  }
+
+  bool isCurrent(Route newRoute) {
+    bool isCurrent = false;
+    popUntil((oldRoute) {
+      final RouteArguments oldArgs = oldRoute.settings.arguments;
+      final RouteArguments newArgs = newRoute.settings.arguments;
+      if (oldRoute.settings.name == newRoute.settings.name &&
+          oldArgs?.chatId == newArgs.chatId) {
+        isCurrent = true;
+        return true;
+      }
+      if (oldRoute.settings.name == AppRoutes.home) {
+        return true;
+      }
+
+      return false;
+    });
+    return isCurrent;
+  }
+}
