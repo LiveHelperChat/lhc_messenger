@@ -1,93 +1,122 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:livehelp/bloc/bloc.dart';
 
-import 'package:livehelp/utils/server_requests.dart';
+import 'package:livehelp/model/model.dart';
+import 'package:livehelp/services/server_repository.dart';
+import 'package:livehelp/widget/widget.dart';
+import 'package:livehelp/utils/utils.dart';
 
-import 'package:livehelp/model/server.dart';
-import 'package:livehelp/model/chat.dart';
-import 'package:livehelp/widget/chat_item_widget.dart';
-import 'package:livehelp/pages/chat/chat_page.dart';
-import 'package:livehelp/utils/routes.dart';
-
-import 'package:livehelp/utils/enum_menu_options.dart';
+import 'package:livehelp/utils/routes.dart' as LHCRouter;
 
 class ActiveListWidget extends StatefulWidget {
+  final List<Server> listOfServers;
+  final VoidCallback refreshList;
+  final Function(Server, Chat) callbackCloseChat;
+  final Function(Server, Chat) callBackDeleteChat;
+
   ActiveListWidget(
       {Key key,
       this.listOfServers,
-      this.listToAdd,
-      this.loadingState,
-      this.chatRemoved,
-      this.refreshList})
+      this.refreshList,
+      @required this.callbackCloseChat,
+      @required this.callBackDeleteChat})
       : super(key: key);
-
-  final List<Chat> listToAdd;
-  final List<Server> listOfServers;
-
-  final ValueChanged<bool> loadingState;
-  final ValueChanged<Chat> chatRemoved;
-  final VoidCallback refreshList;
 
   @override
   _ActiveListWidgetState createState() => new _ActiveListWidgetState();
 }
 
 class _ActiveListWidgetState extends State<ActiveListWidget> {
-  ServerRequest _serverRequest;
-  List<Chat> _listToAdd;
+  ServerRepository _serverRepository;
 
   @override
   void initState() {
     super.initState();
-
-    _serverRequest = new ServerRequest();
-    _listToAdd = widget.listToAdd;
+    _serverRepository = context.repository<ServerRepository>();
   }
 
   @override
   Widget build(BuildContext context) {
-    return new Scaffold(
-        body: new RefreshIndicator(
-      onRefresh: _onRefresh,
-      child: new ListView.builder(
-          itemCount: _listToAdd.length, itemBuilder: _itemBuilder),
-    ));
-  }
+    return BlocBuilder<ChatslistBloc, ChatListState>(builder: (context, state) {
+      if (state is ChatslistInitial) {
+        return Center(child: CircularProgressIndicator());
+      }
 
-  Widget _itemBuilder(BuildContext context, int index) {
-    List<Chat> listToReverse = _listToAdd;
-    //TODO
-    // listToReverse.sort((x,y)=>x.last_msg_time.compareTo(y.last_msg_time));
-
-    List<Chat> reversedList = listToReverse.reversed.toList();
-    Chat chat = reversedList[index];
-    Server server = widget.listOfServers
-        .firstWhere((srvr) => srvr.id == chat.serverid, orElse: () => null);
-
-    return server == null
-        ? Text("No server found")
-        : new GestureDetector(
-            child: new ChatItemWidget(
-              server: server,
-              chat: chat,
-              menuBuilder: _itemMenuBuilder(),
-              onMenuSelected: (selectedOption) {
-                onItemSelected(context, server, chat, selectedOption);
-              },
-            ),
-            onTap: () {
-              var route = new FadeRoute(
-                settings: new RouteSettings(name: AppRoutes.chatPage),
-                builder: (BuildContext context) => ChatPage(
-                  server: server,
-                  chat: chat,
-                  isNewChat: false,
-                  refreshList: widget.refreshList,
-                ),
-              );
-              Navigator.of(context).push(route);
-            },
+      if (state is ChatListLoaded) {
+        if (state.isLoading) {
+          return Center(
+            child: CircularProgressIndicator(),
           );
+        } else {
+          return ListView.builder(
+              itemCount: state.activeChatList.length,
+              itemBuilder: (BuildContext context, int index) {
+                if (state.activeChatList.isNotEmpty) {
+                  Chat chat = state.activeChatList[index];
+                  Server server = widget.listOfServers.firstWhere(
+                      (srvr) => srvr.id == chat.serverid,
+                      orElse: () => null);
+
+                  return server == null
+                      ? Text("No server found")
+                      : new GestureDetector(
+                          child: new ChatItemWidget(
+                            server: server,
+                            chat: chat,
+                            menuBuilder: _itemMenuBuilder(),
+                            onMenuSelected: (selectedOption) {
+                              onItemSelected(
+                                  context, server, chat, selectedOption);
+                            },
+                          ),
+                          onTap: () {
+                            /*  var route = new FadeRoute(
+                            settings:
+                                new RouteSettings(name: AppRoutes.chatPage),
+                            builder: (BuildContext context) => ChatPage(
+                              server: server,
+                              chat: chat,
+                              isNewChat: false,
+                              refreshList: widget.refreshList,
+                            ),
+                          ); */
+                            // RouteArguments is used to track chatpage widget
+                            // foreground state
+                            final routeArgs = RouteArguments(chatId: chat.id);
+                            final routeSettings = RouteSettings(
+                                name: AppRoutes.chatPage, arguments: routeArgs);
+                            var route = LHCRouter.Router.generateRouteChatPage(
+                                routeSettings,
+                                chat,
+                                server,
+                                false,
+                                widget.refreshList);
+                            Navigator.of(context).push(route);
+                          },
+                        );
+                } else
+                  return Container();
+              });
+        }
+      }
+
+      if (state is ChatListLoadError) {
+        return ErrorReloadButton(
+          child: Text("An error occurred: ${state.message}"),
+          actionText: 'Reload',
+          onButtonPress: () {
+            context.bloc<ChatslistBloc>().add(ChatListInitialise());
+          },
+        );
+      }
+      return ListView.builder(
+          itemCount: 1,
+          itemBuilder: (BuildContext context, int index) {
+            return Text("No list available");
+          });
+    });
   }
 
   List<PopupMenuEntry<ChatItemMenuOption>> _itemMenuBuilder() {
@@ -111,60 +140,24 @@ class _ActiveListWidgetState extends State<ActiveListWidget> {
       BuildContext ctx, Server srv, Chat chat, ChatItemMenuOption result) {
     switch (result) {
       case ChatItemMenuOption.CLOSE:
-        widget.loadingState(true);
-        _closeChat(srv, chat);
+        widget.callbackCloseChat(srv, chat);
         break;
       case ChatItemMenuOption.REJECT:
-        widget.loadingState(true);
-        _deleteChat(srv, chat);
+        widget.callBackDeleteChat(srv, chat);
         break;
       case ChatItemMenuOption.TRANSFER:
         // widget.loadingState(true);
-        _showOperatorList(context, srv, chat);
+        _showOperatorList(ctx, srv, chat);
         //_getOperatorList(ctx,srv,chat);
         break;
       default:
         break;
     }
-
-    // print(result.value.toString());
-  }
-
-  void _closeChat(Server srv, Chat chat) async {
-    await _serverRequest.closeChat(srv, chat).then((loaded) {
-      widget.loadingState(false);
-      _updateList(chat);
-    });
-  }
-
-  void _deleteChat(Server srv, Chat chat) async {
-    await _serverRequest.deleteChat(srv, chat).then((loaded) {
-      widget.loadingState(false);
-      //  widget.chatRemoved()
-      _updateList(chat);
-    });
-  }
-
-  void _updateList(chat) {
-    setState(() {
-      _listToAdd.removeWhere((cht) => chat.id == cht.id);
-    });
   }
 
   Future<List<dynamic>> _getOperatorList(
       BuildContext context, Server srvr, Chat chat) async {
-    return await _serverRequest.getOperatorsList(srvr).then((list) {
-      //  widget.loadingState(false);
-      return list;
-    });
-  }
-
-  Future<Null> _onRefresh() {
-    Completer<Null> completer = new Completer<Null>();
-    Timer timer = new Timer(new Duration(seconds: 3), () {
-      completer.complete();
-    });
-    return completer.future;
+    return await _serverRepository.getOperatorsList(srvr);
   }
 
   void _showOperatorList(BuildContext context, Server srvr, Chat chat) {
@@ -208,10 +201,8 @@ class _ActiveListWidgetState extends State<ActiveListWidget> {
         });
   }
 
-  void _transferToUser(Server srvr, Chat chat, int userid) async {
-    await _serverRequest
-        .transferChatUser(srvr, chat, userid)
-        .then((value) => widget.loadingState(false));
+  Future<bool> _transferToUser(Server srvr, Chat chat, int userid) async {
+    return _serverRepository.transferChatUser(srvr, chat, userid);
   }
 
   Widget createListView(
@@ -229,11 +220,9 @@ class _ActiveListWidgetState extends State<ActiveListWidget> {
                 title: new Text(
                     'Name: ${operator["name"]} ${operator["surname"]}'),
                 subtitle: new Text('Title: ${operator["job_title"]}'),
-                onTap: () {
+                onTap: () async {
+                  await _transferToUser(srvr, chat, int.parse(operator['id']));
                   Navigator.of(context).pop();
-                  widget.loadingState(true);
-                  // TODO transfer here
-                  _transferToUser(srvr, chat, int.parse(operator['id']));
                 },
               );
             },

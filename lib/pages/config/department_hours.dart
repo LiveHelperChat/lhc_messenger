@@ -2,14 +2,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'package:async_loader/async_loader.dart';
+import 'package:http/http.dart' as http;
 
 import 'package:livehelp/data/database.dart';
-import 'package:livehelp/model/server.dart';
-import 'package:livehelp/model/department.dart';
-import 'package:livehelp/utils/server_requests.dart';
-import 'package:livehelp/utils/widget_utils.dart';
-import 'package:livehelp/widget/office_time_picker.dart';
-import 'package:livehelp/pages/token_inherited_widget.dart';
+import 'package:livehelp/model/model.dart';
+import 'package:livehelp/services/server_api_client.dart';
+import 'package:livehelp/utils/utils.dart';
+import 'package:livehelp/widget/widget.dart';
 
 class DepartmentHours extends StatefulWidget {
   DepartmentHours({this.server});
@@ -20,7 +19,7 @@ class DepartmentHours extends StatefulWidget {
 
 class _DepartmentHoursState extends State<DepartmentHours> {
   DatabaseHelper _dbHelper;
-  ServerRequest _serverRequest;
+  ServerApiClient _serverRequest;
 
   Server _localServer;
   List<Server> listServers = new List<Server>();
@@ -46,13 +45,11 @@ class _DepartmentHoursState extends State<DepartmentHours> {
 
   TimeOfDay selectedTime;
 
-  String _fcmToken;
-
   @override
   void initState() {
     super.initState();
     _dbHelper = new DatabaseHelper();
-    _serverRequest = new ServerRequest();
+    _serverRequest = new ServerApiClient(httpClient: http.Client());
     _localServer = widget.server;
 
     _syncServerData();
@@ -60,10 +57,6 @@ class _DepartmentHoursState extends State<DepartmentHours> {
 
   @override
   Widget build(BuildContext context) {
-    final tokenInherited = TokenInheritedWidget.of(context);
-    _fcmToken = tokenInherited?.token;
-    // print('$_fcmToken');
-
     Widget loadingIndicator =
         _isLoading ? new CircularProgressIndicator() : new Container();
     var scaff = new Scaffold(
@@ -566,18 +559,5 @@ class _DepartmentHoursState extends State<DepartmentHours> {
     final TimeOfDay picked = await showTimePicker(
         context: context, initialTime: new TimeOfDay.now());
     return picked ?? 00;
-  }
-
-  void _refreshServerData() {
-    _serverRequest
-        .fetchInstallationId(_localServer, _fcmToken, "")
-        .then((server) {
-      _localServer = server;
-      _dbHelper.upsertServer(_localServer, "${Server.columns['db_id']} = ?",
-          ['${_localServer.id}']);
-      setState(() {
-        _isLoading = false;
-      });
-    });
   }
 }
