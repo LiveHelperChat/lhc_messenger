@@ -310,7 +310,7 @@ class _MainPageState extends State<MainPage>
                 if (state is ServerListFromDBLoaded) {
                   if (state.serverList?.isNotEmpty ?? false) {
                     listServers = state.serverList;
-                    _loadChatList();
+                    //_loadChatList();
                   }
 
                   return Scaffold(

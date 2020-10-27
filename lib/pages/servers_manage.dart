@@ -27,7 +27,6 @@ class ServersManageState extends State<ServersManage> with RouteAware {
 
   TimeOfDay selectedTime;
   ServerBloc _serverBloc;
-  var callbackAdded = false;
 
   var _tapPosition;
 
@@ -89,7 +88,8 @@ class ServersManageState extends State<ServersManage> with RouteAware {
     }
     if (state is ServerListFromDBLoaded) {
       //If any server is logged in
-      if (state.serverList.any((server) => server.isLoggedIn) && !widget.returnToList && callbackAdded == false) {
+      if (state.serverList.any((server) => server.isLoggedIn) && !widget.returnToList) {
+          Navigator.of(context).pop();
           SchedulerBinding.instance.addPostFrameCallback((_) {
             Navigator.of(context).pushAndRemoveUntil(
                 FadeRoute(
@@ -100,7 +100,6 @@ class ServersManageState extends State<ServersManage> with RouteAware {
                 ),
                     (Route<dynamic> route) => false);
           });
-          callbackAdded = true;
       }
       return Scaffold(
         backgroundColor: Colors.grey.shade300,
