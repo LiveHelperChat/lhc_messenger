@@ -181,16 +181,17 @@ class LocalNotificationPlugin {
 
   static Future<dynamic> backgroundMessageHandler(
       Map<String, dynamic> message) {
+
     if (message.containsKey('data')) {
       // Handle data message
       final dynamic data = message['data'];
-      //notificationPlugin.showNotification("LHC", data.toString());
     }
 
     if (message.containsKey('notification')) {
       // Handle notification message
       final dynamic notification = message['notification'];
     }
+
     return Future<void>.value();
   }
 
