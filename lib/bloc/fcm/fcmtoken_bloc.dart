@@ -31,7 +31,7 @@ class FcmTokenBloc extends Bloc<FcmTokenEvent, FcmTokenState> {
         this.add(MessageReceivedEvent(fcmToken: token, message: message));
       },
       onLaunch: (Map<String, dynamic> message) {
-        // @todo Navigate to proper window on click
+        this.add(OnResumeEvent(message: message));
         return;
       },
       onResume: (Map<String, dynamic> message) {
@@ -108,8 +108,8 @@ class FcmTokenBloc extends Bloc<FcmTokenEvent, FcmTokenState> {
 
   Future<ReceivedNotification> _prepareNotification(
       Map<String, dynamic> msg) async {
-    if (msg['data'].isEmpty) return null;
-    var data = msg['data'];
+
+    var data = msg['data'] ?? msg;
 
     if (data.containsKey("chat_type")) {
       // check if server exists on this device
@@ -153,7 +153,6 @@ class FcmTokenBloc extends Bloc<FcmTokenEvent, FcmTokenState> {
   }
 
   _showNotification(Map<String, dynamic> msg, {Chat openedChat}) async {
-    if (msg['data'].isEmpty) return null;
 
     ReceivedNotification received = await _prepareNotification(msg);
 
