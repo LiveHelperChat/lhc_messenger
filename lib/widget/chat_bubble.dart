@@ -70,7 +70,11 @@ class Bubble extends StatelessWidget {
               new Padding(
                 padding: const EdgeInsets.only(right: 4.0, bottom: 4.0),
                 child: Html(
-                  data: "<main>${message.msg}</main>",
+                    data: message.msg,
+                    onLinkTap: (url) {
+                      _launchURL(url);
+                    }
+                  /*data: "<main>${message.msg}</main>",
                   customRender: {
                     "main": (RenderContext ctx, Widget child, attributes, e) {
                       return SelectableLinkify(
@@ -78,7 +82,7 @@ class Bubble extends StatelessWidget {
                           text: e.text,
                           style: TextStyle(fontSize: 16));
                     },
-                  },
+                  },*/
                 ),
               ),
               // positioned at bottom but object renderer needs it to calculate
