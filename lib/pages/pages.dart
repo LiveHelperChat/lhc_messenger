@@ -8,3 +8,4 @@ export 'servers_manage.dart';
 export 'lists/chat_list_active.dart';
 export 'lists/chat_list_pending.dart';
 export 'lists/chat_list_transferred.dart';
+export 'lists/chat_list_closed.dart';

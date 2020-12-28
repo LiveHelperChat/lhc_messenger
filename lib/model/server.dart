@@ -68,6 +68,7 @@ class Server {
   List<Chat> activeChatList;
   List<Chat> transferChatList;
   List<Chat> twilioChatList;
+  List<Chat> closedChatList;
 
   Server(
       {this.id,
@@ -97,6 +98,7 @@ class Server {
     activeChatList = List<Chat>();
     transferChatList = List<Chat>();
     twilioChatList = List<Chat>();
+    closedChatList = List<Chat>();
   }
 
   String getUrl() => appendIndexToUrl ? url + "/index.php" : url;
@@ -156,9 +158,7 @@ class Server {
         this.activeChatList ??= new List<Chat>();
         this.activeChatList = _cleanUpLists(this.activeChatList, newChatList);
         //Sort list by last message time
-        this
-            .activeChatList
-            .sort((a, b) => b.last_msg_time.compareTo(a.last_msg_time));
+        this.activeChatList.sort((a, b) => b.last_msg_time.compareTo(a.last_msg_time));
         break;
       case "pending":
         this.pendingChatList ??= new List<Chat>();
@@ -169,9 +169,15 @@ class Server {
         this.transferChatList =
             _cleanUpLists(this.transferChatList, newChatList);
         break;
+    case "closed":
+        this.closedChatList ??= new List<Chat>();
+        this.closedChatList = _cleanUpLists(this.closedChatList, newChatList);
+        this.closedChatList.sort((a, b) => a.id.compareTo(b.id));
+        break;
       case "twilio":
         this.twilioChatList ??= new List<Chat>();
         this.twilioChatList = _cleanUpLists(this.twilioChatList, newChatList);
+        this.twilioChatList.sort((a, b) => b.last_msg_time.compareTo(a.last_msg_time));
         break;
     }
   }
@@ -222,6 +228,9 @@ class Server {
         break;
       case 'transfer':
         this.transferChatList?.clear();
+        break;
+      case 'closed':
+        this.closedChatList?.clear();
         break;
       case 'twilio':
         this.twilioChatList?.clear();

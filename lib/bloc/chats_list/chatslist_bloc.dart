@@ -57,7 +57,8 @@ class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
               activeChatList: server.activeChatList,
               pendingChatList: server.pendingChatList,
               transferChatList: server.transferChatList,
-              twilioChatList: server.twilioChatList);
+              twilioChatList: server.twilioChatList,
+              closedChatList: server.closedChatList);
         } catch (ex) {
           yield ChatListLoadError(message: "${ex?.message}");
         }
@@ -70,14 +71,20 @@ class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
         List<Chat> pendingChats = List.from(currentState.pendingChatList);
         List<Chat> transferChats = List.from(currentState.transferChatList);
         List<Chat> twilioChats = List.from(currentState.twilioChatList);
+        List<Chat> closedChats = List.from(currentState.closedChatList);
 
         List<Chat> activeList =
             await _cleanList(ChatListName.active, server, activeChats);
+
+        List<Chat> closedList =
+            await _cleanList(ChatListName.closed, server, closedChats);
+
         List<Chat> pendingList =
             await _cleanList(ChatListName.pending, server, pendingChats);
 
         List<Chat> transferList =
             await _cleanList(ChatListName.transfer, server, transferChats);
+
         List<Chat> twilioList =
             await _cleanList(ChatListName.twilio, server, twilioChats);
 
@@ -85,7 +92,9 @@ class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
             activeChatList: _sortByLastMessageTime(activeList),
             pendingChatList: pendingList,
             transferChatList: transferList,
-            twilioChatList: twilioList);
+            twilioChatList: _sortByLastMessageTime(twilioList),
+            closedChatList: _sortById(closedList)
+        );
       }
     } on Exception {
       yield ChatListLoadError(message: "Chat list could not be loaded");
@@ -103,10 +112,6 @@ class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
       await Future.forEach(listServers, (Server server) async {
         if (server.isLoggedIn) {
           var srvr = await serverRepository.fetchChatList(server);
-
-          if (server.twilioInstalled == true) {
-            //srvr = await serverRepository.getTwilioChats(srvr);
-          }
           serverList.add(srvr);
         }
       });
@@ -138,6 +143,18 @@ class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
               await _updateChatList(listToClean, server.pendingChatList);
         }
         return listToClean;
+
+      case ChatListName.closed:
+        if (server.closedChatList.length == 0) {
+          if (listToClean.length > 0) {
+            listToClean.removeWhere((chat) => chat.serverid == server.id);
+          }
+        } else {
+          listToClean =
+              await _updateChatList(listToClean, server.closedChatList);
+        }
+        return listToClean;
+
       case ChatListName.transfer:
         if (server.transferChatList.length == 0) {
           if (listToClean.length > 0) {
@@ -181,6 +198,11 @@ class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
 
   List<Chat> _sortByLastMessageTime(List<Chat> listToSort) {
     listToSort.sort((a, b) => b.last_msg_time.compareTo(a.last_msg_time));
+    return listToSort;
+  }
+
+  List<Chat> _sortById(List<Chat> listToSort) {
+    listToSort.sort((a, b) => a.id.compareTo(b.id));
     return listToSort;
   }
 

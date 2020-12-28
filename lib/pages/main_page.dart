@@ -43,6 +43,7 @@ class _MainPageState extends State<MainPage>
   List<dynamic> activeChatStore = new List();
   List<dynamic> pendingChatStore = new List();
   List<dynamic> transferChatStore = new List();
+  List<dynamic> closedChatStore = new List();
 
   Timer _timerChatList;
   Server _selectedServer;
@@ -214,6 +215,23 @@ class _MainPageState extends State<MainPage>
                   number: "0",
                 );
               }),
+            ),
+            Tab(
+              child: BlocBuilder<ChatslistBloc, ChatListState>(
+                  builder: (context, state) {
+                if (state is ChatListLoaded) {
+                  return ChatNumberIndcator(
+                    title: "Closed",
+                    offstage: state.closedChatList.length == 0,
+                    number: state.closedChatList.length.toString(),
+                  );
+                }
+                return ChatNumberIndcator(
+                  title: "Closed",
+                  offstage: true,
+                  number: "0",
+                );
+              }),
             )
           ];
 
@@ -241,6 +259,14 @@ class _MainPageState extends State<MainPage>
             TransferredListWidget(
               listOfServers: listServers,
               refreshList: _loadChatList,
+            ),
+            ClosedListWidget(
+              listOfServers: listServers,
+              refreshList: _loadChatList,
+              callBackDeleteChat: (server, chat) {
+                _chatListBloc
+                    .add(DeleteChatMainPage(server: server, chat: chat));
+              },
             ),
           ];
 
