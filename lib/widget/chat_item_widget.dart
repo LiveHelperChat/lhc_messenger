@@ -224,7 +224,7 @@ class ChatItemWidget extends StatelessWidget {
   }
 
   Color backColor(BuildContext context) {
-    if (chat.status == 2) return Colors.red[200];
+    if (chat.status == 2) return Colors.red[50];
     if (chat.has_unread_messages == 1)
       return Colors.yellow.shade300;
     else

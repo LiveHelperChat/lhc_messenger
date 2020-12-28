@@ -166,6 +166,7 @@ class ServerApiClient {
     ParsedResponse response = await makeRequest(server, "/xml/lists", null);
 
     if (response.isOk() && (response.body.isNotEmpty) ?? false) {
+
       int activeSize = response.body['active_chats']['size'];
       if (activeSize > 0) {
         // activeList = Map.castFrom(activeJson).values.toList();
@@ -177,6 +178,17 @@ class ServerApiClient {
       } else
         server.clearList('active');
 
+      if (response.body['twilio_chats'] != null) {
+        int twilioSize = response.body['twilio_chats']['size'];
+        if (twilioSize > 0) {
+          List<dynamic> newTwilioList =
+          chatListToMap(server.id, response.body['twilio_chats']['rows']);
+          if (newTwilioList != null && newTwilioList.length > 0)
+            server.addChatsToList(newTwilioList, 'twilio');
+        } else
+          server.clearList('twilio');
+      }
+
       int pendingSize = response.body['pending_chats']['size'];
       if (pendingSize > 0) {
         Map pendingJson = response.body['pending_chats']['rows'];
@@ -186,6 +198,16 @@ class ServerApiClient {
           server.addChatsToList(newPendingList, 'pending');
       } else
         server.clearList('pending');
+
+      int closedSize = response.body['closed_chats']['size'];
+      if (closedSize > 0) {
+        Map closedJson = response.body['closed_chats']['rows'];
+        List<dynamic> newClosedList =
+            chatListToMap(server.id, closedJson.values.toList());
+        if (newClosedList != null && newClosedList.length > 0)
+          server.addChatsToList(newClosedList, 'closed');
+      } else
+        server.clearList('closed');
 
       int transferSize = response.body['transfered_chats']['size'];
       if (transferSize > 0) {
@@ -278,6 +300,7 @@ class ServerApiClient {
       });
       listToStore.add(chatsToStore);
     });
+
     return listToStore;
   }
 
@@ -488,35 +511,6 @@ class ServerApiClient {
     return chatData;
   }
 
-  Future<Server> getTwilioChats(Server server) async {
-    // check for twilio extention
-    var twilExt = await isExtensionInstalled(server, "twilio");
-
-    if (twilExt) {
-      String params = "twilio_sms_chat=true&prefill_fields=phone";
-      var resp = await makeRequest(server, "/restapi/chats?" + params, null);
-      if (resp.isOk()) {
-        var response = resp.body;
-        if (response['error'] == false) {
-          var listCount = int.parse(response['list_count'].toString());
-          if (listCount > 0) {
-            var chats = response['list'].toList();
-            /* chats.forEach((chat){
-              chatList.add(Chat.fromMap(chat));
-            });
-            */
-            List<dynamic> newTwilioList = chatListToMap(server.id, chats);
-            if (newTwilioList != null && newTwilioList.length > 0)
-              server.addChatsToList(newTwilioList, 'twilio');
-          } else
-            server.clearList("twilio");
-        }
-      }
-    }
-
-    return server;
-  }
-
   Future<List<TwilioPhone>> getTwilioPhones(Server server) async {
     var resp = await makeRequest(server, "/restapi/twilio_phones", null);
     List<TwilioPhone> phonesList = List<TwilioPhone>();
@@ -544,9 +538,10 @@ class ServerApiClient {
       "create_chat": createChat,
       "msg": message
     });
+
     try {
-      ParsedResponse response =
-          await makeRequest(server, "/restapi/twilio_create_sms", params);
+      ParsedResponse response = await makeRequest(server, "/restapi/twilio_create_sms", params, asJson: true, method: 'post');
+
       if (response.isOk()) {
         return true;
       } else

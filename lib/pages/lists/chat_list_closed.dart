@@ -1,37 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:http/http.dart' as http;
 import 'package:livehelp/bloc/bloc.dart';
 
 import 'package:livehelp/model/model.dart';
 import 'package:livehelp/widget/widget.dart';
 import 'package:livehelp/utils/utils.dart';
-import 'package:livehelp/services/server_api_client.dart';
 
 import 'package:livehelp/utils/routes.dart' as LHCRouter;
 
-class TransferredListWidget extends StatefulWidget {
-  TransferredListWidget({
-    Key key,
-    this.listOfServers,
-    this.refreshList,
-  }) : super(key: key);
+class ClosedListWidget extends StatefulWidget {
+  ClosedListWidget(
+      {Key key,
+        this.listOfServers,
+        @required this.callBackDeleteChat,
+        this.refreshList})
+      : super(key: key);
 
   final List<Server> listOfServers;
+  final Function(Server, Chat) callBackDeleteChat;
+
   final VoidCallback refreshList;
 
   @override
-  _TransferredListWidgetState createState() =>
-      new _TransferredListWidgetState();
+  _ClosedListWidgetState createState() => new _ClosedListWidgetState();
 }
 
-class _TransferredListWidgetState extends State<TransferredListWidget> {
-  ServerApiClient _serverRequest;
-
+class _ClosedListWidgetState extends State<ClosedListWidget> {
   @override
   void initState() {
     super.initState();
-    _serverRequest = ServerApiClient(httpClient: http.Client());
   }
 
   @override
@@ -48,23 +45,30 @@ class _TransferredListWidgetState extends State<TransferredListWidget> {
           );
         } else {
           return ListView.builder(
-              itemCount: state.transferChatList.length,
+              itemCount: state.closedChatList.length,
               itemBuilder: (BuildContext context, int index) {
-                Chat chat = state.transferChatList[index];
+                Chat chat = state.closedChatList.reversed.toList()[index];
                 Server server = widget.listOfServers.firstWhere(
-                    (srvr) => srvr.id == chat.serverid,
+                        (srvr) => srvr.id == chat.serverid,
                     orElse: () => null);
 
                 return GestureDetector(
-                  child: new ChatItemWidget(
+                  child: ChatItemWidget(
                     server: server,
                     chat: chat,
                     menuBuilder: _itemMenuBuilder(),
                     onMenuSelected: (selectedOption) {
-                      onItemSelected(server, chat, selectedOption);
+                      onItemSelected(context, server, chat, selectedOption);
                     },
                   ),
-                  onTap: () {},
+                  onTap: () {
+                    final routeArgs = RouteArguments(chatId: chat.id);
+                    final routeSettings = RouteSettings(
+                        name: AppRoutes.chatPage, arguments: routeArgs);
+                    var route = LHCRouter.Router.generateRouteChatPage(
+                        routeSettings, chat, server, false, widget.refreshList);
+                    Navigator.of(context).push(route);
+                  },
                 );
               });
         }
@@ -90,37 +94,33 @@ class _TransferredListWidgetState extends State<TransferredListWidget> {
 
   List<PopupMenuEntry<ChatItemMenuOption>> _itemMenuBuilder() {
     return <PopupMenuEntry<ChatItemMenuOption>>[
-      /*  const PopupMenuItem<ChatItemMenuOption>(
-      value: ChatItemMenuOption.ACCEPT,
-      child: const Text('Accept Chat'),
-    ),  */
       const PopupMenuItem<ChatItemMenuOption>(
-        value: ChatItemMenuOption.ACCEPT,
-        child: const Text('Accept Chat'),
+        value: ChatItemMenuOption.PREVIEW,
+        child: const Text('Preview'),
+      ),
+      const PopupMenuItem<ChatItemMenuOption>(
+        value: ChatItemMenuOption.REJECT,
+        child: const Text('Delete permanently'),
       ),
     ];
   }
 
-  void onItemSelected(Server srvr, Chat chat, ChatItemMenuOption selectedMenu) {
+  void onItemSelected(BuildContext ctxt, Server srvr, Chat chat,
+      ChatItemMenuOption selectedMenu) {
     switch (selectedMenu) {
-      case ChatItemMenuOption.ACCEPT:
-        _acceptChat(srvr, chat);
+      case ChatItemMenuOption.PREVIEW:
+        final routeArgs = RouteArguments(chatId: chat.id);
+        final routeSettings =
+        RouteSettings(name: AppRoutes.chatPage, arguments: routeArgs);
+        var route = LHCRouter.Router.generateRouteChatPage(
+            routeSettings, chat, srvr, true, widget.refreshList);
+        Navigator.of(ctxt).push(route);
+        break;
+      case ChatItemMenuOption.REJECT:
+        widget.callBackDeleteChat(srvr, chat);
         break;
       default:
         break;
     }
-  }
-
-  void _acceptChat(Server srv, Chat chat) async {
-    await _serverRequest.acceptChatTransfer(srv, chat);
-    widget.refreshList();
-
-    final routeArgs = RouteArguments(chatId: chat.id);
-    final routeSettings =
-        RouteSettings(name: AppRoutes.chatPage, arguments: routeArgs);
-    var route = LHCRouter.Router.generateRouteChatPage(
-        routeSettings, chat, srv, false, widget.refreshList);
-
-    Navigator.of(context).push(route);
   }
 }

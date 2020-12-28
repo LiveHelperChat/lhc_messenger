@@ -95,10 +95,6 @@ class ServerRepository {
     return dBHelper.deleteItem(Server.tableName, "id=?", [srvr.id]);
   }
 
-  Future<Server> getTwilioChats(Server server) async {
-    return serverApiClient.getTwilioChats(server);
-  }
-
   Future<List<TwilioPhone>> getTwilioPhones(Server server) async {
     return serverApiClient.getTwilioPhones(server);
   }

@@ -1,6 +1,6 @@
 name: livehelp
 description: A messenger for Live Helper Chat
-version: 1.0.10+10
+version: 1.0.11+11
 dependencies:
   flutter:
     sdk: flutter
