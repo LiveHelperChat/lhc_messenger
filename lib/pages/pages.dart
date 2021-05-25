@@ -1,4 +1,5 @@
 export 'chat/chat_page.dart';
+export 'chat/operators_chat_page.dart';
 export 'chat/twilio_sms_chat.dart';
 export 'login_form.dart';
 export 'main_page.dart';

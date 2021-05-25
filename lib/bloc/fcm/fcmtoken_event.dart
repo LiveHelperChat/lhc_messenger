@@ -71,6 +71,14 @@ class ChatOpenedEvent extends FcmTokenEvent {
   List<Object> get props => [chat];
 }
 
+class OperatorsChatOpenedEvent extends FcmTokenEvent {
+  final User chat;
+  const OperatorsChatOpenedEvent({this.chat});
+
+  @override
+  List<Object> get props => [chat];
+}
+
 class ChatPausedEvent extends FcmTokenEvent {
   final Chat chat;
   const ChatPausedEvent({this.chat});
@@ -79,9 +87,25 @@ class ChatPausedEvent extends FcmTokenEvent {
   List<Object> get props => [chat];
 }
 
+class OperatorsChatPausedEvent extends FcmTokenEvent {
+  final User chat;
+  const OperatorsChatPausedEvent({this.chat});
+
+  @override
+  List<Object> get props => [chat];
+}
+
 class ChatClosedEvent extends FcmTokenEvent {
   final Chat chat;
   const ChatClosedEvent({this.chat});
+
+  @override
+  List<Object> get props => [chat];
+}
+
+class OperatorsChatClosedEvent extends FcmTokenEvent {
+  final User chat;
+  const OperatorsChatClosedEvent({this.chat});
 
   @override
   List<Object> get props => [chat];

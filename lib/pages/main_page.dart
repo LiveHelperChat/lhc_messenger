@@ -12,6 +12,7 @@ import 'package:livehelp/bloc/bloc.dart';
 import 'package:livehelp/data/database.dart';
 import 'package:livehelp/model/model.dart';
 import 'package:livehelp/pages/lists/chat_list_twilio.dart';
+import 'package:livehelp/pages/lists/chat_list_operators.dart';
 import 'package:livehelp/pages/pages.dart';
 import 'package:livehelp/services/server_repository.dart';
 import 'package:livehelp/utils/utils.dart';
@@ -44,6 +45,7 @@ class _MainPageState extends State<MainPage>
   List<dynamic> pendingChatStore = new List();
   List<dynamic> transferChatStore = new List();
   List<dynamic> closedChatStore = new List();
+  List<dynamic> operatorsStore = new List();
 
   Timer _timerChatList;
   Server _selectedServer;
@@ -232,6 +234,23 @@ class _MainPageState extends State<MainPage>
                   number: "0",
                 );
               }),
+            ),
+            Tab(
+              child: BlocBuilder<ChatslistBloc, ChatListState>(
+                  builder: (context, state) {
+                if (state is ChatListLoaded) {
+                  return ChatNumberIndcator(
+                    title: "Ops",
+                    offstage: state.operatorsChatList.length == 0,
+                    number: state.operatorsChatList.length.toString(),
+                  );
+                }
+                return ChatNumberIndcator(
+                  title: "Operators",
+                  offstage: true,
+                  number: "0",
+                );
+              }),
             )
           ];
 
@@ -261,6 +280,14 @@ class _MainPageState extends State<MainPage>
               refreshList: _loadChatList,
             ),
             ClosedListWidget(
+              listOfServers: listServers,
+              refreshList: _loadChatList,
+              callBackDeleteChat: (server, chat) {
+                _chatListBloc
+                    .add(DeleteChatMainPage(server: server, chat: chat));
+              },
+            ),
+            OperatorsListWidget(
               listOfServers: listServers,
               refreshList: _loadChatList,
               callBackDeleteChat: (server, chat) {
@@ -598,6 +625,23 @@ class _MainPageState extends State<MainPage>
       SchedulerBinding.instance.addPostFrameCallback((_) async {
         Navigator.of(context).push(routeChat);
       });
+    } else if (notification.type == NotificationType.NEW_GROUP_MESSAGE) {
+
+      final routeArgs = RouteArguments(chatId: notification.gchat.user_id);
+      final routeSettings = RouteSettings(
+          name: AppRoutes.operatorsChatPage, arguments: routeArgs);
+      routeChat = LHCRouter.Router.generateRouteOperatorsChatPage(
+          routeSettings,
+          notification.gchat,
+          notification.server,
+          true,
+          _loadChatList
+      );
+
+      SchedulerBinding.instance.addPostFrameCallback((_) async {
+          Navigator.of(context).pushRouteIfNotCurrent(routeChat);
+      });
+
     }
   }
 

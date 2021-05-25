@@ -10,6 +10,7 @@ class AppRoutes {
   static const String login = "/login";
   static const String server = "/server";
   static const String chatPage = "/chats/chat";
+  static const String operatorsChatPage = "/chats/operatorschat";
   static const String main = "/main";
   static const String serverDetails = "/servers/server";
   static const String serversManage = "/servers/manage";
@@ -75,6 +76,21 @@ class Router {
       ),
     );
   }
+
+  static Route<dynamic> generateRouteOperatorsChatPage(RouteSettings settings, User user,
+      Server server, bool isNewChat, Function refreshList) {
+    return FadeRoute(
+      settings: settings,
+      builder: (BuildContext context) => OperatorsChatPage(
+        server: server,
+        chat: user,
+        isNewChat: isNewChat,
+        refreshList: refreshList,
+      ),
+    );
+  }
+
+
 }
 
 extension NavigatorStateExtension on NavigatorState {

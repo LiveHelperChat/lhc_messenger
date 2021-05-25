@@ -1,6 +1,6 @@
 part of 'chatslist_bloc.dart';
 
-enum ChatListName { active, pending, transfer, twilio, closed }
+enum ChatListName { active, pending, transfer, twilio, closed, operators }
 
 abstract class ChatListState extends Equatable {
   ChatListState();
@@ -26,6 +26,7 @@ class ChatListLoaded extends ChatListState {
   final List<Chat> transferChatList;
   final List<Chat> twilioChatList;
   final List<Chat> closedChatList;
+  final List<User> operatorsChatList;
   final bool isLoading;
 
   ChatListLoaded(
@@ -34,6 +35,7 @@ class ChatListLoaded extends ChatListState {
       this.transferChatList = const [],
       this.twilioChatList = const [],
       this.closedChatList = const [],
+      this.operatorsChatList = const [],
       this.isLoading = false});
 
   ChatListLoaded copyWith(
@@ -42,6 +44,7 @@ class ChatListLoaded extends ChatListState {
       List<Chat> transferChatList,
       List<Chat> twilioChatList,
       List<Chat> closedChatList,
+      List<User> operatorsChatList,
       bool isLoading = false}) {
     return ChatListLoaded(
         activeChatList: activeChatList ?? this.activeChatList,
@@ -49,6 +52,7 @@ class ChatListLoaded extends ChatListState {
         transferChatList: transferChatList ?? this.transferChatList,
         twilioChatList: twilioChatList ?? this.twilioChatList,
         closedChatList: closedChatList ?? this.closedChatList,
+        operatorsChatList: operatorsChatList ?? this.operatorsChatList,
         isLoading: isLoading ?? this.isLoading);
   }
 
@@ -59,6 +63,7 @@ class ChatListLoaded extends ChatListState {
         transferChatList,
         twilioChatList,
         closedChatList,
+        operatorsChatList,
         isLoading
       ];
 }

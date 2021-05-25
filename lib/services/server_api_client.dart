@@ -6,6 +6,9 @@ import 'package:livehelp/model/model.dart';
 import 'package:http/http.dart' as http;
 import 'package:livehelp/utils/widget_utils.dart';
 
+import 'dart:convert';
+import 'dart:developer' as developer;
+
 /// A class similar to http.Response but instead of a String describing the body
 /// it already contains the parsed Dart-Object
 class ParsedResponse<T> {
@@ -125,6 +128,8 @@ class ServerApiClient {
         }
       }
 
+      //print(response.body);
+
       if (response == null) {
         return ParsedResponse(200, jsonDecode('{"error":"true"}'));
       }
@@ -208,6 +213,18 @@ class ServerApiClient {
           server.addChatsToList(newClosedList, 'closed');
       } else
         server.clearList('closed');
+
+      if (response.body['operators_chats'] != null) {
+        int operatorsSize = response.body['operators_chats']['size'];
+        if (operatorsSize > 0) {
+          Map operatorsJson = response.body['operators_chats']['rows'];
+          List<dynamic> newOperatorsList =
+          operatorListToMap(server.id, operatorsJson.values.toList());
+          if (newOperatorsList != null && newOperatorsList.length > 0)
+            server.addChatsToList(newOperatorsList, 'operators');
+        } else
+          server.clearList('operators');
+      }
 
       int transferSize = response.body['transfered_chats']['size'];
       if (transferSize > 0) {
@@ -304,6 +321,25 @@ class ServerApiClient {
     return listToStore;
   }
 
+  // returns a list of chats as maps
+  List<dynamic> operatorListToMap(int serverId, List jsonList) {
+    // dynamically pick the fields from the json returned
+    // matching the database columns
+    var listToStore = new List<Map<dynamic, dynamic>>();
+    jsonList.forEach((k) {
+      // Add Server id to chat
+      k["${Chat.columns['db_serverid']}"] = serverId;
+
+      Map<String, dynamic> chatsToStore = {};
+      User.columns.values.forEach((val) {
+        chatsToStore[val] = k[val];
+      });
+      listToStore.add(chatsToStore);
+    });
+
+    return listToStore;
+  }
+
   Future<bool> closeChat(Server server, Chat chat) async {
     String path = "/xml/closechat/${chat.id}";
     ParsedResponse response = await makeRequest(server, path, null);
@@ -311,6 +347,26 @@ class ServerApiClient {
       return false;
     else
       return true;
+  }
+
+  Future<bool> closeOperatorsChat(Server server, User chat) async {
+    /*String path = "/xml/closechat/${chat.id}";
+    ParsedResponse response = await makeRequest(server, path, null);
+    if (response.body["error"] == "true") // no error
+      return false;
+    else
+      return true;*/
+    return true;
+  }
+
+  Future<bool> deleteOperatorsChat(Server server, User chat, {list: "active"}) async {
+    /*ParsedResponse response =
+    await makeRequest(server, "/xml/deletechat/${chat.id}", null);
+
+    if (response.isOk()) server.removeChat(chat.id, list);
+
+    return response.isOk() ? true : false;*/
+    return true;
   }
 
   Future<bool> deleteChat(Server server, Chat chat, {list: "active"}) async {
@@ -453,6 +509,38 @@ class ServerApiClient {
     return await getUserOnlineStatus(server);
   }
 
+  Future<Map<String, dynamic>> syncOperatorsMessages(
+      Server server, User chat, int lastMsgId) async {
+    Map params = {};
+
+    List<String> listChats = [lastMsgId == 0
+        ? chat.chat_id.toString()+',0,0'
+        : chat.chat_id.toString() + ',' + lastMsgId.toString()+',0'];
+
+    params["chats"] = listChats;
+
+    ParsedResponse response =
+        await makeRequest(server, "/groupchat/sync?rest_api=true", params, asJson: true, method: 'post');
+
+    Map<String, dynamic> messagesChatStatus = new Map<String, dynamic>();
+    List<Message> listToMsgs = new List<Message>();
+
+    if (response.isOk() && response.body["error"].toString() == "false") {
+      Map results = {};
+      if (response.body["result"].length > 0) {
+        results.addAll(response.body["result"][0]);
+
+        if (results['content'] is List) {
+          results['content'].forEach((value) {
+            listToMsgs.add(new Message.fromMap(value));
+          });
+          messagesChatStatus['messages'] = listToMsgs;
+        }
+      }
+    }
+    return messagesChatStatus;
+  }
+
   Future<Map<String, dynamic>> syncMessages(
       Server server, Chat chat, int lastMsgId) async {
     Map params = {};
@@ -499,6 +587,14 @@ class ServerApiClient {
     return response.isOk() ? true : false;
   }
 
+  Future<bool> postOperatorsMesssage(Server server, User chat, String msg) async {
+    Map params = {};
+    params["msg"] = msg;
+    ParsedResponse response = await makeRequest(server, "/groupchat/addmessage/${chat.chat_id}?rest_api=true", params);
+
+    return response.isOk() ? true : false;
+  }
+
   Future<Map<String, dynamic>> chatData(Server server, Chat chat) async {
     ParsedResponse response =
         await makeRequest(server, "/xml/chatdata/${chat.id}", null);
@@ -508,6 +604,19 @@ class ServerApiClient {
     if (response.isOk() && response.body["error"].toString() == "false") {
       chatData = Map.castFrom(response.body);
     }
+    return chatData;
+  }
+
+  Future<Map<String, dynamic>> chatOperatorsData(Server server, User chat) async {
+    ParsedResponse response =
+        await makeRequest(server, "/restapi/startchatwithoperator/${chat.user_id}", null);
+
+        Map<String, dynamic> chatData;
+
+        if (response.isOk()) {
+          chatData = Map.castFrom(response.body);
+        }
+
     return chatData;
   }
 

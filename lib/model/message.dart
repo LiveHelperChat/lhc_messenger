@@ -7,10 +7,11 @@ class Message {
     "db_chat_id": "chat_id",
     "db_user_id": "user_id",
     "db_msg": "msg",
-    "db_name_support": "name_support"
+    "db_name_support": "name_support",
+    "db_is_owner": "is_owner"
   };
 
-  int id, chat_id, user_id, time;
+  int id, chat_id, user_id, time, is_owner;
   String msg, name_support;
 
   Message(
@@ -19,7 +20,9 @@ class Message {
       this.user_id,
       this.time,
       this.msg,
-      this.name_support});
+      this.name_support,
+      this.is_owner,
+      });
 
   static int checkInt(dynamic value) {
     if (value == null) return null;
@@ -34,7 +37,9 @@ class Message {
             time: checkInt(map[columns['db_time']]),
             user_id: checkInt(map[columns['db_user_id']]),
             msg: map[columns['db_msg']],
-            name_support: map[columns['db_name_support']]);
+            name_support: map[columns['db_name_support']],
+            is_owner: map[columns['db_is_owner']] ?? 0
+  );
 
   Map<String, dynamic> toMap() {
     return {
@@ -43,7 +48,8 @@ class Message {
       columns['db_time']: time,
       columns['db_user_id']: user_id,
       columns['db_msg']: msg,
-      columns['db_name_support']: name_support
+      columns['db_name_support']: name_support,
+      columns['db_is_owner']: is_owner
     };
   }
 }

@@ -49,19 +49,23 @@ class LocalNotificationPlugin {
       description: "New Chat",
       number: 1111);
 
-  // static final String channelNameNewChat = ;
   static final NotificationChannel channelNewMsg = NotificationChannel(
       id: "com.livehelperchat.chat.channel.NEWMESSAGE",
       name: "New Messages",
       description: "New Messages",
       number: 2222);
 
-  //static final String channelNameNewMSG = ;
   static final NotificationChannel channelUnreadMsg = NotificationChannel(
       id: "com.livehelperchat.chat.channel.UNREADMSG",
       name: "Unread Messages",
       description: "Unread Messages",
       number: 3333);
+
+  static final NotificationChannel channelNewGroupMsg = NotificationChannel(
+      id: "com.livehelperchat.chat.channel.NEWGROUPMESSAGE",
+      name: "New group Messages",
+      description: "New group Messages",
+      number: 4444);
 
   initializePlatformSpecifics() {
     var initializationSettingsAndroid = AndroidInitializationSettings('icon');
@@ -124,19 +128,20 @@ class LocalNotificationPlugin {
     switch (notification.type) {
       case NotificationType.NEW_MESSAGE:
         channel = channelNewMsg;
-        // title = "New Message";
+        break;
+      case NotificationType.NEW_GROUP_MESSAGE:
+        channel = channelNewGroupMsg;
         break;
       case NotificationType.PENDING:
         channel = channelNewChat;
-        // title = 'New Chat';
         break;
       case NotificationType.UNREAD:
         channel = channelUnreadMsg;
-        // title = 'Unread Message';
         break;
       default:
         break;
     }
+
     if (notification.server?.isLoggedIn ?? false) {
       displayNotification(channel, notification,
           playSound: notification.server.soundnotify == 0);
@@ -215,6 +220,7 @@ LocalNotificationPlugin notificationPlugin = LocalNotificationPlugin._();
 class ReceivedNotification {
   int id;
   Chat chat;
+  User gchat;
   Server server;
   NotificationType type;
   final String title;
@@ -227,6 +233,7 @@ class ReceivedNotification {
     this.id,
     this.type,
     this.chat,
+    this.gchat,
     this.payload,
   });
 
@@ -237,7 +244,8 @@ class ReceivedNotification {
         'body': body,
         'payload': payload,
         'type': type.toString(),
-        'chat': chat?.toJson()
+        'chat': chat?.toJson(),
+        'gchat': gchat?.toJson()
       };
 
   ReceivedNotification.fromJson(Map<String, dynamic> map)
@@ -248,7 +256,8 @@ class ReceivedNotification {
     type = getNotificationTypeFromString(map['type'].toString()) ??
         NotificationType.INFO;
     server = Server.fromJson(map['server']) ?? null;
-    chat = Chat.fromJson(map['chat']) ?? null;
+    chat = map.containsKey('chat') && map['chat'] != null ? Chat.fromJson(map['chat']) : null;
+    gchat = map.containsKey('gchat') && map['gchat'] != null ? User.fromJson(map['gchat']) : null;
   }
 
   NotificationType getNotificationTypeFromString(String typeStr) {
@@ -257,4 +266,4 @@ class ReceivedNotification {
   }
 }
 
-enum NotificationType { INFO, NEW_MESSAGE, PENDING, UNREAD }
+enum NotificationType { INFO, NEW_MESSAGE, PENDING, UNREAD, NEW_GROUP_MESSAGE }
