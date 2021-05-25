@@ -78,5 +78,5 @@ flutter:
   # For details regarding fonts from package dependencies,
   # see https://flutter.io/custom-fonts/#from-packages
 environment:
-  sdk: '>=2.10.0-110 <=2.11.0-242.0.dev'
+  sdk: '>=2.0.0 <3.0.0'
   flutter: ">=1.18.0-6.0.pre <2.0.0"
