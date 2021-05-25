@@ -11,24 +11,20 @@ class ChatMessagesBloc extends Bloc<ChatMessagesEvent, ChatMessagesState>{
   final ServerRepository serverRepository;
   ChatMessagesBloc({@required this.serverRepository}) : assert(serverRepository != null), super(ChatMessagesInitial());
 
-
-
   @override
   Stream<ChatMessagesState> mapEventToState(ChatMessagesEvent event) async* {
     final currentState = state;
 
-     if(event is FetchChatMessages){
+   if (event is FetchChatMessages) {
       yield* _mapChatMessagesLoadedToState(event, currentState);
-    }
-   else if(event is PostMessage){
-     if(currentState is ChatMessagesLoaded){
+   } else if (event is PostMessage) {
+     if (currentState is ChatMessagesLoaded) {
        await serverRepository.postMesssage(event.server, event.chat, event.message);
        this.add(FetchChatMessages(server: event.server, chat: event.chat));
-     }
-    }
-   else if (event is CloseChat || event is DeleteChat){
+      }
+    } else if (event is CloseChat || event is DeleteChat){
      var closed = false;
-     if(currentState is ChatMessagesLoaded){
+     if (currentState is ChatMessagesLoaded) {
        yield currentState.copyWith(isLoading: true);
        try{
          if(event is CloseChat) {

@@ -1,6 +1,10 @@
 import 'package:livehelp/model/model.dart';
 import 'package:livehelp/utils/utils.dart';
 
+import 'dart:convert';
+import 'dart:developer' as developer;
+
+
 // ignore_for_file: non_constant_identifier_names
 class Server {
   //Tablename
@@ -69,6 +73,7 @@ class Server {
   List<Chat> transferChatList;
   List<Chat> twilioChatList;
   List<Chat> closedChatList;
+  List<User> operatorsChatList;
 
   Server(
       {this.id,
@@ -99,6 +104,7 @@ class Server {
     transferChatList = List<Chat>();
     twilioChatList = List<Chat>();
     closedChatList = List<Chat>();
+    operatorsChatList = List<User>();
   }
 
   String getUrl() => appendIndexToUrl ? url + "/index.php" : url;
@@ -169,7 +175,7 @@ class Server {
         this.transferChatList =
             _cleanUpLists(this.transferChatList, newChatList);
         break;
-    case "closed":
+      case "closed":
         this.closedChatList ??= new List<Chat>();
         this.closedChatList = _cleanUpLists(this.closedChatList, newChatList);
         this.closedChatList.sort((a, b) => a.id.compareTo(b.id));
@@ -178,6 +184,11 @@ class Server {
         this.twilioChatList ??= new List<Chat>();
         this.twilioChatList = _cleanUpLists(this.twilioChatList, newChatList);
         this.twilioChatList.sort((a, b) => b.last_msg_time.compareTo(a.last_msg_time));
+        break;
+      case "operators":
+        this.operatorsChatList ??= new List<User>();
+        this.operatorsChatList = _cleanUpOperatorsLists(this.operatorsChatList, newChatList);
+        this.operatorsChatList.sort((a, b) => a.user_id.compareTo(b.user_id));
         break;
     }
   }
@@ -218,6 +229,44 @@ class Server {
     return chatToClean;
   }
 
+  List<User> _cleanUpOperatorsLists(
+      List<User> chatToClean, List<dynamic> listFromServer) {
+
+    //developer.log(jsonEncode(listFromServer), name: 'my.app.category');
+    //developer.log(jsonEncode(listFromServer), name: '_cleanUpOperatorsLists');
+
+    var incomingList = listFromServer.map((map) => new User.fromJson(map));
+    incomingList.forEach((map) {
+      if (chatToClean.any((chat) => chat.user_id == map.user_id && chat.serverid == map.serverid)) {
+        int index = chatToClean.indexWhere((chat) => chat.user_id == map.user_id && chat.serverid == map.serverid);
+        chatToClean[index] = map;
+      } else {
+        chatToClean.add(map);
+      }
+    });
+
+    //remove missing
+    if (chatToClean.length > 0 && incomingList.length > 0) {
+      List<int> removedIndices = new List();
+      chatToClean.forEach((chat) {
+        if (!incomingList
+            .any((map) => map.user_id == chat.user_id && map.serverid == chat.serverid)) {
+          int index = chatToClean.indexOf(chat);
+          removedIndices.add(index);
+        }
+      });
+
+      //remove the chats
+      if (removedIndices != null && removedIndices.length > 0) {
+        removedIndices.sort();
+        removedIndices.reversed.toList().forEach(chatToClean.removeAt);
+        removedIndices.clear();
+      }
+    }
+
+    return chatToClean;
+  }
+
   void clearList(String list) {
     switch (list) {
       case 'active':
@@ -234,6 +283,9 @@ class Server {
         break;
       case 'twilio':
         this.twilioChatList?.clear();
+        break;
+      case 'operators':
+        this.operatorsChatList?.clear();
         break;
       default:
         break;

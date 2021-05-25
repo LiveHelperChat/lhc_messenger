@@ -7,8 +7,14 @@ import 'package:equatable/equatable.dart';
 import 'package:livehelp/model/model.dart';
 import 'package:livehelp/services/server_repository.dart';
 
+import 'dart:convert';
+import 'dart:developer' as developer;
+
 part 'chatslist_event.dart';
 part 'chatslist_state.dart';
+
+
+
 
 class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
   final ServerRepository serverRepository;
@@ -58,7 +64,9 @@ class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
               pendingChatList: server.pendingChatList,
               transferChatList: server.transferChatList,
               twilioChatList: server.twilioChatList,
-              closedChatList: server.closedChatList);
+              closedChatList: server.closedChatList,
+              operatorsChatList: server.operatorsChatList
+          );
         } catch (ex) {
           yield ChatListLoadError(message: "${ex?.message}");
         }
@@ -72,12 +80,16 @@ class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
         List<Chat> transferChats = List.from(currentState.transferChatList);
         List<Chat> twilioChats = List.from(currentState.twilioChatList);
         List<Chat> closedChats = List.from(currentState.closedChatList);
+        List<User> operatorsChatChats = List.from(currentState.operatorsChatList);
 
         List<Chat> activeList =
             await _cleanList(ChatListName.active, server, activeChats);
 
         List<Chat> closedList =
             await _cleanList(ChatListName.closed, server, closedChats);
+
+        List<User> operatorsList =
+            await _cleanListOperator(ChatListName.operators, server, operatorsChatChats);
 
         List<Chat> pendingList =
             await _cleanList(ChatListName.pending, server, pendingChats);
@@ -93,7 +105,8 @@ class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
             pendingChatList: pendingList,
             transferChatList: transferList,
             twilioChatList: _sortByLastMessageTime(twilioList),
-            closedChatList: _sortById(closedList)
+            closedChatList: _sortById(closedList),
+            operatorsChatList: _sortByLastOperatorMessageTime(operatorsList)
         );
       }
     } on Exception {
@@ -165,6 +178,7 @@ class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
               await _updateChatList(listToClean, server.transferChatList);
         }
         return listToClean;
+
       case ChatListName.twilio:
         if (server.twilioChatList.length == 0) {
           if (listToClean.length > 0) {
@@ -177,6 +191,41 @@ class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
         return listToClean;
     }
     return listToClean;
+  }
+
+  Future<List<User>> _cleanListOperator(
+      ChatListName listName, Server server, List<User> listToClean) async {
+    switch (listName) {
+      case ChatListName.operators:
+        if (server.operatorsChatList.length == 0) {
+          if (listToClean.length > 0) {
+            listToClean.removeWhere((chat) => chat.serverid == server.id);
+          }
+        } else {
+          listToClean =
+              await _updateOperatorList(listToClean, server.operatorsChatList);
+        }
+        return listToClean;
+    }
+    return listToClean;
+  }
+
+  Future<List<User>> _updateOperatorList(
+      List<User> chatToUpdate, List<User> listFromServer) async {
+    List<User> resultList = chatToUpdate;
+
+    await Future.forEach(listFromServer, (User map) async {
+      if (resultList
+          .any((chat) => chat.user_id == map.user_id && chat.serverid == map.serverid)) {
+        int index = resultList.indexWhere(
+            (chat) => chat.user_id == map.user_id && chat.serverid == map.serverid);
+        resultList[index] = map;
+      } else {
+        resultList.add(map);
+      }
+    });
+
+    return await _removeMissingOperatorFromList(resultList, listFromServer);
   }
 
   Future<List<Chat>> _updateChatList(
@@ -201,6 +250,11 @@ class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
     return listToSort;
   }
 
+  List<User> _sortByLastOperatorMessageTime(List<User> listToSort) {
+    listToSort.sort((a, b) => a.last_msg_time.compareTo(b.last_msg_time));
+    return listToSort;
+  }
+
   List<Chat> _sortById(List<Chat> listToSort) {
     listToSort.sort((a, b) => a.id.compareTo(b.id));
     return listToSort;
@@ -217,6 +271,33 @@ class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
       resultList.asMap().forEach((index, chat) {
         if (!listToCompare.any(
             (map) => map.id == chat.id && chat.serverid == chat.serverid)) {
+          //assume listToCompare belongs to a single server
+          if (chat.serverid == serverIdIncoming) {
+            removedIndices.add(index);
+          }
+        }
+      });
+
+      //remove the chats
+      if (removedIndices != null && removedIndices.length > 0) {
+        removedIndices.sort();
+        removedIndices.reversed.toList().forEach(resultList.removeAt);
+        removedIndices.clear();
+      }
+    }
+    return resultList;
+  }
+
+  Future<List<User>> _removeMissingOperatorFromList(
+      List<User> chatToClean, List<User> listToCompare) async {
+    List<User> resultList = chatToClean;
+    if (resultList.length > 0 && resultList.length > 0) {
+      List<int> removedIndices = new List();
+
+      int serverIdIncoming = listToCompare.first.serverid;
+      resultList.asMap().forEach((index, chat) {
+        if (!listToCompare.any(
+            (map) => map.user_id == chat.user_id && chat.serverid == chat.serverid)) {
           //assume listToCompare belongs to a single server
           if (chat.serverid == serverIdIncoming) {
             removedIndices.add(index);

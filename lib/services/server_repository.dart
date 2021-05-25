@@ -65,8 +65,17 @@ class ServerRepository {
     return serverApiClient.syncMessages(server, chat, lastMsgId);
   }
 
+  Future<Map<String, dynamic>> syncOperatorsMessages(
+      Server server, User chat, int lastMsgId) {
+    return serverApiClient.syncOperatorsMessages(server, chat, lastMsgId);
+  }
+
   Future<bool> postMesssage(Server server, Chat chat, String msg) {
     return serverApiClient.postMesssage(server, chat, msg);
+  }
+
+  Future<bool> postOperatorsMesssage(Server server, User chat, String msg) {
+    return serverApiClient.postOperatorsMesssage(server, chat, msg);
   }
 
   Future<bool> closeChat(
@@ -76,11 +85,25 @@ class ServerRepository {
     return serverApiClient.closeChat(server, chat);
   }
 
+  Future<bool> closeOperatorsChat(
+    Server server,
+    User chat,
+  ) {
+    return serverApiClient.closeOperatorsChat(server, chat);
+  }
+
   Future<bool> deleteChat(
     Server server,
     Chat chat,
   ) {
     return serverApiClient.deleteChat(server, chat);
+  }
+
+  Future<bool> deleteOperatorsChat(
+    Server server,
+    User chat,
+  ) {
+    return serverApiClient.deleteOperatorsChat(server, chat);
   }
 
   Future<List<dynamic>> getOperatorsList(Server server) {

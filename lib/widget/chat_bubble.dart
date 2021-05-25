@@ -12,22 +12,23 @@ class Bubble extends StatelessWidget {
 
   final Message message;
 
+
   @override
   Widget build(BuildContext context) {
     var dateFormatter = new DateFormat("HH:mm, dd/MM/yy");
 
-    final bg = message.user_id == 0
+    final bg = message.user_id == 0 || (message.is_owner == 2)
         ? Colors.black12
         : message.user_id > 0
             ? Colors.white
             : Colors.greenAccent;
-    final align = message.user_id == 0
+    final align = message.user_id == 0 || (message.is_owner == 2)
         ? CrossAxisAlignment.start
         : message.user_id > 0
             ? CrossAxisAlignment.end
             : CrossAxisAlignment.center;
 
-    final radius = message.user_id == 0
+    final radius = message.user_id == 0 || (message.is_owner == 2)
         ? const BorderRadius.only(
             topRight: const Radius.circular(10.0),
             bottomLeft: const Radius.circular(10.0),
@@ -46,7 +47,7 @@ class Bubble extends StatelessWidget {
                 bottomLeft: const Radius.circular(10.0),
               );
 
-    final margin = message.user_id == 0
+    final margin = message.user_id == 0 || (message.is_owner == 2)
         ? const EdgeInsets.only(right: 40.0)
         : const EdgeInsets.only(left: 40.0);
     return new Column(

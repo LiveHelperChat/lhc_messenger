@@ -40,6 +40,20 @@ class ChatOpenedState extends FcmTokenState {
   List<Object> get props => [token, chat];
 }
 
+class ChatOperatorsOpenedState extends FcmTokenState {
+  final User chat;
+  final String token;
+  const ChatOperatorsOpenedState({@required this.token, this.chat})
+      : super(token: token);
+
+  ChatOperatorsOpenedState copyWith({User chat, String token}) {
+    return ChatOperatorsOpenedState(chat: chat ?? this.chat, token: token ?? this.token);
+  }
+
+  @override
+  List<Object> get props => [token, chat];
+}
+
 class ChatPausedState extends ChatOpenedState {
   final Chat chat;
   final String token;
@@ -54,6 +68,16 @@ class ChatClosedState extends FcmTokenState {
   final Chat chat;
   final String token;
   const ChatClosedState({@required this.token, this.chat})
+      : super(token: token);
+
+  @override
+  List<Object> get props => [token, chat];
+}
+
+class ChatOperatorsClosedState extends FcmTokenState {
+  final User chat;
+  final String token;
+  const ChatOperatorsClosedState({@required this.token, this.chat})
       : super(token: token);
 
   @override

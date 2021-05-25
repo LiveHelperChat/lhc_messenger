@@ -1,3 +1,8 @@
+1.2
+
+1. Chat between operators
+2. Notifications fixes.
+
 1.1
 
 To see online visitor status it's require 3.42v

@@ -75,7 +75,7 @@ class ChatItemWidget extends StatelessWidget {
                               new AnimatedDefaultTextStyle(
                                 style: styling,
                                 duration: kThemeChangeDuration,
-                                child: new Text(chat.nick,
+                                child: new Text(chat.nick ?? "",
                                     textAlign: TextAlign.left,
                                     style: styling.copyWith(
                                         color: Colors.black,

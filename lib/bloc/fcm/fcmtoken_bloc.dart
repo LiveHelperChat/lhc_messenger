@@ -71,18 +71,24 @@ class FcmTokenBloc extends Bloc<FcmTokenEvent, FcmTokenState> {
       yield FcmTokenReceived(token: event.fcmToken);
     } else if (event is FcmTokenRefresh) {
       yield FcmTokenReceived(token: event.fcmToken);
+    } else if (event is OperatorsChatClosedEvent) {
+      if (currentState is ChatOperatorsOpenedState && currentState.chat?.chat_id == event.chat?.chat_id) {
+        yield ChatOperatorsClosedState(chat: event.chat, token: token);
+      }
+    } else if (event is OperatorsChatOpenedEvent) {
+      yield ChatOperatorsOpenedState(chat: event.chat, token: token);
     } else if (event is ChatOpenedEvent) {
       yield ChatOpenedState(chat: event.chat, token: token);
     } else if (event is ChatPausedEvent) {
       yield ChatPausedState(chat: event.chat, token: token);
     } else if (event is ChatClosedEvent) {
-      //Don't yield closedstate if previous chat and current chat are not the same.
+      // Don't yield closedstate if previous chat and current chat are not the same.
       // Popping a chat page doesn't call dispose right away.
       // yielding a closed state later affects a newly opened chatstate
-      if (currentState is ChatOpenedState && currentState.chat == event.chat) {
+      if (currentState is ChatOpenedState && currentState.chat?.id == event.chat?.id) {
         yield ChatClosedState(chat: event.chat, token: token);
       }
-      if (currentState is ChatPausedState && currentState.chat == event.chat) {
+      if (currentState is ChatPausedState && currentState.chat?.id == event.chat?.id) {
         yield ChatClosedState(chat: event.chat, token: token);
       }
     } else if (event is OnResumeEvent) {
@@ -100,6 +106,10 @@ class FcmTokenBloc extends Bloc<FcmTokenEvent, FcmTokenState> {
         yield currentState.copyWith(
             chat: currentState.chat, token: currentState.token);
         _showNotification(event.message, openedChat: currentState.chat);
+      } else if (currentState is ChatOperatorsOpenedState) {
+        yield currentState.copyWith(
+            chat: currentState.chat, token: currentState.token);
+        _showNotification(event.message, openedGroupChat: currentState.chat);
       } else {
         _showNotification(event.message);
       }
@@ -129,6 +139,15 @@ class FcmTokenBloc extends Bloc<FcmTokenEvent, FcmTokenState> {
               body: data['msg'].toString());
         }
 
+        if (data['chat_type'].toString() == 'new_group_msg') {
+          return ReceivedNotification(
+              server: server,
+              gchat: User.fromJson(chat),
+              type: NotificationType.NEW_GROUP_MESSAGE,
+              title: "New message from " + chat['name_official'].toString(),
+              body: data['msg'].toString());
+        }
+
         // pending chat
         if (data["chat_type"].toString() == "pending") {
           return ReceivedNotification(
@@ -152,15 +171,14 @@ class FcmTokenBloc extends Bloc<FcmTokenEvent, FcmTokenState> {
     return null;
   }
 
-  _showNotification(Map<String, dynamic> msg, {Chat openedChat}) async {
+  _showNotification(Map<String, dynamic> msg, {Chat openedChat, User openedGroupChat}) async {
 
     ReceivedNotification received = await _prepareNotification(msg);
 
     if (received != null) {
-      bool isChatOpened =
-          openedChat != null && openedChat.id == received.chat?.id;
 
-      if (received.type == NotificationType.NEW_MESSAGE && isChatOpened) return;
+      if (received.type == NotificationType.NEW_MESSAGE && openedChat != null && openedChat.id == received.chat?.id) return;
+      if (received.type == NotificationType.NEW_GROUP_MESSAGE && openedGroupChat != null && openedGroupChat.chat_id == received.gchat?.chat_id) return;
 
       notificationPlugin.showNotification(received);
     }
@@ -172,13 +190,15 @@ class FcmTokenBloc extends Bloc<FcmTokenEvent, FcmTokenState> {
     }
   }
 
-  onNotificationClick(String payload) {
+  onNotificationClick(String payload) async {
     if (payload.isNotEmpty) {
+
       final payloadMap = jsonDecode(payload) as Map<String, dynamic>;
 
-      ReceivedNotification receivedNotification =
-          ReceivedNotification.fromJson(payloadMap);
+      ReceivedNotification receivedNotification = await ReceivedNotification.fromJson(payloadMap);
+
       add(NotificationClick(notification: receivedNotification));
+
     }
   }
 }
