@@ -8,6 +8,7 @@ import 'package:rxdart/subjects.dart';
 
 import 'package:livehelp/model/model.dart';
 
+
 class LocalNotificationPlugin {
   //
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
@@ -26,45 +27,89 @@ class LocalNotificationPlugin {
 
     if (Platform.isIOS) {
       _requestIOSPermission();
+    } else {
+
+      const AndroidNotificationChannel channel = AndroidNotificationChannel(
+        'com.livehelperchat.chat.channel.NEWCHAT', // id
+        'New chat (background)', // title
+        'New chat notifications while app is in the background', // description
+        importance: Importance.High,
+        enableVibration: true,
+        playSound: true,
+      );
+
+      const AndroidNotificationChannel channelMessage = AndroidNotificationChannel(
+        'com.livehelperchat.chat.channel.NEWMESSAGE', // id
+        'New messages (background)', // title
+        'New chat messages notifications while app is in the background', // description
+        importance: Importance.High,
+        enableVibration: true,
+        playSound: true,
+      );
+
+      const AndroidNotificationChannel channelGroupMessage = AndroidNotificationChannel(
+        'com.livehelperchat.chat.channel.NEWGROUPMESSAGE', // id
+        'New group messages (background)', // title
+        'New group messages notifications while app is in the background', // description
+        importance: Importance.High,
+        enableVibration: true,
+        playSound: true,
+      );
+
+      flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>()
+          ?.createNotificationChannel(channel);
+
+      flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>()
+          ?.createNotificationChannel(channelMessage);
+
+      flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>()
+          ?.createNotificationChannel(channelGroupMessage);
     }
+
     initializePlatformSpecifics();
   }
 
   // default channel id - same as in AndroidManifest.xml file
   static final NotificationChannel channelDefault = NotificationChannel(
       id: "com.livehelperchat.chat.channel.lhcmessenger_notification",
-      name: "Information",
-      description: "Info from server",
+      name: "Default",
+      description: "Default notifications while app is open",
       number: 1001);
 
   static final NotificationChannel silentChannel = NotificationChannel(
       id: "com.livehelperchat.chat.channel.lhc_silent_channel",
-      name: "Information",
-      description: "Info from server",
+      name: "Default",
+      description: "Default notifications while app is open",
       number: 1001);
 
   static final NotificationChannel channelNewChat = NotificationChannel(
       id: "com.livehelperchat.chat.channel.NEWCHAT",
-      name: "New Chat",
-      description: "New Chat",
+      name: "New chat (open app)",
+      description: "New chat notifications while app is open",
       number: 1111);
 
   static final NotificationChannel channelNewMsg = NotificationChannel(
       id: "com.livehelperchat.chat.channel.NEWMESSAGE",
-      name: "New Messages",
-      description: "New Messages",
+      name: "New messages (open app)",
+      description: "New messages notifications while app is open",
       number: 2222);
 
   static final NotificationChannel channelUnreadMsg = NotificationChannel(
       id: "com.livehelperchat.chat.channel.UNREADMSG",
-      name: "Unread Messages",
-      description: "Unread Messages",
+      name: "Unread messages (open app)",
+      description: "Unread messages notifications while app is open",
       number: 3333);
 
   static final NotificationChannel channelNewGroupMsg = NotificationChannel(
       id: "com.livehelperchat.chat.channel.NEWGROUPMESSAGE",
-      name: "New group Messages",
-      description: "New group Messages",
+      name: "New group messages (open app)",
+      description: "New group messages notifications while app is open",
       number: 4444);
 
   initializePlatformSpecifics() {

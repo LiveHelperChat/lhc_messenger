@@ -30,7 +30,7 @@ def keystoreProperties = new Properties()
 keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 
 android {
-    compileSdkVersion 29
+    compileSdkVersion 30
 
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
@@ -44,9 +44,9 @@ android {
         // TODO: Specify your own unique Application.kt ID (https://developer.android.com/studio/build/application-id.html).
         applicationId "com.livehelperchat.chat"
         minSdkVersion 16
-        targetSdkVersion 29
-        versionCode 35
-        versionName "1.6"
+        targetSdkVersion 30
+        versionCode 36
+        versionName "1.7"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 	
