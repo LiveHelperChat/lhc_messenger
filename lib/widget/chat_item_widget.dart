@@ -5,6 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:livehelp/model/model.dart';
 import 'package:livehelp/utils/utils.dart';
 
+import 'dart:developer' as developer;
+import 'dart:convert';
+
 class ChatItemWidget extends StatelessWidget {
   ChatItemWidget(
       {Key key,
@@ -36,6 +39,63 @@ class ChatItemWidget extends StatelessWidget {
     }, itemBuilder: (BuildContext context) {
       return menuBuilder;
     });
+
+    List<Widget> subjects = [];
+
+    if (chat.subject_front != "") {
+        List<String> subjectsList = chat.subject_front.split("||");
+        subjectsList.forEach((element) {
+          subjects.add(Container(
+            color: Colors.transparent,
+            margin: const EdgeInsets.only(right: 4.0,),
+            child: new Container(
+                decoration: new BoxDecoration(
+                    color: Colors.lightGreen,
+                    borderRadius: new BorderRadius.only(
+                      topLeft: const Radius.circular(5.0),
+                      topRight: const Radius.circular(5.0),
+                      bottomRight: const Radius.circular(5.0),
+                      bottomLeft: const Radius.circular(5.0),
+                    )
+                ),
+                child: Container(
+                    margin: const EdgeInsets.all(4.0),
+                    child: new Center(
+                      child: new Text(element, style: TextStyle(fontSize: 12.0, color: Colors.white)),
+                    )
+                )
+            ),
+          ));
+        });
+
+    }
+
+    if (chat.aicon_front != "") {
+        List<String> aicons = chat.aicon_front.split("||");
+        aicons.forEach((element) {
+          subjects.add(Container(
+            color: Colors.transparent,
+            margin: const EdgeInsets.only(right: 4.0,),
+            child: new Container(
+                decoration: new BoxDecoration(
+                    color: Colors.grey,
+                    borderRadius: new BorderRadius.only(
+                      topLeft: const Radius.circular(5.0),
+                      topRight: const Radius.circular(5.0),
+                      bottomRight: const Radius.circular(5.0),
+                      bottomLeft: const Radius.circular(5.0),
+                    )
+                ),
+                child: Container(
+                    margin: const EdgeInsets.all(4.0),
+                    child: new Center(
+                      child: new Text(element, style: TextStyle(fontSize: 12.0, color: Colors.white)),
+                    )
+                )
+            ),
+          ));
+        });
+    }
 
     return new SizedBox(
         height: 160.0,
@@ -82,14 +142,29 @@ class ChatItemWidget extends StatelessWidget {
                                         fontSize: 18.0,
                                         fontWeight: FontWeight.bold)),
                               ),
-                              new AnimatedDefaultTextStyle(
-                                  duration: kThemeChangeDuration,
-                                  child: Text(chat.country_name ?? ""),
-                                  textAlign: TextAlign.left,
-                                  style: styling.copyWith(
-                                    color: Colors.indigo.shade400,
-                                    fontSize: 14.0,
-                                  )),
+                             new Row(
+                                 children: <Widget>[
+                                  AnimatedDefaultTextStyle(
+                                       duration: kThemeChangeDuration,
+                                       child: Text(chat.country_name ?? ""),
+                                       textAlign: TextAlign.left,
+                                       style: styling.copyWith(
+                                         color: Colors.grey.shade400,
+                                         fontSize: 14.0,
+                                       )),
+                                   new Expanded(
+                                   child: new Container(
+                                     height: 20.0,
+                                     child: ListView(
+                                         scrollDirection: Axis.horizontal,
+                                         children: subjects
+                                     ),
+                                   ),
+                                   )
+                                 ]
+                             ),
+
+
                             ])),
                         Align(
                           alignment: Alignment.topRight,
@@ -132,7 +207,7 @@ class ChatItemWidget extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: <Widget>[
                         new Icon(
-                          Icons.people,
+                          (chat.status == 5 && chat.user_id == null ? Icons.android : Icons.people),
                           size: 14,
                           color: Theme.of(context).primaryColor,
                         ),

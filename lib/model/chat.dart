@@ -26,6 +26,8 @@ class Chat extends Equatable {
     "db_last_user_msg_time": "last_user_msg_time",
     "db_phone": "phone",
     "db_user_status_front": "user_status_front",
+    "db_subject_front": "subject_front",
+    "db_aicon_front": "aicon_front"
   };
 
   final int id,
@@ -48,7 +50,9 @@ class Chat extends Equatable {
       department_name,
       user_typing_txt,
       owner,
-      phone;
+      phone,
+      subject_front,
+      aicon_front;
 
   int get last_msg_time {
     if (last_op_msg_time != null && last_user_msg_time != null) {
@@ -85,7 +89,10 @@ class Chat extends Equatable {
       this.last_user_msg_time,
       this.last_op_msg_time,
       this.phone,
-      this.user_status_front});
+      this.user_status_front,
+      this.subject_front,
+      this.aicon_front,
+      });
 
   Chat copyWith(
       {int id,
@@ -108,7 +115,10 @@ class Chat extends Equatable {
       last_user_msg_time,
       last_op_msg_time,
       String phone,
-      String user_status_front}) {
+      String user_status_front,
+      String subject_front,
+      String aicon_front
+      }) {
     return Chat(
         id: id ?? this.id,
         serverid: serverid ?? this.serverid,
@@ -130,7 +140,10 @@ class Chat extends Equatable {
         last_user_msg_time: last_user_msg_time ?? this.last_user_msg_time,
         last_op_msg_time: last_op_msg_time ?? this.last_op_msg_time,
         phone: phone ?? this.phone,
-        user_status_front: user_status_front ?? this.user_status_front);
+        user_status_front: user_status_front ?? this.user_status_front,
+        subject_front: subject_front ?? this.subject_front,
+        aicon_front: aicon_front ?? this.aicon_front
+    );
   }
 
   static int checkInt(dynamic value) {
@@ -161,6 +174,8 @@ class Chat extends Equatable {
           last_op_msg_time: checkInt(map['last_op_msg_time']),
           phone: map['phone'] ?? "",
           user_status_front: map['user_status_front'] ?? 0,
+          subject_front: map['subject_front'] ?? "",
+          aicon_front: map['aicon_front'] ?? "",
         );
 
   Map<String, dynamic> toJson() {
@@ -185,6 +200,8 @@ class Chat extends Equatable {
       'last_msg_time': last_msg_time,
       columns['db_phone']: phone,
       columns['db_user_status_front']: user_status_front,
+      columns['db_subject_front']: subject_front,
+      columns['db_aicon_front']: aicon_front,
     };
   }
 
@@ -210,6 +227,8 @@ class Chat extends Equatable {
         last_user_msg_time,
         last_op_msg_time,
         phone,
-        user_status_front
+        user_status_front,
+        subject_front,
+        aicon_front,
       ];
 }

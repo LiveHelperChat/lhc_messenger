@@ -307,13 +307,6 @@ class ChatPageState extends State<ChatPage>
                       onPressed: () {
                         _isActionLoading = true;
                         _acceptChat();
-                        // Use timer to accept the chat. To handle problematic network connection
-                        /*       _acceptTimer = new Timer.periodic(
-                  new Duration(seconds: 10), (Timer timer){
-                    if (!_isOwnerOfChat)_acceptChat();
-                    else _cancelAccept();
-                  });
-                    */
                       },
                     )),
                 new IconButton(

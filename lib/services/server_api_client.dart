@@ -214,6 +214,30 @@ class ServerApiClient {
       } else
         server.clearList('closed');
 
+      if (response.body['bot_chats'] != null) {
+        int botSize = response.body['bot_chats']['size'];
+        if (botSize > 0) {
+          Map botJson = response.body['bot_chats']['rows'];
+          List<dynamic> newBotList =
+          chatListToMap(server.id, botJson.values.toList());
+          if (newBotList != null && newBotList.length > 0)
+            server.addChatsToList(newBotList, 'bot');
+        } else
+          server.clearList('bot');
+      }
+
+      if (response.body['subject_chats'] != null) {
+        int subjectSize = response.body['subject_chats']['size'];
+        if (subjectSize > 0) {
+          Map subjectJson = response.body['subject_chats']['rows'];
+          List<dynamic> newSubjectList =
+          chatListToMap(server.id, subjectJson.values.toList());
+          if (newSubjectList != null && newSubjectList.length > 0)
+            server.addChatsToList(newSubjectList, 'subject');
+        } else
+          server.clearList('subject');
+      }
+
       if (response.body['operators_chats'] != null) {
         int operatorsSize = response.body['operators_chats']['size'];
         if (operatorsSize > 0) {

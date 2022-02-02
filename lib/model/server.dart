@@ -73,6 +73,8 @@ class Server {
   List<Chat> transferChatList;
   List<Chat> twilioChatList;
   List<Chat> closedChatList;
+  List<Chat> botChatList;
+  List<Chat> subjectChatList;
   List<User> operatorsChatList;
 
   Server(
@@ -104,6 +106,8 @@ class Server {
     transferChatList = List<Chat>();
     twilioChatList = List<Chat>();
     closedChatList = List<Chat>();
+    botChatList = List<Chat>();
+    subjectChatList = List<Chat>();
     operatorsChatList = List<User>();
   }
 
@@ -179,6 +183,16 @@ class Server {
         this.closedChatList ??= new List<Chat>();
         this.closedChatList = _cleanUpLists(this.closedChatList, newChatList);
         this.closedChatList.sort((a, b) => a.id.compareTo(b.id));
+        break;
+      case "bot":
+        this.botChatList ??= new List<Chat>();
+        this.botChatList = _cleanUpLists(this.botChatList, newChatList);
+        this.botChatList.sort((a, b) => a.id.compareTo(b.id));
+        break;
+      case "subject":
+        this.subjectChatList ??= new List<Chat>();
+        this.subjectChatList = _cleanUpLists(this.subjectChatList, newChatList);
+        this.subjectChatList.sort((a, b) => a.id.compareTo(b.id));
         break;
       case "twilio":
         this.twilioChatList ??= new List<Chat>();
@@ -278,6 +292,12 @@ class Server {
       case 'transfer':
         this.transferChatList?.clear();
         break;
+      case 'bot':
+        this.botChatList?.clear();
+        break;
+      case 'subject':
+        this.subjectChatList?.clear();
+        break;
       case 'closed':
         this.closedChatList?.clear();
         break;
@@ -299,6 +319,12 @@ class Server {
         break;
       case 'pending':
         this.pendingChatList.removeWhere((chat) => chat.id == id);
+        break;
+        case 'subject':
+        this.subjectChatList.removeWhere((chat) => chat.id == id);
+        break;
+        case 'bot':
+        this.botChatList.removeWhere((chat) => chat.id == id);
         break;
       case 'transfer':
         this.transferChatList.removeWhere((chat) => chat.id == id);

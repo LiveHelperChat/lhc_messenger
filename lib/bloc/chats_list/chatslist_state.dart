@@ -1,6 +1,6 @@
 part of 'chatslist_bloc.dart';
 
-enum ChatListName { active, pending, transfer, twilio, closed, operators }
+enum ChatListName { active, pending, transfer, twilio, closed, subject, bot, operators }
 
 abstract class ChatListState extends Equatable {
   ChatListState();
@@ -26,6 +26,8 @@ class ChatListLoaded extends ChatListState {
   final List<Chat> transferChatList;
   final List<Chat> twilioChatList;
   final List<Chat> closedChatList;
+  final List<Chat> botChatList;
+  final List<Chat> subjectChatList;
   final List<User> operatorsChatList;
   final bool isLoading;
 
@@ -35,6 +37,8 @@ class ChatListLoaded extends ChatListState {
       this.transferChatList = const [],
       this.twilioChatList = const [],
       this.closedChatList = const [],
+      this.botChatList = const [],
+      this.subjectChatList = const [],
       this.operatorsChatList = const [],
       this.isLoading = false});
 
@@ -44,6 +48,8 @@ class ChatListLoaded extends ChatListState {
       List<Chat> transferChatList,
       List<Chat> twilioChatList,
       List<Chat> closedChatList,
+      List<Chat> botChatList,
+      List<Chat> subjectChatList,
       List<User> operatorsChatList,
       bool isLoading = false}) {
     return ChatListLoaded(
@@ -52,6 +58,8 @@ class ChatListLoaded extends ChatListState {
         transferChatList: transferChatList ?? this.transferChatList,
         twilioChatList: twilioChatList ?? this.twilioChatList,
         closedChatList: closedChatList ?? this.closedChatList,
+        botChatList: botChatList ?? this.botChatList,
+        subjectChatList: subjectChatList ?? this.subjectChatList,
         operatorsChatList: operatorsChatList ?? this.operatorsChatList,
         isLoading: isLoading ?? this.isLoading);
   }
@@ -63,6 +71,8 @@ class ChatListLoaded extends ChatListState {
         transferChatList,
         twilioChatList,
         closedChatList,
+        botChatList,
+        subjectChatList,
         operatorsChatList,
         isLoading
       ];
