@@ -18,25 +18,24 @@ class ChatMessagesLoaded extends ChatMessagesState {
   final bool isChatClosed;
   final bool isChatAccepted;
   const ChatMessagesLoaded(
-      {@required this.server,
-      @required this.chat,
-      this.messages = const [],
-      this.chatStatus = "",
-      this.chatStatusCode = 0,
-      this.isLoading = false,
-      this.isChatClosed = false,
-      this.isChatAccepted = true})
-      : assert(server != null && chat != null);
+      {required this.server,
+        required this.chat,
+        this.messages = const [],
+        this.chatStatus = "",
+        this.chatStatusCode = 0,
+        this.isLoading = false,
+        this.isChatClosed = false,
+        this.isChatAccepted = true});
 
   ChatMessagesLoaded copyWith(
-      {Server server,
-      Chat chat,
-      List<Message> messages,
-      String chatStatus,
-      int chatStatusCode,
-      bool isLoading,
-      bool isChatAccepted,
-      bool isChatClosed}) {
+      {Server? server,
+        Chat? chat,
+        List<Message>? messages,
+        String? chatStatus,
+        int? chatStatusCode,
+        bool? isLoading,
+        bool? isChatAccepted,
+        bool? isChatClosed})  {
     return ChatMessagesLoaded(
         server: server ?? this.server,
         chat: chat ?? this.chat,
@@ -56,11 +55,10 @@ class ChatMessagesLoaded extends ChatMessagesState {
 class ChatMessagesInitial extends ChatMessagesState {}
 
 class ChatMessagesLoadError extends ChatMessagesState {
-  final String message;
+  final String? message;
   const ChatMessagesLoadError({this.message});
 
   @override
   List<Object> get props => [];
 }
 
-class ChatMessagePosted extends ChatMessagesLoaded {}

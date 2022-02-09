@@ -1,5 +1,5 @@
-import 'package:livehelp/model/model.dart';
-import 'package:livehelp/utils/utils.dart';
+import 'package:livehelperchat/model/model.dart';
+import 'package:livehelperchat/utils/utils.dart';
 
 import 'dart:convert';
 import 'dart:developer' as developer;
@@ -7,10 +7,11 @@ import 'dart:developer' as developer;
 
 // ignore_for_file: non_constant_identifier_names
 class Server {
+
   //Tablename
-  static final String tableName = "server";
-  static final int LOGGED_OUT = 0;
-  static final int LOGGED_IN = 1;
+  static const String tableName = "server";
+  static const int LOGGED_OUT = 0;
+  static const int LOGGED_IN = 1;
 
   //Columns
   static final Map columns = {
@@ -37,7 +38,7 @@ class Server {
   };
   bool get appendIndexToUrl => _urlhasindex != 0;
   set appendIndexToUrl(bool value) =>
-      _urlhasindex = WidgetUtils.checkInt(value);
+      _urlhasindex = WidgetUtils.checkInt(value)!;
 
   bool get isLoggedIn => this._loggedin == Server.LOGGED_IN;
   set isLoggedIn(bool val) => this._loggedin = (val) ? 1 : 0;
@@ -47,8 +48,8 @@ class Server {
 
   //set twilioInstalled(bool val) =>
 
-  bool twilioInstalled = false, extensionsSynced;
-  int id,
+  bool? twilioInstalled = false, extensionsSynced;
+  int? id,
       userid,
       _loggedin,
       rememberme,
@@ -57,7 +58,7 @@ class Server {
       all_departments,
       _user_online,
       _urlhasindex;
-  String installationid,
+  String? installationid,
       servername,
       url,
       username,
@@ -68,74 +69,70 @@ class Server {
       operatoremail,
       departments_ids;
 
-  List<Chat> pendingChatList;
-  List<Chat> activeChatList;
-  List<Chat> transferChatList;
-  List<Chat> twilioChatList;
-  List<Chat> closedChatList;
-  List<Chat> botChatList;
-  List<Chat> subjectChatList;
-  List<User> operatorsChatList;
+  List<Chat> pendingChatList=[];
+  List<Chat> activeChatList=[];
+  List<Chat> transferChatList=[];
+  List<Chat> twilioChatList=[];
+  List<Chat> closedChatList=[];
+  List<User> operatorsChatList=[];
 
   Server(
       {this.id,
-      this.userid,
-      bool loggedIn = false,
-      this.rememberme = 0,
-      this.soundnotify = 1,
-      this.vibrate = 0,
-      this.installationid,
-      this.servername,
-      this.url,
-      this.username,
-      this.password,
-      this.firstname,
-      this.surname,
-      this.job_title,
-      this.all_departments,
-      this.departments_ids,
-      this.operatoremail,
-      bool useronline,
-      this.twilioInstalled,
-      int urlHasIndex}) {
+        this.userid,
+        bool loggedIn = false,
+        this.rememberme = 0,
+        this.soundnotify = 1,
+        this.vibrate = 0,
+        this.installationid,
+        this.servername,
+        this.url,
+        this.username,
+        this.password,
+        this.firstname,
+        this.surname,
+        this.job_title,
+        this.all_departments,
+        this.departments_ids,
+        this.operatoremail,
+        bool? useronline,
+        this.twilioInstalled,
+        int? urlHasIndex}) {
     _user_online = userOnline ? 1 : 0;
     _urlhasindex = urlHasIndex;
     _loggedin = loggedIn ? 1 : 0;
-    pendingChatList = List<Chat>();
-    activeChatList = List<Chat>();
-    transferChatList = List<Chat>();
-    twilioChatList = List<Chat>();
-    closedChatList = List<Chat>();
-    botChatList = List<Chat>();
-    subjectChatList = List<Chat>();
-    operatorsChatList = List<User>();
+    pendingChatList =  <Chat>[];
+    activeChatList = <Chat>[];
+    transferChatList = <Chat>[];
+    twilioChatList = <Chat>[];
+    closedChatList = <Chat>[];
+    operatorsChatList = <User>[];
   }
 
-  String getUrl() => appendIndexToUrl ? url + "/index.php" : url;
+  String? getUrl() => appendIndexToUrl ? url.toString() + "/index.php" : url;
 
   Server.fromJson(Map<String, dynamic> map)
       : this(
-            id: WidgetUtils.checkInt(map[columns['db_id']]),
-            userid: WidgetUtils.checkInt(map[columns['db_userid']]),
-            loggedIn: map[columns['db_isloggedin']] == 1,
-            rememberme: map[columns['db_rememberme']],
-            soundnotify: map[columns['db_soundnotify']],
-            vibrate: map[columns['db_vibrate']],
-            installationid: map[columns['db_installationid']],
-            servername: map[columns['db_servername']],
-            url: map[columns['db_url']],
-            username: map[columns['db_username']],
-            password: map[columns['db_password']],
-            firstname: map[columns['db_firstname']],
-            surname: map[columns['db_surname']],
-            job_title: map[columns['db_job_title']],
-            all_departments: map[columns['db_all_departments']],
-            departments_ids: map[columns['db_departments_ids']],
-            operatoremail: map[columns['db_operatoremail']],
-            useronline: map[columns['db_user_online']] == 1,
-            urlHasIndex: map[columns['db_urlhasindex']],
-            twilioInstalled:
-                WidgetUtils.checkInt(map[columns['db_twilio_installed']]) == 1);
+      id: WidgetUtils.checkInt(map[columns['db_id']]),
+      userid: WidgetUtils.checkInt(map[columns['db_userid']]),
+      loggedIn: map[columns['db_isloggedin']] == 1,
+      rememberme: map[columns['db_rememberme']],
+      soundnotify: map[columns['db_soundnotify']],
+      vibrate: map[columns['db_vibrate']],
+      installationid: map[columns['db_installationid']],
+      servername: map[columns['db_servername']],
+      url: map[columns['db_url']],
+      username: map[columns['db_username']],
+      password: map[columns['db_password']],
+      firstname: map[columns['db_firstname']],
+      surname: map[columns['db_surname']],
+      job_title: map[columns['db_job_title']],
+      all_departments: map[columns['db_all_departments']],
+      departments_ids: map[columns['db_departments_ids']],
+      operatoremail: map[columns['db_operatoremail']],
+      useronline: map[columns['db_user_online']] == 1,
+      urlHasIndex: map[columns['db_urlhasindex']],
+      twilioInstalled:
+      WidgetUtils.checkInt(map[columns['db_twilio_installed']]) == 1);
 
   Map<String, dynamic> toJson() {
     return {
@@ -165,56 +162,40 @@ class Server {
   void addChatsToList(List<dynamic> newChatList, String list) {
     switch (list) {
       case "active":
-        this.activeChatList ??= new List<Chat>();
-        this.activeChatList = _cleanUpLists(this.activeChatList, newChatList);
+        activeChatList = _cleanUpLists(activeChatList, newChatList);
         //Sort list by last message time
-        this.activeChatList.sort((a, b) => b.last_msg_time.compareTo(a.last_msg_time));
+        activeChatList.sort((a, b) => b.last_msg_time.compareTo(a.last_msg_time));
         break;
       case "pending":
-        this.pendingChatList ??= new List<Chat>();
-        this.pendingChatList = _cleanUpLists(this.pendingChatList, newChatList);
+        pendingChatList = _cleanUpLists(pendingChatList, newChatList);
         break;
       case "transfer":
-        this.transferChatList ??= new List<Chat>();
-        this.transferChatList =
-            _cleanUpLists(this.transferChatList, newChatList);
+        transferChatList =
+            _cleanUpLists(transferChatList, newChatList);
         break;
       case "closed":
-        this.closedChatList ??= new List<Chat>();
-        this.closedChatList = _cleanUpLists(this.closedChatList, newChatList);
-        this.closedChatList.sort((a, b) => a.id.compareTo(b.id));
-        break;
-      case "bot":
-        this.botChatList ??= new List<Chat>();
-        this.botChatList = _cleanUpLists(this.botChatList, newChatList);
-        this.botChatList.sort((a, b) => a.id.compareTo(b.id));
-        break;
-      case "subject":
-        this.subjectChatList ??= new List<Chat>();
-        this.subjectChatList = _cleanUpLists(this.subjectChatList, newChatList);
-        this.subjectChatList.sort((a, b) => a.id.compareTo(b.id));
+        closedChatList = _cleanUpLists(closedChatList, newChatList);
+        closedChatList.sort((a, b) => a.id!.compareTo(b.id!));
         break;
       case "twilio":
-        this.twilioChatList ??= new List<Chat>();
-        this.twilioChatList = _cleanUpLists(this.twilioChatList, newChatList);
-        this.twilioChatList.sort((a, b) => b.last_msg_time.compareTo(a.last_msg_time));
+        twilioChatList = _cleanUpLists(twilioChatList, newChatList);
+        twilioChatList.sort((a, b) => b.last_msg_time.compareTo(a.last_msg_time));
         break;
       case "operators":
-        this.operatorsChatList ??= new List<User>();
-        this.operatorsChatList = _cleanUpOperatorsLists(this.operatorsChatList, newChatList);
-        this.operatorsChatList.sort((a, b) => a.user_id.compareTo(b.user_id));
+        operatorsChatList = _cleanUpOperatorsLists(operatorsChatList, newChatList);
+        operatorsChatList.sort((a, b) => a.user_id!.compareTo(b.user_id!));
         break;
     }
   }
 
   List<Chat> _cleanUpLists(
       List<Chat> chatToClean, List<dynamic> listFromServer) {
-    var incomingList = listFromServer.map((map) => new Chat.fromJson(map));
+    var incomingList = listFromServer.map((map) => Chat.fromJson(map));
     incomingList.forEach((map) {
       if (chatToClean
           .any((chat) => chat.id == map.id && chat.serverid == map.serverid)) {
         int index = chatToClean.indexWhere(
-            (chat) => chat.id == map.id && chat.serverid == map.serverid);
+                (chat) => chat.id == map.id && chat.serverid == map.serverid);
         chatToClean[index] = map;
       } else {
         chatToClean.add(map);
@@ -222,18 +203,18 @@ class Server {
     });
 
     //remove missing
-    if (chatToClean.length > 0 && incomingList.length > 0) {
-      List<int> removedIndices = new List();
-      chatToClean.forEach((chat) {
+    if (chatToClean.isNotEmpty && incomingList.isNotEmpty) {
+      List<int> removedIndices = [];
+      for (var chat in chatToClean) {
         if (!incomingList
             .any((map) => map.id == chat.id && map.serverid == chat.serverid)) {
           int index = chatToClean.indexOf(chat);
           removedIndices.add(index);
         }
-      });
+      }
 
       //remove the chats
-      if (removedIndices != null && removedIndices.length > 0) {
+      if (removedIndices.isNotEmpty) {
         removedIndices.sort();
         removedIndices.reversed.toList().forEach(chatToClean.removeAt);
         removedIndices.clear();
@@ -249,29 +230,29 @@ class Server {
     //developer.log(jsonEncode(listFromServer), name: 'my.app.category');
     //developer.log(jsonEncode(listFromServer), name: '_cleanUpOperatorsLists');
 
-    var incomingList = listFromServer.map((map) => new User.fromJson(map));
-    incomingList.forEach((map) {
+    var incomingList = listFromServer.map((map) => User.fromJson(map));
+    for (var map in incomingList) {
       if (chatToClean.any((chat) => chat.user_id == map.user_id && chat.serverid == map.serverid)) {
         int index = chatToClean.indexWhere((chat) => chat.user_id == map.user_id && chat.serverid == map.serverid);
         chatToClean[index] = map;
       } else {
         chatToClean.add(map);
       }
-    });
+    }
 
     //remove missing
-    if (chatToClean.length > 0 && incomingList.length > 0) {
-      List<int> removedIndices = new List();
-      chatToClean.forEach((chat) {
+    if (chatToClean.isNotEmpty && incomingList.isNotEmpty) {
+      List<int> removedIndices = List.empty();
+      for (var chat in chatToClean) {
         if (!incomingList
             .any((map) => map.user_id == chat.user_id && map.serverid == chat.serverid)) {
           int index = chatToClean.indexOf(chat);
           removedIndices.add(index);
         }
-      });
+      }
 
       //remove the chats
-      if (removedIndices != null && removedIndices.length > 0) {
+      if (removedIndices.isNotEmpty) {
         removedIndices.sort();
         removedIndices.reversed.toList().forEach(chatToClean.removeAt);
         removedIndices.clear();
@@ -284,28 +265,22 @@ class Server {
   void clearList(String list) {
     switch (list) {
       case 'active':
-        this.activeChatList?.clear();
+        activeChatList.clear();
         break;
       case 'pending':
-        this.pendingChatList?.clear();
+        pendingChatList.clear();
         break;
       case 'transfer':
-        this.transferChatList?.clear();
-        break;
-      case 'bot':
-        this.botChatList?.clear();
-        break;
-      case 'subject':
-        this.subjectChatList?.clear();
+        transferChatList.clear();
         break;
       case 'closed':
-        this.closedChatList?.clear();
+        closedChatList.clear();
         break;
       case 'twilio':
-        this.twilioChatList?.clear();
+        twilioChatList.clear();
         break;
       case 'operators':
-        this.operatorsChatList?.clear();
+        operatorsChatList.clear();
         break;
       default:
         break;
@@ -315,19 +290,13 @@ class Server {
   void removeChat(int id, String list) {
     switch (list) {
       case 'active':
-        this.activeChatList.removeWhere((chat) => chat.id == id);
+        activeChatList.removeWhere((chat) => chat.id == id);
         break;
       case 'pending':
-        this.pendingChatList.removeWhere((chat) => chat.id == id);
-        break;
-        case 'subject':
-        this.subjectChatList.removeWhere((chat) => chat.id == id);
-        break;
-        case 'bot':
-        this.botChatList.removeWhere((chat) => chat.id == id);
+        pendingChatList.removeWhere((chat) => chat.id == id);
         break;
       case 'transfer':
-        this.transferChatList.removeWhere((chat) => chat.id == id);
+        transferChatList.removeWhere((chat) => chat.id == id);
         break;
     }
   }
@@ -335,7 +304,7 @@ class Server {
   List<Chat> removeMissingFromList(
       List<Chat> toBeCleaned, List<Chat> incomingList) {
     //List<Chat> toBeCleaned = chatToClean;
-    List<int> removedIndices = new List();
+    List<int> removedIndices = List.empty();
 
     toBeCleaned.forEach((chat) {
       if (this.id == chat.serverid) {

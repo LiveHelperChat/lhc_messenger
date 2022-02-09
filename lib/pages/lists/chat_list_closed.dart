@@ -1,28 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:livehelp/bloc/bloc.dart';
+import 'package:livehelperchat/bloc/bloc.dart';
 
-import 'package:livehelp/model/model.dart';
-import 'package:livehelp/widget/widget.dart';
-import 'package:livehelp/utils/utils.dart';
+import 'package:livehelperchat/model/model.dart';
+import 'package:livehelperchat/services/server_repository.dart';
+import 'package:livehelperchat/widget/widget.dart';
+import 'package:livehelperchat/utils/utils.dart';
 
-import 'package:livehelp/utils/routes.dart' as LHCRouter;
+import 'package:livehelperchat/utils/routes.dart' as LHCRouter;
 
 class ClosedListWidget extends StatefulWidget {
-  ClosedListWidget(
-      {Key key,
+  const ClosedListWidget(
+      {Key? key,
         this.listOfServers,
-        @required this.callBackDeleteChat,
+        required this.callBackDeleteChat,
         this.refreshList})
       : super(key: key);
 
-  final List<Server> listOfServers;
+  final List<Server>? listOfServers;
   final Function(Server, Chat) callBackDeleteChat;
 
-  final VoidCallback refreshList;
+  final VoidCallback? refreshList;
 
   @override
-  _ClosedListWidgetState createState() => new _ClosedListWidgetState();
+  _ClosedListWidgetState createState() => _ClosedListWidgetState();
 }
 
 class _ClosedListWidgetState extends State<ClosedListWidget> {
@@ -33,14 +34,16 @@ class _ClosedListWidgetState extends State<ClosedListWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<ChatslistBloc, ChatListState>(builder: (context, state) {
+
+    return BlocBuilder<ChatslistBloc, ChatListState>(
+        builder: (context, state) {
       if (state is ChatslistInitial) {
-        return Center(child: CircularProgressIndicator());
+        return const Center(child: CircularProgressIndicator());
       }
 
       if (state is ChatListLoaded) {
         if (state.isLoading) {
-          return Center(
+          return const Center(
             child: CircularProgressIndicator(),
           );
         } else {
@@ -48,9 +51,9 @@ class _ClosedListWidgetState extends State<ClosedListWidget> {
               itemCount: state.closedChatList.length,
               itemBuilder: (BuildContext context, int index) {
                 Chat chat = state.closedChatList.reversed.toList()[index];
-                Server server = widget.listOfServers.firstWhere(
+                Server server = widget.listOfServers!.firstWhere(
                         (srvr) => srvr.id == chat.serverid,
-                    orElse: () => null);
+                    orElse: () => new Server());
 
                 return GestureDetector(
                   child: ChatItemWidget(
@@ -66,7 +69,7 @@ class _ClosedListWidgetState extends State<ClosedListWidget> {
                     final routeSettings = RouteSettings(
                         name: AppRoutes.chatPage, arguments: routeArgs);
                     var route = LHCRouter.Router.generateRouteChatPage(
-                        routeSettings, chat, server, false, widget.refreshList);
+                        routeSettings, chat, server, false, widget.refreshList!);
                     Navigator.of(context).push(route);
                   },
                 );
@@ -79,7 +82,7 @@ class _ClosedListWidgetState extends State<ClosedListWidget> {
           child: Text("An error occurred: ${state.message}"),
           actionText: 'Reload',
           onButtonPress: () {
-            context.bloc<ChatslistBloc>().add(ChatListInitialise());
+            context.read<ChatslistBloc>().add(ChatListInitialise());
           },
         );
       }
@@ -113,7 +116,7 @@ class _ClosedListWidgetState extends State<ClosedListWidget> {
         final routeSettings =
         RouteSettings(name: AppRoutes.chatPage, arguments: routeArgs);
         var route = LHCRouter.Router.generateRouteChatPage(
-            routeSettings, chat, srvr, true, widget.refreshList);
+            routeSettings, chat, srvr, true, widget.refreshList!);
         Navigator.of(ctxt).push(route);
         break;
       case ChatItemMenuOption.REJECT:

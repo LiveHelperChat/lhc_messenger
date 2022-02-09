@@ -1,27 +1,27 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:livehelp/bloc/bloc.dart';
+import 'package:livehelperchat/bloc/bloc.dart';
 
-import 'package:livehelp/model/model.dart';
-import 'package:livehelp/services/server_repository.dart';
-import 'package:livehelp/widget/widget.dart';
-import 'package:livehelp/utils/utils.dart';
+import 'package:livehelperchat/model/model.dart';
+import 'package:livehelperchat/services/server_repository.dart';
+import 'package:livehelperchat/widget/widget.dart';
+import 'package:livehelperchat/utils/utils.dart';
 
-import 'package:livehelp/utils/routes.dart' as LHCRouter;
+import 'package:livehelperchat/utils/routes.dart' as LHCRouter;
 
 class TwilioListWidget extends StatefulWidget {
-  final List<Server> listOfServers;
-  final VoidCallback refreshList;
+  final List<Server>? listOfServers;
+  final VoidCallback? refreshList;
   final Function(Server, Chat) callbackCloseChat;
   final Function(Server, Chat) callBackDeleteChat;
 
-  TwilioListWidget(
-      {Key key,
+  const TwilioListWidget(
+      {Key? key,
       this.listOfServers,
       this.refreshList,
-      @required this.callbackCloseChat,
-      @required this.callBackDeleteChat})
+      required this.callbackCloseChat,
+      required this.callBackDeleteChat})
       : super(key: key);
 
   @override
@@ -29,24 +29,24 @@ class TwilioListWidget extends StatefulWidget {
 }
 
 class _TwilioListWidgetState extends State<TwilioListWidget> {
-  ServerRepository _serverRepository;
-
+  ServerRepository? _serverRepository;
   @override
   void initState() {
     super.initState();
-    _serverRepository = context.repository<ServerRepository>();
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<ChatslistBloc, ChatListState>(builder: (context, state) {
+    _serverRepository = context.watch<ServerRepository>();
+    return BlocBuilder<ChatslistBloc, ChatListState>(
+        builder: (context, state) {
       if (state is ChatslistInitial) {
-        return Center(child: CircularProgressIndicator());
+        return const Center(child: CircularProgressIndicator());
       }
 
       if (state is ChatListLoaded) {
         if (state.isLoading) {
-          return Center(
+          return const Center(
             child: CircularProgressIndicator(),
           );
         } else {
@@ -55,14 +55,14 @@ class _TwilioListWidgetState extends State<TwilioListWidget> {
               itemBuilder: (BuildContext context, int index) {
                 if (state.twilioChatList.isNotEmpty) {
                   Chat chat = state.twilioChatList[index];
-                  Server server = widget.listOfServers.firstWhere(
+                  Server server = widget.listOfServers!.firstWhere(
                       (srvr) => srvr.id == chat.serverid,
-                      orElse: () => null);
+                      orElse: () => new Server());
 
-                  return server == null
-                      ? Text("No server found")
-                      : new GestureDetector(
-                          child: new ChatItemWidget(
+                  return server.id == null
+                      ? const Text("No server found")
+                      : GestureDetector(
+                          child: ChatItemWidget(
                             server: server,
                             chat: chat,
                             menuBuilder: _itemMenuBuilder(),
@@ -92,12 +92,13 @@ class _TwilioListWidgetState extends State<TwilioListWidget> {
                                 chat,
                                 server,
                                 false,
-                                widget.refreshList);
+                                widget.refreshList!);
                             Navigator.of(context).push(route);
                           },
                         );
-                } else
+                } else {
                   return Container();
+                }
               });
         }
       }
@@ -107,7 +108,7 @@ class _TwilioListWidgetState extends State<TwilioListWidget> {
           child: Text("An error occurred: ${state.message}"),
           actionText: 'Reload',
           onButtonPress: () {
-            context.bloc<ChatslistBloc>().add(ChatListInitialise());
+            context.read<ChatslistBloc>().add(ChatListInitialise());
           },
         );
       }
@@ -157,7 +158,7 @@ class _TwilioListWidgetState extends State<TwilioListWidget> {
 
   Future<List<dynamic>> _getOperatorList(
       BuildContext context, Server srvr, Chat chat) async {
-    return await _serverRepository.getOperatorsList(srvr);
+    return await _serverRepository!.getOperatorsList(srvr);
   }
 
   void _showOperatorList(BuildContext context, Server srvr, Chat chat) {
@@ -202,7 +203,7 @@ class _TwilioListWidgetState extends State<TwilioListWidget> {
   }
 
   Future<bool> _transferToUser(Server srvr, Chat chat, int userid) async {
-    return _serverRepository.transferChatUser(srvr, chat, userid);
+    return _serverRepository!.transferChatUser(srvr, chat, userid);
   }
 
   Widget createListView(

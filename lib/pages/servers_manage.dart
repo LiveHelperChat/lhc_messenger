@@ -2,58 +2,57 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:livehelp/bloc/bloc.dart';
-import 'package:livehelp/model/model.dart';
-import 'package:livehelp/pages/login_form.dart';
-import 'package:livehelp/pages/pages.dart';
-import 'package:livehelp/utils/utils.dart';
-import 'package:livehelp/utils/routes.dart' as LHCRouter;
-import 'package:livehelp/widget/widget.dart';
+import 'package:livehelperchat/bloc/bloc.dart';
+import 'package:livehelperchat/model/model.dart';
+import 'package:livehelperchat/pages/pages.dart';
+import 'package:livehelperchat/utils/utils.dart';
+import 'package:livehelperchat/utils/routes.dart' as LHCRouter;
+import 'package:livehelperchat/widget/widget.dart';
 
-import 'package:livehelp/globals.dart' as globals;
+import 'package:livehelperchat/globals.dart' as globals;
 
 class ServersManage extends StatefulWidget {
   ServersManage({this.returnToList = false});
   // used to determine whether page was opened from MainPage
   final bool returnToList;
   @override
-  ServersManageState createState() => new ServersManageState();
+  ServersManageState createState() => ServersManageState();
 }
 
 class ServersManageState extends State<ServersManage> with RouteAware {
   GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
 
-  ValueChanged<TimeOfDay> selectTime;
+  ValueChanged<TimeOfDay>? selectTime;
 
-  TimeOfDay selectedTime;
-  ServerBloc _serverBloc;
+  TimeOfDay? selectedTime;
+  ServerBloc? _serverBloc;
 
   var _tapPosition;
 
   @override
   void initState() {
     super.initState();
-    _serverBloc = context.bloc<ServerBloc>()
-      ..add(GetServerListFromDB(onlyLoggedIn: false));
+    _serverBloc = context.read<ServerBloc>()
+      ..add(const GetServerListFromDB(onlyLoggedIn: false));
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    globals.routeObserver.subscribe(this, ModalRoute.of(context));
+    globals.routeObserver.subscribe(this, ModalRoute.of(context) as PageRoute);
   }
 
   // Called when the current route has been pushed.
   @override
   void didPush() {
-    _serverBloc.add(GetServerListFromDB(onlyLoggedIn: false));
+    _serverBloc!.add(const GetServerListFromDB(onlyLoggedIn: false));
   }
 
   @override
   // Called when the top route has been popped off, and the current route shows up.
   void didPopNext() {
-    _serverBloc.add(GetServerListFromDB(onlyLoggedIn: false));
+    _serverBloc!.add(const GetServerListFromDB(onlyLoggedIn: false));
   }
 
   @override
@@ -67,11 +66,11 @@ class ServersManageState extends State<ServersManage> with RouteAware {
     var scaffold = BlocConsumer<ServerBloc, ServerState>(
         listener: (context, state) {
           if (state is ServerInitial || state is ServerListLoading) {
-            _serverBloc.add(GetServerListFromDB(onlyLoggedIn: false));
+            _serverBloc!.add(const GetServerListFromDB(onlyLoggedIn: false));
           }
           if (state is ServerLoggedOut) {
-            _serverBloc.add(InitServers());
-            _serverBloc.add(GetServerListFromDB(onlyLoggedIn: false));
+            _serverBloc!.add(const InitServers());
+            _serverBloc!.add(const GetServerListFromDB(onlyLoggedIn: false));
           }
         },
         builder: _bodyBuilder);
@@ -81,40 +80,40 @@ class ServersManageState extends State<ServersManage> with RouteAware {
 
   Widget _bodyBuilder(BuildContext context, ServerState state) {
     if (state is ServerInitial || state is ServerListLoading) {
-      return Scaffold(
+      return const Scaffold(
           body: Center(
-        child: CircularProgressIndicator(),
-      ));
+            child: CircularProgressIndicator(),
+          ));
     }
     if (state is ServerListFromDBLoaded) {
       //If any server is logged in
       if (state.serverList.any((server) => server.isLoggedIn) && !widget.returnToList) {
-          Navigator.of(context).pop();
-          SchedulerBinding.instance.addPostFrameCallback((_) {
-            Navigator.of(context).pushAndRemoveUntil(
-                FadeRoute(
-                  builder: (BuildContext context) => MainPage(),
-                  settings: RouteSettings(
-                    name: AppRoutes.home,
-                  ),
+        Navigator.of(context).pop();
+        SchedulerBinding.instance?.addPostFrameCallback((_) {
+          Navigator.of(context).pushAndRemoveUntil(
+              FadeRoute(
+                builder: (BuildContext context) => const MainPage(),
+                settings: const RouteSettings(
+                  name: AppRoutes.home,
                 ),
-                    (Route<dynamic> route) => false);
-          });
+              ),
+                  (Route<dynamic> route) => false);
+        });
       }
       return Scaffold(
         backgroundColor: Colors.grey.shade300,
         key: _scaffoldKey,
-        appBar: new AppBar(
-          title: Text("Manage Servers"),
+        appBar: AppBar(
+          title: const Text("Manage Servers"),
           elevation:
-              Theme.of(context).platform == TargetPlatform.android ? 6.0 : 0.0,
-          actions: <Widget>[],
+          Theme.of(context).platform == TargetPlatform.android ? 6.0 : 0.0,
+          actions: const <Widget>[],
         ),
         body: ListView.builder(
             itemCount: state.serverList.length,
             itemBuilder: (context, index) {
               Server server = state.serverList[index];
-              return new GestureDetector(
+              return GestureDetector(
                 child: ServerItemWidget(
                     server: server,
                     menuBuilder: _itemMenuBuilder(),
@@ -141,8 +140,8 @@ class ServersManageState extends State<ServersManage> with RouteAware {
                 onTapDown: _storePosition,
               );
             }),
-        floatingActionButton: new FloatingActionButton(
-          child: new Icon(Icons.add),
+        floatingActionButton: FloatingActionButton(
+          child: Icon(Icons.add),
           onPressed: () {
             _addServer();
           },
@@ -151,12 +150,12 @@ class ServersManageState extends State<ServersManage> with RouteAware {
     }
     return ErrorReloadButton(
         onButtonPress: () {
-          _serverBloc.add(InitServers());
+          _serverBloc!.add(const InitServers());
         },
         actionText: "Reload");
   }
 
-  void _addServer({Server svr}) {
+  void _addServer({Server? svr}) {
     //Navigator.of(context).pop();
     Navigator.of(context).push(LHCRouter.FadeRoute(
       builder: (BuildContext context) {
@@ -164,24 +163,24 @@ class ServersManageState extends State<ServersManage> with RouteAware {
           server: svr,
         );
       },
-      settings: new RouteSettings(
+      settings: const RouteSettings(
         name: LHCRouter.AppRoutes.login,
       ),
     ));
   }
 
-  void _showCustomMenu(Server sv) {
-    final RenderBox overlay = Overlay.of(context).context.findRenderObject();
+  Future<void> _showCustomMenu(Server sv) async {
+    final RenderObject? overlay = Overlay.of(context)?.context.findRenderObject();
 
-    showMenu(
-            context: context,
-            items: _itemMenuBuilder(),
-            position: RelativeRect.fromRect(_tapPosition & Size(40, 40),
-                Offset.zero & overlay.semanticBounds.size))
-        // This is how you handle user selection
-        .then<void>((ServerItemMenuOption option) {
+    ServerItemMenuOption? value=await showMenu(
+        context: context,
+        items: _itemMenuBuilder(),
+        position: RelativeRect.fromRect(_tapPosition & const Size(40, 40),
+            Offset.zero & overlay!.semanticBounds.size));
+    // This is how you handle user selection
+      print(value);
       //  if (option == null) return;
-      switch (option) {
+      switch (value) {
         case ServerItemMenuOption.MODIFY:
           _addServer(svr: sv);
           break;
@@ -191,7 +190,6 @@ class ServersManageState extends State<ServersManage> with RouteAware {
         default:
           break;
       }
-    });
   }
 
   void _storePosition(TapDownDetails details) {
@@ -202,32 +200,32 @@ class ServersManageState extends State<ServersManage> with RouteAware {
     return <PopupMenuEntry<ServerItemMenuOption>>[
       const PopupMenuItem<ServerItemMenuOption>(
         value: ServerItemMenuOption.MODIFY,
-        child: const Text('Modify / Login'),
+        child: Text('Modify / Login'),
       ),
       const PopupMenuItem<ServerItemMenuOption>(
         value: ServerItemMenuOption.REMOVE,
-        child: const Text('Remove'),
+        child: Text('Remove'),
       ),
     ];
   }
 
   void _showAlert(BuildContext context, Server srvr) {
-    AlertDialog dialog = new AlertDialog(
-      content: new Text(
+    AlertDialog dialog = AlertDialog(
+      content: const Text(
         "Do you want to remove the server?",
-        style: new TextStyle(fontSize: 14.0),
+        style: TextStyle(fontSize: 14.0),
       ),
       actions: <Widget>[
-        new MaterialButton(
-            child: new Text("Yes"),
+        MaterialButton(
+            child: Text("Yes"),
             onPressed: () async {
-              String fcmToken = context.bloc<FcmTokenBloc>().token;
-              context.bloc<ServerBloc>().add(LogoutServer(
+              String fcmToken = context.read<FcmTokenBloc>().token;
+              context.read<ServerBloc>().add(LogoutServer(
                   server: srvr, fcmToken: fcmToken, deleteServer: true));
               Navigator.of(context).pop();
             }),
         MaterialButton(
-            child: new Text("No"),
+            child: Text("No"),
             onPressed: () async {
               Navigator.of(context).pop();
             }),
@@ -238,7 +236,7 @@ class ServersManageState extends State<ServersManage> with RouteAware {
   }
 
   void _showAlertMsg(String title, String msg) {
-    SimpleDialog dialog = new SimpleDialog(
+    SimpleDialog dialog = SimpleDialog(
       titlePadding: const EdgeInsets.fromLTRB(16.00, 8.00, 16.00, 8.00),
       contentPadding: const EdgeInsets.fromLTRB(8.00, 0.00, 16.00, 8.00),
       title: Text(

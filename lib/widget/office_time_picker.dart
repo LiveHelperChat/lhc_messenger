@@ -2,15 +2,15 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:livehelp/utils/utils.dart';
+import 'package:livehelperchat/utils/utils.dart';
 
 class OfficeTimePicker extends StatefulWidget {
   OfficeTimePicker(
-      {@required this.isChecked,
-      this.startTime,
-      this.endTime,
-      this.startTimeChanged,
-      this.endTimeChanged});
+      {required this.isChecked,
+        required this.startTime,
+        required this.endTime,
+        required this.startTimeChanged,
+        required this.endTimeChanged});
 
   final ValueChanged<String> startTimeChanged;
   final ValueChanged<String> endTimeChanged;
@@ -19,15 +19,15 @@ class OfficeTimePicker extends StatefulWidget {
   final bool isChecked;
 
   @override
-  _OfficeTimePickerState createState() => new _OfficeTimePickerState();
+  _OfficeTimePickerState createState() => _OfficeTimePickerState();
 }
 
 class _OfficeTimePickerState extends State<OfficeTimePicker> {
-  TimeOfDay _startTime;
-  TimeOfDay _endTime;
+  TimeOfDay? _startTime;
+  TimeOfDay? _endTime;
 
-  String _startString;
-  String _endString;
+  String? _startString;
+  String? _endString;
 
   @override
   void initState() {
@@ -39,8 +39,8 @@ class _OfficeTimePickerState extends State<OfficeTimePicker> {
     _startTime = _parseTimeOfDay(widget.startTime);
     _endTime = _parseTimeOfDay(widget.endTime);
 
-    _startString = _toTimeFormat(_timeOfDayToString(_startTime));
-    _endString = _toTimeFormat(_timeOfDayToString(_endTime));
+    _startString = _toTimeFormat(_timeOfDayToString(_startTime!));
+    _endString = _toTimeFormat(_timeOfDayToString(_endTime!));
   }
 
   @override
@@ -62,9 +62,9 @@ class _OfficeTimePickerState extends State<OfficeTimePicker> {
               new FlatButton(
                 child: new Text('From: $_startString'),
                 onPressed: () {
-                  _selectTime(context, _startTime).then((val) {
+                  _selectTime(context, _startTime!).then((val) {
                     // print(_endTime.toString()+" : "+val.toString());
-                    if (val.hour > _endTime.hour) {
+                    if (val.hour > _endTime!.hour) {
                       _showDialog();
                     } else {
                       setState(() {
@@ -81,9 +81,9 @@ class _OfficeTimePickerState extends State<OfficeTimePicker> {
               new FlatButton(
                 child: new Text('To: $_endString'),
                 onPressed: () {
-                  _selectTime(context, _endTime).then((val) {
+                  _selectTime(context, _endTime!).then((val) {
                     // print(_startTime.toString()+" : "+val.toString());
-                    if (_startTime.hour > val.hour) {
+                    if (_startTime!.hour > val.hour) {
                       _showDialog();
                     } else {
                       setState(() {
@@ -110,28 +110,29 @@ class _OfficeTimePickerState extends State<OfficeTimePicker> {
 
   Future<TimeOfDay> _selectTime(
       BuildContext context, TimeOfDay initialTime) async {
-    final TimeOfDay picked =
-        await showTimePicker(context: context, initialTime: initialTime);
+    final TimeOfDay? picked =
+    await showTimePicker(context: context, initialTime: initialTime);
 
     return picked ?? new TimeOfDay(hour: 0, minute: 0);
   }
 
   TimeOfDay _parseTimeOfDay(String value) {
-    if (value != null) {
+    if (value!='') {
       String padded = "00";
       if (int.parse(value) >= 0) {
         padded = value.padLeft(4, '0');
-        return new TimeOfDay(
+        return TimeOfDay(
             hour: int.parse(padded.substring(0, 2)),
             minute: int.parse(padded.substring(2, 4)));
-      } else
-        return new TimeOfDay.now();
-    } else
-      return new TimeOfDay.now();
+      } else {
+        return TimeOfDay.now();
+      }
+    } else {
+      return TimeOfDay.now();
+    }
   }
 
   String _timeOfDayToString(TimeOfDay time) {
-    assert(time != null);
     return time.hour.toString().padLeft(2, "0") +
         time.minute.toString().padLeft(2, "0");
   }

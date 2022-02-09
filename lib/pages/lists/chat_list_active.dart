@@ -1,52 +1,52 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:livehelp/bloc/bloc.dart';
+import 'package:livehelperchat/bloc/bloc.dart';
 
-import 'package:livehelp/model/model.dart';
-import 'package:livehelp/services/server_repository.dart';
-import 'package:livehelp/widget/widget.dart';
-import 'package:livehelp/utils/utils.dart';
+import 'package:livehelperchat/model/model.dart';
+import 'package:livehelperchat/services/server_repository.dart';
+import 'package:livehelperchat/widget/widget.dart';
+import 'package:livehelperchat/utils/utils.dart';
 
-import 'package:livehelp/utils/routes.dart' as LHCRouter;
+import 'package:livehelperchat/utils/routes.dart' as LHCRouter;
 
 class ActiveListWidget extends StatefulWidget {
-  final List<Server> listOfServers;
-  final VoidCallback refreshList;
+  final List<Server>? listOfServers;
+  final VoidCallback? refreshList;
   final Function(Server, Chat) callbackCloseChat;
   final Function(Server, Chat) callBackDeleteChat;
 
-  ActiveListWidget(
-      {Key key,
+  const ActiveListWidget(
+      {Key? key,
       this.listOfServers,
       this.refreshList,
-      @required this.callbackCloseChat,
-      @required this.callBackDeleteChat})
+      required this.callbackCloseChat,
+      required this.callBackDeleteChat})
       : super(key: key);
 
   @override
-  _ActiveListWidgetState createState() => new _ActiveListWidgetState();
+  _ActiveListWidgetState createState() => _ActiveListWidgetState();
 }
 
 class _ActiveListWidgetState extends State<ActiveListWidget> {
-  ServerRepository _serverRepository;
-
+  ServerRepository? _serverRepository;
   @override
   void initState() {
     super.initState();
-    _serverRepository = context.repository<ServerRepository>();
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<ChatslistBloc, ChatListState>(builder: (context, state) {
+    _serverRepository = context.watch<ServerRepository>();
+    return BlocBuilder<ChatslistBloc, ChatListState>(
+        builder: (context, state) {
       if (state is ChatslistInitial) {
-        return Center(child: CircularProgressIndicator());
+        return const Center(child: CircularProgressIndicator());
       }
 
       if (state is ChatListLoaded) {
         if (state.isLoading) {
-          return Center(
+          return const Center(
             child: CircularProgressIndicator(),
           );
         } else {
@@ -55,14 +55,14 @@ class _ActiveListWidgetState extends State<ActiveListWidget> {
               itemBuilder: (BuildContext context, int index) {
                 if (state.activeChatList.isNotEmpty) {
                   Chat chat = state.activeChatList[index];
-                  Server server = widget.listOfServers.firstWhere(
+                  Server server = widget.listOfServers!.firstWhere(
                       (srvr) => srvr.id == chat.serverid,
-                      orElse: () => null);
+                      orElse: () => Server());
 
-                  return server == null
-                      ? Text("No server found")
-                      : new GestureDetector(
-                          child: new ChatItemWidget(
+                  return server.id == null
+                      ? const Text("No server found")
+                      : GestureDetector(
+                          child: ChatItemWidget(
                             server: server,
                             chat: chat,
                             menuBuilder: _itemMenuBuilder(),
@@ -92,12 +92,13 @@ class _ActiveListWidgetState extends State<ActiveListWidget> {
                                 chat,
                                 server,
                                 false,
-                                widget.refreshList);
+                                widget.refreshList!);
                             Navigator.of(context).push(route);
                           },
                         );
-                } else
+                } else {
                   return Container();
+                }
               });
         }
       }
@@ -107,14 +108,15 @@ class _ActiveListWidgetState extends State<ActiveListWidget> {
           child: Text("An error occurred: ${state.message}"),
           actionText: 'Reload',
           onButtonPress: () {
-            context.bloc<ChatslistBloc>().add(ChatListInitialise());
+            print("Reload");
+            context.read<ChatslistBloc>().add(ChatListInitialise());
           },
         );
       }
       return ListView.builder(
           itemCount: 1,
           itemBuilder: (BuildContext context, int index) {
-            return Text("No list available");
+            return const Text("No list available");
           });
     });
   }
@@ -157,22 +159,23 @@ class _ActiveListWidgetState extends State<ActiveListWidget> {
 
   Future<List<dynamic>> _getOperatorList(
       BuildContext context, Server srvr, Chat chat) async {
-    return await _serverRepository.getOperatorsList(srvr);
+    return await _serverRepository!.getOperatorsList(srvr);
   }
 
   void _showOperatorList(BuildContext context, Server srvr, Chat chat) {
-    var futureBuilder = new FutureBuilder(
+    var futureBuilder = FutureBuilder(
       future: _getOperatorList(context, srvr, chat),
       builder: (BuildContext context, AsyncSnapshot snapshot) {
         switch (snapshot.connectionState) {
           case ConnectionState.none:
           case ConnectionState.waiting:
-            return new Text('loading...');
+            return const Text('loading...');
           default:
-            if (snapshot.hasError)
-              return new Text('Error: ${snapshot.error}');
-            else
+            if (snapshot.hasError) {
+              return Text('Error: ${snapshot.error}');
+            } else {
               return createListView(context, snapshot, srvr, chat);
+            }
         }
       },
     );
@@ -202,15 +205,15 @@ class _ActiveListWidgetState extends State<ActiveListWidget> {
   }
 
   Future<bool> _transferToUser(Server srvr, Chat chat, int userid) async {
-    return _serverRepository.transferChatUser(srvr, chat, userid);
+    return _serverRepository!.transferChatUser(srvr, chat, userid);
   }
 
   Widget createListView(
       BuildContext context, AsyncSnapshot snapshot, Server srvr, Chat chat) {
     List<dynamic> listOP = snapshot.data;
 
-    return listOP != null
-        ? new ListView.builder(
+    return listOP.isNotEmpty
+        ? ListView.builder(
             reverse: false,
             padding: new EdgeInsets.all(6.0),
             itemCount: listOP.length,
@@ -227,6 +230,6 @@ class _ActiveListWidgetState extends State<ActiveListWidget> {
               );
             },
           )
-        : new Text('No online operator found!');
+        : const Text('No online operator found!');
   }
 }

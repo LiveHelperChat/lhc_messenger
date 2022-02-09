@@ -2,20 +2,21 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:io' show Platform;
 
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:rxdart/subjects.dart';
 
-import 'package:livehelp/model/model.dart';
+import 'package:livehelperchat/model/model.dart';
 
 
 class LocalNotificationPlugin {
   //
-  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
+  FlutterLocalNotificationsPlugin? flutterLocalNotificationsPlugin;
 
   final BehaviorSubject<ReceivedNotification>
-      didReceivedLocalNotificationSubject =
-      BehaviorSubject<ReceivedNotification>();
+  didReceivedLocalNotificationSubject =
+  BehaviorSubject<ReceivedNotification>();
   var initializationSettings;
 
   LocalNotificationPlugin._() {
@@ -32,8 +33,8 @@ class LocalNotificationPlugin {
       const AndroidNotificationChannel channel = AndroidNotificationChannel(
         'com.livehelperchat.chat.channel.NEWCHAT', // id
         'New chat (background)', // title
-        'New chat notifications while app is in the background', // description
-        importance: Importance.High,
+        description: 'New chat notifications while app is in the background', // description
+        importance: Importance.high,
         enableVibration: true,
         playSound: true,
       );
@@ -41,8 +42,8 @@ class LocalNotificationPlugin {
       const AndroidNotificationChannel channelMessage = AndroidNotificationChannel(
         'com.livehelperchat.chat.channel.NEWMESSAGE', // id
         'New messages (background)', // title
-        'New chat messages notifications while app is in the background', // description
-        importance: Importance.High,
+        description: 'New chat messages notifications while app is in the background', // description
+        importance: Importance.high,
         enableVibration: true,
         playSound: true,
       );
@@ -50,40 +51,26 @@ class LocalNotificationPlugin {
       const AndroidNotificationChannel channelGroupMessage = AndroidNotificationChannel(
         'com.livehelperchat.chat.channel.NEWGROUPMESSAGE', // id
         'New group messages (background)', // title
-        'New group messages notifications while app is in the background', // description
-        importance: Importance.High,
-        enableVibration: true,
-        playSound: true,
-      );
-
-      const AndroidNotificationChannel subjectMessage = AndroidNotificationChannel(
-        'com.livehelperchat.chat.channel.SUBJECT', // id
-        'New subject', // title
-        'New subject notifications while app is in the background', // description
-        importance: Importance.High,
+        description: 'New group messages notifications while app is in the background', // description
+        importance: Importance.high,
         enableVibration: true,
         playSound: true,
       );
 
       flutterLocalNotificationsPlugin
-          .resolvePlatformSpecificImplementation<
+          ?.resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin>()
           ?.createNotificationChannel(channel);
 
       flutterLocalNotificationsPlugin
-          .resolvePlatformSpecificImplementation<
+          ?.resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin>()
           ?.createNotificationChannel(channelMessage);
 
       flutterLocalNotificationsPlugin
-          .resolvePlatformSpecificImplementation<
+          ?.resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin>()
           ?.createNotificationChannel(channelGroupMessage);
-
-      flutterLocalNotificationsPlugin
-          .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>()
-          ?.createNotificationChannel(subjectMessage);
     }
 
     initializePlatformSpecifics();
@@ -126,12 +113,6 @@ class LocalNotificationPlugin {
       description: "New group messages notifications while app is open",
       number: 4444);
 
-  static final NotificationChannel channelSubject = NotificationChannel(
-      id: "com.livehelperchat.chat.channel.SUBJECT",
-      name: "New subject (open app)",
-      description: "New subject while app is open",
-      number: 5555);
-
   initializePlatformSpecifics() {
     var initializationSettingsAndroid = AndroidInitializationSettings('icon');
     var initializationSettingsIOS = IOSInitializationSettings(
@@ -140,23 +121,23 @@ class LocalNotificationPlugin {
       requestSoundPermission: false,
       onDidReceiveLocalNotification: (id, title, body, payload) async {
         ReceivedNotification receivedNotification = ReceivedNotification(
-            id: id, title: title, body: body, payload: payload);
+            id: id, title: title!, body: body!, payload: payload);
         didReceivedLocalNotificationSubject.add(receivedNotification);
       },
     );
     initializationSettings = InitializationSettings(
-        initializationSettingsAndroid, initializationSettingsIOS);
+        android: initializationSettingsAndroid, iOS: initializationSettingsIOS);
   }
 
   _requestIOSPermission() {
     flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<
-            IOSFlutterLocalNotificationsPlugin>()
-        .requestPermissions(
-          alert: false,
-          badge: true,
-          sound: true,
-        );
+        ?.resolvePlatformSpecificImplementation<
+        IOSFlutterLocalNotificationsPlugin>()
+        ?.requestPermissions(
+      alert: false,
+      badge: true,
+      sound: true,
+    );
   }
 
   void _createDefaultNotificationChannel() async {
@@ -164,11 +145,11 @@ class LocalNotificationPlugin {
     var defaultAndroidNotificationChannel = AndroidNotificationChannel(
       channelDefault.id,
       channelDefault.name,
-      channelDefault.description,
+      description:channelDefault.description,
     );
     await flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
+        ?.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(defaultAndroidNotificationChannel);
   }
 
@@ -179,16 +160,16 @@ class LocalNotificationPlugin {
   }
 
   setOnNotificationClick(Function onNotificationClick) async {
-    await flutterLocalNotificationsPlugin.initialize(initializationSettings,
-        onSelectNotification: (String payload) async {
-      onNotificationClick(payload);
-    });
+    await flutterLocalNotificationsPlugin?.initialize(initializationSettings,
+        onSelectNotification: (String? payload) async {
+          onNotificationClick(payload);
+        });
 
     _createDefaultNotificationChannel();
   }
 
   showNotification(ReceivedNotification notification) async {
-    NotificationChannel channel;
+    NotificationChannel? channel;
     //String title="";
     switch (notification.type) {
       case NotificationType.NEW_MESSAGE:
@@ -203,16 +184,13 @@ class LocalNotificationPlugin {
       case NotificationType.UNREAD:
         channel = channelUnreadMsg;
         break;
-      case NotificationType.SUBJECT:
-        channel = channelSubject;
-        break;
       default:
         break;
     }
 
     if (notification.server?.isLoggedIn ?? false) {
-      displayNotification(channel, notification,
-          playSound: notification.server.soundnotify == 0);
+      displayNotification(channel!, notification,
+          playSound: notification.server?.soundnotify == 0);
     }
   }
 
@@ -235,68 +213,67 @@ class LocalNotificationPlugin {
     vibrationPattern[1] = 100;
     vibrationPattern[2] = 1000;
     // vibrationPattern[3] = 1000;
-    var androidPlatformChannelSpecifics = new AndroidNotificationDetails(
-        channelId, channelName, channelDescription,
+    var androidPlatformChannelSpecifics = AndroidNotificationDetails(
+        channelId, channelName,
+        channelDescription: channelDescription,
         icon: 'icon',
-        importance: Importance.High,
-        priority: Priority.High,
+        importance: Importance.high,
+        priority: Priority.high,
         playSound: playSound,
-        sound: RawResourceAndroidNotificationSound('slow_spring_board'),
-        styleInformation: DefaultStyleInformation(true, true));
-    var iOSPlatformChannelSpecifics = IOSNotificationDetails();
-    NotificationDetails platformChannelSpecifics = new NotificationDetails(
-        androidPlatformChannelSpecifics, iOSPlatformChannelSpecifics);
+        sound: const RawResourceAndroidNotificationSound('slow_spring_board'),
+        styleInformation: const DefaultStyleInformation(true, true));
+    var iOSPlatformChannelSpecifics = const IOSNotificationDetails();
+    NotificationDetails platformChannelSpecifics = NotificationDetails(
+        android: androidPlatformChannelSpecifics, iOS: iOSPlatformChannelSpecifics);
 
-    await flutterLocalNotificationsPlugin.show(channel.number,
+    await flutterLocalNotificationsPlugin?.show(channel.number,
         notification.title, notification.body, platformChannelSpecifics,
         payload: jsonEncode(notification.toJson()));
   }
 
   static Future<dynamic> backgroundMessageHandler(
-      Map<String, dynamic> message) {
+      RemoteMessage  message) {
 
-    if (message.containsKey('data')) {
       // Handle data message
-      final dynamic data = message['data'];
-    }
+      final dynamic data = message.data;
 
-    if (message.containsKey('notification')) {
+
+
       // Handle notification message
-      final dynamic notification = message['notification'];
-    }
+      final dynamic notification = message.notification;
 
     return Future<void>.value();
   }
 
   Future<int> getPendingNotificationCount() async {
     List<PendingNotificationRequest> p =
-        await flutterLocalNotificationsPlugin.pendingNotificationRequests();
+    await flutterLocalNotificationsPlugin!.pendingNotificationRequests();
     return p.length;
   }
 
   Future<void> cancelNotification() async {
-    await flutterLocalNotificationsPlugin.cancel(0);
+    await flutterLocalNotificationsPlugin?.cancel(0);
   }
 
   Future<void> cancelAllNotification() async {
-    await flutterLocalNotificationsPlugin.cancelAll();
+    await flutterLocalNotificationsPlugin?.cancelAll();
   }
 }
 
 LocalNotificationPlugin notificationPlugin = LocalNotificationPlugin._();
 
 class ReceivedNotification {
-  int id;
-  Chat chat;
-  User gchat;
-  Server server;
-  NotificationType type;
+  int? id;
+  Chat? chat;
+  User? gchat;
+  Server? server;
+  NotificationType? type;
   final String title;
   final String body;
-  String payload;
+  String? payload;
   ReceivedNotification({
-    @required this.title,
-    @required this.body,
+    required this.title,
+    required this.body,
     this.server,
     this.id,
     this.type,
@@ -306,32 +283,31 @@ class ReceivedNotification {
   });
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'server': server?.toJson(),
-        'title': title,
-        'body': body,
-        'payload': payload,
-        'type': type.toString(),
-        'chat': chat?.toJson(),
-        'gchat': gchat?.toJson()
-      };
+    'id': id,
+    'server': server?.toJson(),
+    'title': title,
+    'body': body,
+    'payload': payload,
+    'type': type.toString(),
+    'chat': chat?.toJson(),
+    'gchat': gchat?.toJson()
+  };
 
   ReceivedNotification.fromJson(Map<String, dynamic> map)
       : id = map['id'] ?? 0,
         body = map['body'] ?? '',
         title = map['title'] ?? 'Title not specified',
         payload = map['payload'] ?? '' {
-    type = getNotificationTypeFromString(map['type'].toString()) ??
-        NotificationType.INFO;
-    server = Server.fromJson(map['server']) ?? null;
+    type = getNotificationTypeFromString(map['type'].toString());
+    server = Server.fromJson(map['server']);
     chat = map.containsKey('chat') && map['chat'] != null ? Chat.fromJson(map['chat']) : null;
     gchat = map.containsKey('gchat') && map['gchat'] != null ? User.fromJson(map['gchat']) : null;
   }
 
   NotificationType getNotificationTypeFromString(String typeStr) {
     return NotificationType.values
-        .firstWhere((nt) => nt.toString() == typeStr, orElse: () => null);
+        .firstWhere((nt) => nt.toString() == typeStr, orElse: () => NotificationType.UNREAD);
   }
 }
 
-enum NotificationType { INFO, NEW_MESSAGE, PENDING, UNREAD, NEW_GROUP_MESSAGE, SUBJECT}
+enum NotificationType { INFO, NEW_MESSAGE, PENDING, UNREAD, NEW_GROUP_MESSAGE }

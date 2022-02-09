@@ -4,20 +4,20 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class S extends WidgetsLocalizations {
-  Locale _locale;
-  String _lang;
+  Locale? _locale;
+  String? _lang;
 
   S(this._locale) {
-    _lang = getLang(_locale);
+    _lang = getLang(_locale!);
     // print('Current locale: $_lang');
   }
 
   static final GeneratedLocalizationsDelegate delegate =
-      new GeneratedLocalizationsDelegate();
+  new GeneratedLocalizationsDelegate();
 
   static S of(BuildContext context) {
     var s = Localizations.of<S>(context, WidgetsLocalizations);
-    s._lang = getLang(s._locale);
+    s!._lang = getLang(s._locale!);
     return s;
   }
 
@@ -38,9 +38,9 @@ class GeneratedLocalizationsDelegate extends LocalizationsDelegate<WidgetsLocali
     ];
   }
 
-  LocaleResolutionCallback resolution({Locale fallback}) {
-    return (Locale locale, Iterable<Locale> supported) {
-      var languageLocale = new Locale(locale.languageCode, "");
+  LocaleResolutionCallback resolution({Locale? fallback}) {
+    return (Locale? locale, Iterable<Locale> supported) {
+      var languageLocale = new Locale(locale!.languageCode, "");
       if (supported.contains(locale))
         return locale;
       else if (supported.contains(languageLocale))
@@ -67,6 +67,6 @@ class GeneratedLocalizationsDelegate extends LocalizationsDelegate<WidgetsLocali
   bool shouldReload(GeneratedLocalizationsDelegate old) => false;
 }
 
-String getLang(Locale l) => l.countryCode != null && l.countryCode.isEmpty
+String getLang(Locale l) => l.countryCode != null && l.countryCode!.isEmpty
     ? l.languageCode
     : l.toString();

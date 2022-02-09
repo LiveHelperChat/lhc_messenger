@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:livehelp/utils/utils.dart';
-import 'package:livehelp/model/model.dart';
-import 'package:livehelp/services/server_repository.dart';
+import 'package:livehelperchat/utils/utils.dart';
+import 'package:livehelperchat/model/model.dart';
+import 'package:livehelperchat/services/server_repository.dart';
 import 'package:meta/meta.dart';
 
 import 'package:bloc/bloc.dart';
@@ -13,46 +13,48 @@ part 'fcmtoken_event.dart';
 part 'fcmtoken_state.dart';
 
 class FcmTokenBloc extends Bloc<FcmTokenEvent, FcmTokenState> {
-  final FirebaseMessaging _firebaseMessaging = new FirebaseMessaging();
+   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
 
   String token = "";
-  ServerRepository serverRepository;
+  ServerRepository? serverRepository;
 
   FcmTokenBloc({@required this.serverRepository}) : super(FcmTokenInitial()) {
     assert(serverRepository != null);
-
+    on<FcmTokenReceive>(_onFcmTokenReceive);
+    on<FcmTokenRefresh>(_onFcmTokenRefresh);
+    on<OperatorsChatClosedEvent>(_onOperatorsChatClosedEvent);
+    on<OperatorsChatOpenedEvent>(_onOperatorsChatOpenedEvent);
+    on<ChatOpenedEvent>(_onChatOpenedEvent);
+    on<ChatPausedEvent>(_onChatPausedEvent);
+    on<ChatClosedEvent>(_onChatClosedEvent);
+    on<OnResumeEvent>(_onResumeEvent);
+    on<NotificationClick>(_onNotificationClick);
+    on<MessageReceivedEvent>(_onMessageReceivedEvent);
     _initFCM();
   }
 
-  void _initFCM() {
-    _firebaseMessaging.configure(
-      onBackgroundMessage: LocalNotificationPlugin.backgroundMessageHandler,
-      onMessage: (Map<String, dynamic> message) async {
-        this.add(MessageReceivedEvent(fcmToken: token, message: message));
-      },
-      onLaunch: (Map<String, dynamic> message) {
-        this.add(OnResumeEvent(message: message));
-        return;
-      },
-      onResume: (Map<String, dynamic> message) {
-        this.add(OnResumeEvent(message: message));
-        return;
-      },
-    );
+  Future<void> _initFCM() async {
+    FirebaseMessaging.onBackgroundMessage(LocalNotificationPlugin.backgroundMessageHandler);
 
-    _firebaseMessaging.onTokenRefresh.listen((String fcmtoken) {
-      this.token = fcmtoken;
-      this.add(FcmTokenRefresh(fcmToken: fcmtoken));
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      add(MessageReceivedEvent(fcmToken: token, message: message));
     });
 
-    _firebaseMessaging.requestNotificationPermissions(
-        const IosNotificationSettings(sound: true, badge: true, alert: true));
-    _firebaseMessaging.onIosSettingsRegistered
-        .listen((IosNotificationSettings settings) {});
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      add(MessageReceivedEvent(fcmToken: token, message: message));
+    });
 
-    _firebaseMessaging.getToken().then((String fcmtoken) {
+    _firebaseMessaging.onTokenRefresh.listen((String fcmtoken) {
+      token = fcmtoken;
+      add(FcmTokenRefresh(fcmToken: fcmtoken));
+    });
+
+    _firebaseMessaging.requestPermission(
+        sound: true, badge: true, alert: true);
+
+    _firebaseMessaging.getToken().then((String? fcmtoken) {
       assert(fcmtoken != null);
-      this.token = fcmtoken;
+      token = fcmtoken!;
       add(FcmTokenReceive(fcmToken: fcmtoken));
     });
 
@@ -62,72 +64,85 @@ class FcmTokenBloc extends Bloc<FcmTokenEvent, FcmTokenState> {
     notificationPlugin.setOnNotificationClick(onNotificationClick);
   }
 
-  @override
-  Stream<FcmTokenState> mapEventToState(
-    FcmTokenEvent event,
-  ) async* {
-    final currentState = state;
-    if (event is FcmTokenReceive) {
-      yield FcmTokenReceived(token: event.fcmToken);
-    } else if (event is FcmTokenRefresh) {
-      yield FcmTokenReceived(token: event.fcmToken);
-    } else if (event is OperatorsChatClosedEvent) {
-      if (currentState is ChatOperatorsOpenedState && currentState.chat?.chat_id == event.chat?.chat_id) {
-        yield ChatOperatorsClosedState(chat: event.chat, token: token);
-      }
-    } else if (event is OperatorsChatOpenedEvent) {
-      yield ChatOperatorsOpenedState(chat: event.chat, token: token);
-    } else if (event is ChatOpenedEvent) {
-      yield ChatOpenedState(chat: event.chat, token: token);
-    } else if (event is ChatPausedEvent) {
-      yield ChatPausedState(chat: event.chat, token: token);
-    } else if (event is ChatClosedEvent) {
-      // Don't yield closedstate if previous chat and current chat are not the same.
-      // Popping a chat page doesn't call dispose right away.
-      // yielding a closed state later affects a newly opened chatstate
-      if (currentState is ChatOpenedState && currentState.chat?.id == event.chat?.id) {
-        yield ChatClosedState(chat: event.chat, token: token);
-      }
-      if (currentState is ChatPausedState && currentState.chat?.id == event.chat?.id) {
-        yield ChatClosedState(chat: event.chat, token: token);
-      }
-    } else if (event is OnResumeEvent) {
-      if (event.message != null) {
-        ReceivedNotification notification =
-            await _prepareNotification(event.message);
-        yield NotificationClicked(notification: notification);
-      }
-    } else if (event is NotificationClick) {
-      if (event.notification != null) {
-        yield NotificationClicked(notification: event.notification);
-      }
-    } else if (event is MessageReceivedEvent) {
-      if (currentState is ChatOpenedState) {
-        yield currentState.copyWith(
-            chat: currentState.chat, token: currentState.token);
-        _showNotification(event.message, openedChat: currentState.chat);
-      } else if (currentState is ChatOperatorsOpenedState) {
-        yield currentState.copyWith(
-            chat: currentState.chat, token: currentState.token);
-        _showNotification(event.message, openedGroupChat: currentState.chat);
-      } else {
-        _showNotification(event.message);
-      }
-    }
+  Future<void> _onFcmTokenReceive(FcmTokenReceive event, Emitter<FcmTokenState> emit) async {
+    emit(FcmTokenReceived(token: event.fcmToken!));
   }
 
-  Future<ReceivedNotification> _prepareNotification(
-      Map<String, dynamic> msg) async {
+   Future<void> _onFcmTokenRefresh(FcmTokenRefresh event, Emitter<FcmTokenState> emit) async {
+    emit(FcmTokenReceived(token: event.fcmToken!));
+   }
 
-    var data = msg['data'] ?? msg;
+   Future<void> _onOperatorsChatClosedEvent(OperatorsChatClosedEvent event, Emitter<FcmTokenState> emit) async {
+     final currentState = state;
+    if (currentState is ChatOperatorsOpenedState && currentState.chat?.chat_id == event.chat?.chat_id) {
+      emit(ChatOperatorsClosedState(chat: event.chat!, token: token));
+     }
+   }
+
+   Future<void> _onOperatorsChatOpenedEvent(OperatorsChatOpenedEvent event, Emitter<FcmTokenState> emit) async {
+    emit(ChatOperatorsOpenedState(chat: event.chat, token: token));
+   }
+
+   Future<void> _onChatOpenedEvent(ChatOpenedEvent event, Emitter<FcmTokenState> emit) async {
+    emit(ChatOpenedState(chat: event.chat, token: token));
+   }
+
+   Future<void> _onChatPausedEvent(ChatPausedEvent event, Emitter<FcmTokenState> emit) async {
+    emit(ChatPausedState(chat: event.chat!, token: token));
+   }
+
+   Future<void> _onChatClosedEvent(ChatClosedEvent event, Emitter<FcmTokenState> emit) async {
+     final currentState = state;
+     if (currentState is ChatOpenedState && currentState.chat?.id == event.chat?.id) {
+       emit(ChatClosedState(chat: event.chat!, token: token));
+     }
+     if (currentState is ChatPausedState && currentState.chat?.id == event.chat?.id) {
+       emit(ChatClosedState(chat: event.chat!, token: token));
+     }
+   }
+
+   Future<void> _onResumeEvent(OnResumeEvent event, Emitter<FcmTokenState> emit) async {
+     if (event.message != null) {
+       ReceivedNotification? notification =
+       await _prepareNotification(event.message!);
+       emit(NotificationClicked(notification: notification!));
+     }
+   }
+
+   Future<void> _onNotificationClick(NotificationClick event, Emitter<FcmTokenState> emit) async {
+     if (event.notification != null) {
+       emit(NotificationClicked(notification: event.notification!));
+     }
+   }
+
+   Future<void> _onMessageReceivedEvent(MessageReceivedEvent event, Emitter<FcmTokenState> emit) async {
+     final currentState = state;
+    if (currentState is ChatOpenedState) {
+       emit(currentState.copyWith(
+           chat: currentState.chat, token: currentState.token));
+       _showNotification(event.message!, openedChat: currentState.chat);
+     } else if (currentState is ChatOperatorsOpenedState) {
+       emit(currentState.copyWith(
+           chat: currentState.chat, token: currentState.token));
+       _showNotification(event.message!, openedGroupChat: currentState.chat);
+     } else {
+       _showNotification(event.message!);
+     }
+   }
+
+
+  Future<ReceivedNotification?> _prepareNotification(
+      RemoteMessage msg) async {
+
+    var data = msg.data;
 
     if (data.containsKey("chat_type")) {
       // check if server exists on this device
-      var srv = await serverRepository.fetchItemFromDB(Server.tableName,
+      var srv = await serverRepository!.fetchItemFromDB(Server.tableName,
           "installationid=? and isloggedin=?", [data['server_id'], 1]);
 
       if (srv != null) {
-        Server server = new Server.fromJson(srv);
+        Server server = Server.fromJson(srv);
         Map<String, dynamic> chat = jsonDecode(data["chat"].toString());
 
         if (data['chat_type'].toString() == 'new_msg') {
@@ -158,15 +173,6 @@ class FcmTokenBloc extends Bloc<FcmTokenEvent, FcmTokenState> {
               body: data['msg'].toString());
         }
 
-        if (data["chat_type"].toString() == "subject") {
-          return ReceivedNotification(
-              server: server,
-              chat: Chat.fromJson(chat),
-              type: NotificationType.SUBJECT,
-              title: "New subject",
-              body: data['msg'].toString());
-        }
-
         if (data["chat_type"].toString() == "unread") {
           return ReceivedNotification(
               server: server,
@@ -180,9 +186,9 @@ class FcmTokenBloc extends Bloc<FcmTokenEvent, FcmTokenState> {
     return null;
   }
 
-  _showNotification(Map<String, dynamic> msg, {Chat openedChat, User openedGroupChat}) async {
+  _showNotification(RemoteMessage msg, {Chat? openedChat, User? openedGroupChat}) async {
 
-    ReceivedNotification received = await _prepareNotification(msg);
+    ReceivedNotification? received = await _prepareNotification(msg);
 
     if (received != null) {
 
@@ -194,9 +200,7 @@ class FcmTokenBloc extends Bloc<FcmTokenEvent, FcmTokenState> {
   }
 
   onNotificationInLowerVersions(ReceivedNotification receivedNotification) {
-    if (receivedNotification != null) {
-      add(NotificationClick(notification: receivedNotification));
-    }
+    add(NotificationClick(notification: receivedNotification));
   }
 
   onNotificationClick(String payload) async {
@@ -204,7 +208,7 @@ class FcmTokenBloc extends Bloc<FcmTokenEvent, FcmTokenState> {
 
       final payloadMap = jsonDecode(payload) as Map<String, dynamic>;
 
-      ReceivedNotification receivedNotification = await ReceivedNotification.fromJson(payloadMap);
+      ReceivedNotification receivedNotification = ReceivedNotification.fromJson(payloadMap);
 
       add(NotificationClick(notification: receivedNotification));
 

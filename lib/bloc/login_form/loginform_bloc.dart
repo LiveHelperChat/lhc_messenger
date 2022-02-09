@@ -3,44 +3,42 @@ import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
-import 'package:livehelp/model/model.dart';
-import 'package:livehelp/services/server_repository.dart';
+import 'package:livehelperchat/model/model.dart';
+import 'package:livehelperchat/services/server_repository.dart';
 
 part 'loginform_event.dart';
 part 'loginform_state.dart';
 
 class LoginformBloc extends Bloc<LoginformEvent, LoginformState> {
-  LoginformBloc({@required this.serverRepository}) : super(LoginformInitial());
+  LoginformBloc({required this.serverRepository}) : super(LoginformInitial()){
+    on<SetServerLoginError>(_onSetServerLoginError);
+    on<ServerLogin>(_onServerLogin);
+  }
 
   final ServerRepository serverRepository;
 
-  @override
-  Stream<LoginformState> mapEventToState(
-    LoginformEvent event,
-  ) async* {
-    if (event is SetServerLoginError) {
-      yield ServerLoginError(message: event.message);
-    } else if (event is ServerLogin) {
-      yield ServerLoginStarted();
-      yield* _login(event.server, event.fcmToken);
-    }
+  Future<void> _onSetServerLoginError(SetServerLoginError event, Emitter<LoginformState> emit) async {
+    emit(ServerLoginError(message: event.message));
   }
 
-  Stream<LoginformState> _login(Server server, String fcmToken) async* {
+  Future<void> _onServerLogin(ServerLogin event, Emitter<LoginformState> emit) async {
+    emit(ServerLoginStarted());
+    final server=event.server;
+    final fcmToken=event.fcmToken!;
     try {
       bool isNew = false;
       //  await updateToken(recToken);
       List<Server> savedServersList = await serverRepository.getServersFromDB();
 
       // check if server already exists
-      if (savedServersList.length > 0) {
+      if (savedServersList.isNotEmpty) {
         Server found = savedServersList.firstWhere(
-            (srvr) =>
-                (srvr.url == server.url && srvr.username == server.username) ||
+                (srvr) =>
+            (srvr.url == server.url && srvr.username == server.username) ||
                 srvr.servername == server.servername,
-            orElse: () => null);
+            orElse: () => Server());
 
-        if (found != null) {
+        if (found.id != null) {
           server.id = found.id;
           isNew = false;
         } else {
@@ -54,17 +52,16 @@ class LoginformBloc extends Bloc<LoginformEvent, LoginformState> {
 
       Server srv = await serverRepository.loginServer(server);
 
-      yield ServerLoginFinished();
-
+      emit(ServerLoginFinished());
       if (srv.isLoggedIn) {
         srv.twilioInstalled =
-            await serverRepository.isExtensionInstalled(srv, "twilio");
+        await serverRepository.isExtensionInstalled(srv, "twilio");
 
         // we use this to fetch the already saved serverid
         srv = isNew
-            ? await serverRepository.saveServerToDB(srv, null, null)
+            ? await serverRepository.saveServerToDB(srv,null, [])
             : await serverRepository.saveServerToDB(
-                srv, "${Server.columns['db_id']} = ? ", [srv.id]);
+            srv, "${Server.columns['db_id']} = ? ", [srv.id]);
 
         // fetch installation id
         // used for unique identification
@@ -73,32 +70,30 @@ class LoginformBloc extends Bloc<LoginformEvent, LoginformState> {
         srv = await serverRepository.saveServerToDB(
             srv, "${Server.columns['db_id']} = ?", ['${srv.id}']);
 
-        if (srv.installationid.isEmpty) {
-          yield ServerLoginError(
-              message: "Couldn't find this app's extension at the given url");
+        if (srv.installationid!.isEmpty) {
+          emit(const ServerLoginError(
+              message: "Couldn't find this app's extension at the given url"));
           return;
         }
 
         // fetch user data
         var user = await serverRepository.fetchUserFromServer(srv);
-        if (user != null) {
-          srv.userid = user['id'];
-          srv.firstname = user['name'];
-          srv.surname = user['surname'];
-          srv.operatoremail = user['email'];
-          srv.job_title = user['job_title'];
-          srv.all_departments = user['all_departments'];
-          srv.departments_ids = user['departments_ids'];
-        }
+        srv.userid = user['id'];
+        srv.firstname = user['name'];
+        srv.surname = user['surname'];
+        srv.operatoremail = user['email'];
+        srv.job_title = user['job_title'];
+        srv.all_departments = user['all_departments'];
+        srv.departments_ids = user['departments_ids'];
 
         srv = await serverRepository.saveServerToDB(srv, "id=?", [srv.id]);
 
-        yield ServerLoginSuccess(server: srv, isNew: isNew);
+        emit(ServerLoginSuccess(server: srv, isNew: isNew));
       } else {
-        yield ServerLoginError(message: "Login was not successful");
+        emit(const ServerLoginError(message: "Login was not successful"));
       }
     } catch (ex) {
-      yield ServerLoginError(message: "${ex?.message}");
+      emit(ServerLoginError(message: ex.toString()));
     }
   }
 }

@@ -1,33 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
-import 'package:livehelp/bloc/bloc.dart';
+import 'package:livehelperchat/bloc/bloc.dart';
 
-import 'package:livehelp/model/model.dart';
-import 'package:livehelp/widget/widget.dart';
-import 'package:livehelp/utils/utils.dart';
-import 'package:livehelp/services/server_api_client.dart';
+import 'package:livehelperchat/model/model.dart';
+import 'package:livehelperchat/services/server_repository.dart';
+import 'package:livehelperchat/widget/widget.dart';
+import 'package:livehelperchat/utils/utils.dart';
+import 'package:livehelperchat/services/server_api_client.dart';
 
-import 'package:livehelp/utils/routes.dart' as LHCRouter;
+import 'package:livehelperchat/utils/routes.dart' as LHCRouter;
 
 class TransferredListWidget extends StatefulWidget {
-  TransferredListWidget({
-    Key key,
+  const TransferredListWidget({
+    Key? key,
     this.listOfServers,
     this.refreshList,
   }) : super(key: key);
 
-  final List<Server> listOfServers;
-  final VoidCallback refreshList;
+  final List<Server>? listOfServers;
+  final VoidCallback? refreshList;
 
   @override
   _TransferredListWidgetState createState() =>
-      new _TransferredListWidgetState();
+      _TransferredListWidgetState();
 }
 
 class _TransferredListWidgetState extends State<TransferredListWidget> {
-  ServerApiClient _serverRequest;
-
+  ServerApiClient? _serverRequest;
   @override
   void initState() {
     super.initState();
@@ -36,14 +36,15 @@ class _TransferredListWidgetState extends State<TransferredListWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<ChatslistBloc, ChatListState>(builder: (context, state) {
+    return BlocBuilder<ChatslistBloc, ChatListState>(
+        builder: (context, state) {
       if (state is ChatslistInitial) {
-        return Center(child: CircularProgressIndicator());
+        return const Center(child: CircularProgressIndicator());
       }
 
       if (state is ChatListLoaded) {
         if (state.isLoading) {
-          return Center(
+          return const Center(
             child: CircularProgressIndicator(),
           );
         } else {
@@ -51,12 +52,12 @@ class _TransferredListWidgetState extends State<TransferredListWidget> {
               itemCount: state.transferChatList.length,
               itemBuilder: (BuildContext context, int index) {
                 Chat chat = state.transferChatList[index];
-                Server server = widget.listOfServers.firstWhere(
+                Server server = widget.listOfServers!.firstWhere(
                     (srvr) => srvr.id == chat.serverid,
-                    orElse: () => null);
+                    orElse: () => Server());
 
                 return GestureDetector(
-                  child: new ChatItemWidget(
+                  child: ChatItemWidget(
                     server: server,
                     chat: chat,
                     menuBuilder: _itemMenuBuilder(),
@@ -75,7 +76,7 @@ class _TransferredListWidgetState extends State<TransferredListWidget> {
           child: Text("An error occurred: ${state.message}"),
           actionText: 'Reload',
           onButtonPress: () {
-            context.bloc<ChatslistBloc>().add(ChatListInitialise());
+            context.read<ChatslistBloc>().add(ChatListInitialise());
           },
         );
       }
@@ -112,14 +113,14 @@ class _TransferredListWidgetState extends State<TransferredListWidget> {
   }
 
   void _acceptChat(Server srv, Chat chat) async {
-    await _serverRequest.acceptChatTransfer(srv, chat);
-    widget.refreshList();
+    await _serverRequest!.acceptChatTransfer(srv, chat);
+    widget.refreshList!();
 
     final routeArgs = RouteArguments(chatId: chat.id);
     final routeSettings =
         RouteSettings(name: AppRoutes.chatPage, arguments: routeArgs);
     var route = LHCRouter.Router.generateRouteChatPage(
-        routeSettings, chat, srv, false, widget.refreshList);
+        routeSettings, chat, srv, false, widget.refreshList!);
 
     Navigator.of(context).push(route);
   }

@@ -1,18 +1,18 @@
 import 'dart:async';
 
-import 'package:livehelp/data/database.dart';
+import 'package:livehelperchat/data/database.dart';
 import 'package:flutter/foundation.dart';
-import 'package:livehelp/model/model.dart';
-import 'package:livehelp/services/server_api_client.dart';
+import 'package:livehelperchat/model/model.dart';
+import 'package:livehelperchat/services/server_api_client.dart';
 
 class ServerRepository {
   final ServerApiClient serverApiClient;
   final DatabaseHelper dBHelper;
 
-  ServerRepository({@required this.serverApiClient, @required this.dBHelper})
-      : assert(serverApiClient != null, dBHelper != null);
+  ServerRepository({required this.serverApiClient, required this.dBHelper});
 
   Future<Server> fetchChatList(Server server) async {
+    //print("fetchChatList");
     return serverApiClient.getChatLists(server);
   }
 
@@ -25,7 +25,7 @@ class ServerRepository {
   }
 
   Future<Server> saveServerToDB(
-      Server server, String condition, List whereArg) {
+      Server server, String? condition, List whereArg) {
     return dBHelper.upsertServer(server, condition, whereArg);
   }
 
@@ -75,34 +75,35 @@ class ServerRepository {
   }
 
   Future<bool> postOperatorsMesssage(Server server, User chat, String msg) {
+    print("postOperatorsMesssage 1st");
     return serverApiClient.postOperatorsMesssage(server, chat, msg);
   }
 
   Future<bool> closeChat(
-    Server server,
-    Chat chat,
-  ) {
+      Server server,
+      Chat chat,
+      ) {
     return serverApiClient.closeChat(server, chat);
   }
 
   Future<bool> closeOperatorsChat(
-    Server server,
-    User chat,
-  ) {
+      Server server,
+      User chat,
+      ) {
     return serverApiClient.closeOperatorsChat(server, chat);
   }
 
   Future<bool> deleteChat(
-    Server server,
-    Chat chat,
-  ) {
+      Server server,
+      Chat chat,
+      ) {
     return serverApiClient.deleteChat(server, chat);
   }
 
   Future<bool> deleteOperatorsChat(
-    Server server,
-    User chat,
-  ) {
+      Server server,
+      User chat,
+      ) {
     return serverApiClient.deleteOperatorsChat(server, chat);
   }
 

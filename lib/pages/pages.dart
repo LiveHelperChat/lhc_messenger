@@ -10,5 +10,3 @@ export 'lists/chat_list_active.dart';
 export 'lists/chat_list_pending.dart';
 export 'lists/chat_list_transferred.dart';
 export 'lists/chat_list_closed.dart';
-export 'lists/chat_list_bot.dart';
-export 'lists/chat_list_subject.dart';

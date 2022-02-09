@@ -6,20 +6,20 @@ import 'package:http/http.dart' as http;
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'package:livehelp/bloc/bloc.dart';
+import 'package:livehelperchat/bloc/bloc.dart';
 
-import 'package:livehelp/model/model.dart';
-import 'package:livehelp/data/database.dart';
-import 'package:livehelp/services/server_api_client.dart';
-import 'package:livehelp/utils/utils.dart';
-import 'package:livehelp/pages/main_page.dart';
+import 'package:livehelperchat/model/model.dart';
+import 'package:livehelperchat/data/database.dart';
+import 'package:livehelperchat/services/server_api_client.dart';
+import 'package:livehelperchat/utils/utils.dart';
+import 'package:livehelperchat/pages/main_page.dart';
 
 const TIMEOUT = const Duration(seconds: 5);
 
 class LoginForm extends StatefulWidget {
-  LoginForm({Key key, this.server}) : super(key: key);
+  LoginForm({Key? key, this.server}) : super(key: key);
 
-  final Server server;
+  final Server? server;
 
   @override
   State<StatefulWidget> createState() {
@@ -37,8 +37,8 @@ class LoginFormState extends State<LoginForm> {
   final TextEditingController _userNameController = new TextEditingController();
   final TextEditingController _passwordController = new TextEditingController();
 
-  Server _currentServer;
-  DatabaseHelper _dbHelper;
+  Server? _currentServer;
+  DatabaseHelper? _dbHelper;
 
   ServerApiClient srvrRequest = new ServerApiClient(httpClient: http.Client());
 
@@ -61,7 +61,7 @@ class LoginFormState extends State<LoginForm> {
         if (state is ServerLoginStarted) {
           return CircularProgressIndicator();
         } else {
-          return new Container(
+          return Container(
               padding: const EdgeInsets.only(top: 8.0),
               child: new RaisedButton(
                 onPressed: () {
@@ -77,7 +77,7 @@ class LoginFormState extends State<LoginForm> {
       },
     );
 
-    var loginForm = new Column(
+    var loginForm = Column(
       children: <Widget>[
         Form(
           key: _formKey,
@@ -92,7 +92,7 @@ class LoginFormState extends State<LoginForm> {
                       labelText: 'Server Name *'),
                   //  onSaved: (String value) { person.name = value; },
                   validator: (value) {
-                    if (value.isEmpty) {
+                    if (value!.isEmpty) {
                       return 'A name is required for this server';
                     }
                     return null;
@@ -108,7 +108,7 @@ class LoginFormState extends State<LoginForm> {
                 keyboardType: TextInputType.url,
                 onSaved: (val) {},
                 validator: (value) {
-                  if (value.isEmpty) {
+                  if (value!.isEmpty) {
                     return 'Address cannot be empty';
                   }
                   return null;
@@ -119,8 +119,8 @@ class LoginFormState extends State<LoginForm> {
                   children: <Widget>[
                     Checkbox(
                         value: _checkBoxUrlHasIndex,
-                        onChanged: (bool value) {
-                          onCheckBoxUrlHasIndexChanged(value);
+                        onChanged:(bool? value) {
+                          onCheckBoxUrlHasIndexChanged(value!);
                         }),
                     Text('Append index.php to address'),
                   ]),
@@ -132,7 +132,7 @@ class LoginFormState extends State<LoginForm> {
                   labelText: 'Username *',
                 ),
                 validator: (value) {
-                  if (value.isEmpty) {
+                  if (value!.isEmpty) {
                     return 'Username cannot be empty';
                   }
                   return null;
@@ -148,7 +148,7 @@ class LoginFormState extends State<LoginForm> {
                 ),
                 obscureText: true,
                 validator: (value) {
-                  if (value.isEmpty) {
+                  if (value!.isEmpty) {
                     return 'Password cannot be empty';
                   }
                   return null;
@@ -193,26 +193,26 @@ class LoginFormState extends State<LoginForm> {
 
     return BlocConsumer<LoginformBloc, LoginformState>(
         listener: (context, state) {
-      if (state is ServerLoginError) {
-        //Show Error message
-        _showSnackBar(state.message);
-      }
-      if (state is LoginServerSelected) {
-        _currentServer = state.server;
-      }
-      if (state is ServerLoginSuccess) {
-        SchedulerBinding.instance.addPostFrameCallback((_) {
-          Navigator.of(context).pushAndRemoveUntil(
-              FadeRoute(
-                builder: (BuildContext context) => MainPage(),
-                settings: RouteSettings(
-                  name: AppRoutes.home,
-                ),
-              ),
-              (Route<dynamic> route) => false);
-        });
-      }
-    }, builder: (context, state) {
+          if (state is ServerLoginError) {
+            //Show Error message
+            _showSnackBar(state.message!);
+          }
+          if (state is LoginServerSelected) {
+            _currentServer = state.server;
+          }
+          if (state is ServerLoginSuccess) {
+            SchedulerBinding.instance?.addPostFrameCallback((_) {
+              Navigator.of(context).pushAndRemoveUntil(
+                  FadeRoute(
+                    builder: (BuildContext context) => MainPage(),
+                    settings: RouteSettings(
+                      name: AppRoutes.home,
+                    ),
+                  ),
+                      (Route<dynamic> route) => false);
+            });
+          }
+        }, builder: (context, state) {
       return scaffoldLoginForm;
     });
   }
@@ -220,19 +220,19 @@ class LoginFormState extends State<LoginForm> {
   void _submit(BuildContext context) async {
     try {
       final form = _formKey.currentState;
-      if (form.validate()) {
+      if (form!.validate()) {
         form.save();
 
-        _currentServer.servername = _nameController.text;
-        _currentServer.url = _urlController.text;
-        _currentServer.appendIndexToUrl = _checkBoxUrlHasIndex;
-        _currentServer.username = _userNameController.text;
-        _currentServer.password = _passwordController.text;
+        _currentServer!.servername = _nameController.text;
+        _currentServer!.url = _urlController.text;
+        _currentServer!.appendIndexToUrl = _checkBoxUrlHasIndex;
+        _currentServer!.username = _userNameController.text;
+        _currentServer!.password = _passwordController.text;
 
-        String fcmtoken = context.bloc<FcmTokenBloc>().token;
+        String fcmtoken = context.read<FcmTokenBloc>().token;
         context
-            .bloc<LoginformBloc>()
-            .add(ServerLogin(server: _currentServer, fcmToken: fcmtoken));
+            .read<LoginformBloc>()
+            .add(ServerLogin(server: _currentServer!, fcmToken: fcmtoken));
       }
     } catch (ex) {}
   }
@@ -256,7 +256,7 @@ class LoginFormState extends State<LoginForm> {
 
   void _showSnackBar(String text) {
     _scaffoldKey.currentState
-        .showSnackBar(new SnackBar(content: new Text(text)));
+        ?.showSnackBar(new SnackBar(content: new Text(text)));
   }
 
   void onCheckBoxUrlHasIndexChanged(bool value) {
@@ -265,9 +265,9 @@ class LoginFormState extends State<LoginForm> {
     });
   }
 
-  Future<int> updateToken(String token) async {
-    int id = 0;
-    if (token.isNotEmpty) id = await _dbHelper.upsertFCMToken(token);
+  Future<int?> updateToken(String token) async {
+    int? id = 0;
+    if (token.isNotEmpty) id = await _dbHelper?.upsertFCMToken(token);
 
     return id;
   }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_html/html_parser.dart';
-import 'package:livehelp/model/model.dart';
+import 'package:livehelperchat/model/model.dart';
 import 'package:intl/intl.dart';
 
 import 'package:flutter_html/flutter_html.dart';
@@ -8,7 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_linkify/flutter_linkify.dart';
 
 class Bubble extends StatelessWidget {
-  Bubble({this.message});
+  Bubble({required this.message});
 
   final Message message;
 
@@ -19,60 +19,60 @@ class Bubble extends StatelessWidget {
 
     final bg = message.user_id == 0 || (message.is_owner == 2)
         ? Colors.black12
-        : message.user_id > 0
-            ? Colors.white
-            : Colors.greenAccent;
+        : message.user_id! > 0
+        ? Colors.white
+        : Colors.greenAccent;
     final align = message.user_id == 0 || (message.is_owner == 2)
         ? CrossAxisAlignment.start
-        : message.user_id > 0
-            ? CrossAxisAlignment.end
-            : CrossAxisAlignment.center;
+        : message.user_id! > 0
+        ? CrossAxisAlignment.end
+        : CrossAxisAlignment.center;
 
     final radius = message.user_id == 0 || (message.is_owner == 2)
         ? const BorderRadius.only(
-            topRight: const Radius.circular(10.0),
-            bottomLeft: const Radius.circular(10.0),
-            bottomRight: const Radius.circular(10.0),
-          )
-        : message.user_id > 0
-            ? const BorderRadius.only(
-                topLeft: const Radius.circular(10.0),
-                bottomLeft: const Radius.circular(10.0),
-                bottomRight: const Radius.circular(10.0),
-              )
-            : const BorderRadius.only(
-                topRight: const Radius.circular(10.0),
-                bottomRight: const Radius.circular(10.0),
-                topLeft: const Radius.circular(10.0),
-                bottomLeft: const Radius.circular(10.0),
-              );
+      topRight: Radius.circular(10.0),
+      bottomLeft: Radius.circular(10.0),
+      bottomRight: Radius.circular(10.0),
+    )
+        : message.user_id! > 0
+        ? const BorderRadius.only(
+      topLeft: Radius.circular(10.0),
+      bottomLeft: Radius.circular(10.0),
+      bottomRight: Radius.circular(10.0),
+    )
+        : const BorderRadius.only(
+      topRight: Radius.circular(10.0),
+      bottomRight: Radius.circular(10.0),
+      topLeft:Radius.circular(10.0),
+      bottomLeft: Radius.circular(10.0),
+    );
 
     final margin = message.user_id == 0 || (message.is_owner == 2)
         ? const EdgeInsets.only(right: 40.0)
         : const EdgeInsets.only(left: 40.0);
-    return new Column(
+    return Column(
       crossAxisAlignment: align,
       children: <Widget>[
-        new Padding(
+        Padding(
           padding: const EdgeInsets.only(right: 8.0),
-          child: new Text(message.name_support),
+          child: Text(message.name_support!),
         ),
-        new Container(
+        Container(
           constraints: const BoxConstraints(minWidth: 50.0),
           margin: margin,
           padding: const EdgeInsets.all(4.0),
-          decoration: new BoxDecoration(
+          decoration: BoxDecoration(
             color: bg,
             borderRadius: radius,
           ),
-          child: new Column(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              new Padding(
+              Padding(
                 padding: const EdgeInsets.only(right: 4.0, bottom: 4.0),
                 child: Html(
                     data: message.msg,
-                    onLinkTap: (url) {
+                    onLinkTap: (url,context,attributes,element) {
                       _launchURL(url);
                     }
                   /*data: "<main>${message.msg}</main>",
@@ -88,13 +88,13 @@ class Bubble extends StatelessWidget {
               ),
               // positioned at bottom but object renderer needs it to calculate
               // width of the column
-              new Padding(
+              Padding(
                 padding: const EdgeInsets.only(left: 2.0),
-                child: new Text(
+                child: Text(
                     dateFormatter.format(
-                        new DateTime.fromMillisecondsSinceEpoch(
-                            message.time * 1000)),
-                    style: new TextStyle(
+                        DateTime.fromMillisecondsSinceEpoch(
+                            message.time! * 1000)),
+                    style: const TextStyle(
                       color: Colors.black38,
                       fontSize: 10.0,
                     )),
@@ -114,3 +114,4 @@ class Bubble extends StatelessWidget {
     }
   }
 }
+

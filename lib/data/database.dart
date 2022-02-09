@@ -7,10 +7,10 @@ import 'package:synchronized/synchronized.dart';
 
 import 'package:path_provider/path_provider.dart';
 
-import 'package:livehelp/model/model.dart';
+import 'package:livehelperchat/model/model.dart';
 
 class DatabaseHelper {
-  static DatabaseHelper _livehelpDatabase;
+  static DatabaseHelper? _livehelpDatabase;
 
   final int dbVersion = 3; // previous 1
   final String configTable = "app_config";
@@ -19,18 +19,18 @@ class DatabaseHelper {
 
   bool didInit = false;
 
-  Database _db;
-  final _lock = new Lock();
+  Database? _db;
+  final _lock = Lock();
 
   factory DatabaseHelper() {
-    if (_livehelpDatabase != null) return _livehelpDatabase;
-    _livehelpDatabase = new DatabaseHelper._internal();
+    if (_livehelpDatabase != null) return _livehelpDatabase!;
+    _livehelpDatabase = DatabaseHelper._internal();
 
-    return _livehelpDatabase;
+    return _livehelpDatabase!;
   }
 
   static DatabaseHelper get() {
-    return _livehelpDatabase;
+    return _livehelpDatabase!;
   }
 
   DatabaseHelper._internal();
@@ -103,18 +103,16 @@ class DatabaseHelper {
     if (_db == null) {
       await _lock.synchronized(() async {
         // Check again once entering the synchronized block
-        if (_db == null) {
-          _db = await openDatabase(
+        _db ??= await openDatabase(
             path,
             version: dbVersion,
-            onCreate: this._create,
-            onUpgrade: this._upgradeDB,
+            onCreate: _create,
+            onUpgrade: _upgradeDB,
           );
-        }
       });
     }
 
-    return _db;
+    return _db!;
   }
 
   Future _upgradeDB(Database db, int oldVersion, int newVersion) async {
@@ -129,18 +127,18 @@ class DatabaseHelper {
   }
 
   /// Get an item by its id, if there is not entry for that ID, returns null.
-  Future<Map<String, dynamic>> fetchItem(
+  Future<Map<String, dynamic>?> fetchItem(
       String tableName, String condition, List arguments) async {
     var db = await getDb();
     var result =
-        await db.query(tableName, where: condition, whereArgs: arguments); //
+    await db.query(tableName, where: condition, whereArgs: arguments); //
     if (result.length == 0) return null;
     // print(result[0].toString());
     return result[0];
   }
 
   Future<List<dynamic>> fetchAll(String tableName, String orderBy,
-      String condition, List arguments) async {
+      String? condition, List arguments) async {
     var db = await getDb();
     return db
         .query(tableName, where: condition, whereArgs: arguments)
@@ -155,7 +153,7 @@ class DatabaseHelper {
     tkn[tokenColumn] = token;
 
     List<Map<String, dynamic>> listMap =
-        await db.rawQuery("SELECT * FROM $configTable");
+    await db.rawQuery("SELECT * FROM $configTable");
     if (listMap == null || listMap.length == 0) {
       await db.insert(configTable, tkn);
     } else {
@@ -170,7 +168,7 @@ class DatabaseHelper {
     var db = await getDb();
     var count = Sqflite.firstIntValue(await db.rawQuery(
         "SELECT COUNT(*) FROM ${Chat.tableName}"
-        " WHERE id = ? and status= ? and serverid= ?",
+            " WHERE id = ? and status= ? and serverid= ?",
         [chat.id, chat.status, chat.serverid]));
     if (count == 0) {
       int id = await db.insert(Chat.tableName, chat.toJson());
@@ -187,7 +185,7 @@ class DatabaseHelper {
     var db = await getDb();
     var count = Sqflite.firstIntValue(await db.rawQuery(
         "SELECT COUNT(*) FROM $tableName"
-        " WHERE $condition",
+            " WHERE $condition",
         whereArg));
     return count;
   }
@@ -199,28 +197,30 @@ class DatabaseHelper {
     bulkRecords.forEach((row) async {
       //Add server id to row
       row['serverid'] = srvr.id;
-      Chat chat = new Chat.fromJson(row);
+      Chat chat = Chat.fromJson(row);
 
       List<Map<String, dynamic>> listMap = await db.rawQuery(
           "SELECT COUNT(*) FROM chat"
-          " WHERE id = ? and status= ? and serverid= ?",
+              " WHERE id = ? and status= ? and serverid= ?",
           [chat.id, chat.status, chat.serverid]);
       var count = listMap.first.values.first;
       if (count == 0) {
-        return await db.insert(Chat.tableName, chat.toJson());
+        await db.insert(Chat.tableName, chat.toJson());
       } else {
-        return await db.update(Chat.tableName, chat.toJson(),
+        await db.update(Chat.tableName, chat.toJson(),
             where: "id = ?", whereArgs: [chat.id]);
       }
     });
   }
 
   Future<Server> upsertServer(
-      Server server, String condition, List whereArg) async {
+      Server server, String? condition, List whereArg) async {
+    print("upsertServer");
+    print(condition);
     var db = await getDb();
     List<Map<String, dynamic>> listMap = await db.rawQuery(
         "SELECT COUNT(*) FROM ${Server.tableName}"
-        " WHERE $condition",
+            " WHERE $condition",
         whereArg);
 
     var count = listMap.first.values.first;
@@ -238,6 +238,7 @@ class DatabaseHelper {
   }
 
   Future upsertGeneral(String tableName, Map<String, dynamic> values) async {
+    print("upsertGeneral");
     var db = await getDb();
     var count = Sqflite.firstIntValue(
         await db.rawQuery("SELECT COUNT(*) FROM $tableName"));
@@ -289,19 +290,20 @@ class DatabaseHelper {
   }
 
   Future<List<Server>> getServers(bool onlyLoggedIn) async {
-    String condition;
+    print("getServers");
+    String? condition;
     List args = [];
     if (onlyLoggedIn) {
       condition = "isloggedin=?";
       int loggedIn = onlyLoggedIn ? 1 : 0;
       args = [loggedIn];
     }
-    List<Map> savedservers = await fetchAll(
+    List savedservers = await fetchAll(
         Server.tableName, "${Server.columns['db_id']}  ASC", condition, args);
     List<Server> serversList = [];
-    if (savedservers != null && savedservers.length > 0) {
+    if (savedservers.isNotEmpty) {
       savedservers.forEach((item) {
-        Server newServer = new Server.fromJson(item);
+        Server newServer = Server.fromJson(item);
         serversList.add(newServer);
       });
     }

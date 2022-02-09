@@ -26,7 +26,7 @@ class GetServerListFromDB extends ServerEvent {
 class SelectServer extends ServerEvent {
   final Server server;
 
-  const SelectServer({@required this.server}) : assert(server != null);
+  const SelectServer({required this.server}) : assert(server != null);
 
   @override
   List<Object> get props => [server];
@@ -36,7 +36,7 @@ class GetUserOnlineStatus extends ServerEvent {
   final Server server;
   final bool isActionLoading;
 
-  const GetUserOnlineStatus({this.server, this.isActionLoading = false});
+  const GetUserOnlineStatus({required this.server, this.isActionLoading = false});
 
   @override
   List<Object> get props => [server, isActionLoading];
@@ -46,8 +46,7 @@ class SetUserOnlineStatus extends ServerEvent {
   final Server server;
   final bool isOnline;
 
-  const SetUserOnlineStatus({@required this.server, this.isOnline = false})
-      : assert(server != null);
+  const SetUserOnlineStatus({required this.server, this.isOnline = false});
 
   @override
   List<Object> get props => [server];
@@ -55,13 +54,13 @@ class SetUserOnlineStatus extends ServerEvent {
 
 class LogoutServer extends ServerEvent {
   final Server server;
-  final String fcmToken;
+  final String? fcmToken;
   final bool deleteServer;
 
   const LogoutServer(
-      {@required this.server, this.fcmToken, this.deleteServer = false})
+      {required this.server, this.fcmToken, this.deleteServer = false})
       : assert(server != null);
 
   @override
-  List<Object> get props => [server, fcmToken, deleteServer];
+  List<Object> get props => [server, fcmToken!, deleteServer];
 }

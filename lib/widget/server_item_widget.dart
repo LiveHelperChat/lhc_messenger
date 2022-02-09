@@ -1,23 +1,23 @@
 import 'package:flutter/foundation.dart';
 
 import 'package:flutter/material.dart';
-import 'package:livehelp/model/model.dart';
-import 'package:livehelp/utils/utils.dart';
+import 'package:livehelperchat/model/model.dart';
+import 'package:livehelperchat/utils/utils.dart';
 
 class ServerItemWidget extends StatelessWidget {
   ServerItemWidget(
-      {Key key,
-      this.server,
-      @required this.onMenuSelected,
-      @required this.menuBuilder})
+      {Key? key,
+        this.server,
+        required this.onMenuSelected,
+        required this.menuBuilder})
       : super(key: key);
 
-  final Server server;
+  final Server? server;
 
   final ValueChanged<ServerItemMenuOption> onMenuSelected;
 
   final List<PopupMenuEntry<ServerItemMenuOption>>
-      menuBuilder; // for populating the menu
+  menuBuilder; // for populating the menu
 
   @override
   Widget build(BuildContext context) {
@@ -38,22 +38,22 @@ class ServerItemWidget extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Text(
-                          server.servername,
+                          server!.servername!,
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 18.00,
                           ),
                         ),
-                        server.isLoggedIn
+                        server!.isLoggedIn
                             ? Text("Logged In",
-                                style: TextStyle(color: Colors.green))
+                            style: TextStyle(color: Colors.green))
                             : Text("Logged Out",
-                                style: TextStyle(color: Colors.redAccent)),
+                            style: TextStyle(color: Colors.redAccent)),
                         Divider(),
                         Padding(
                           padding: EdgeInsets.only(bottom: 8.00),
                           child: Text(
-                            "${server.url}",
+                            "${server!.url}",
                             style: labelStyle,
                             softWrap: true,
                             maxLines: 2,
@@ -67,7 +67,7 @@ class ServerItemWidget extends StatelessWidget {
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: <Widget>[
-                                  Text("${server.username}"),
+                                  Text("${server!.username}"),
                                   Text(
                                     "username",
                                     style: labelStyle,
@@ -77,7 +77,7 @@ class ServerItemWidget extends StatelessWidget {
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: <Widget>[
-                                  Text("${server.firstname} ${server.surname}"),
+                                  Text("${server!.firstname} ${server!.surname}"),
                                   Text("operator name", style: labelStyle),
                                 ],
                               )

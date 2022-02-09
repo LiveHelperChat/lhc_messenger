@@ -5,11 +5,11 @@ import 'package:flutter/material.dart';
 // the application
 class TokenInheritedWidget extends InheritedWidget {
   const TokenInheritedWidget({
-    Key key,
+    Key? key,
     this.token,
-    Widget child}) : super(key: key, child: child);
+    required Widget child}) : super(key: key, child: child);
 
-  final String token;
+  final String? token;
 
   @override
   bool updateShouldNotify(TokenInheritedWidget old) {
@@ -17,7 +17,7 @@ class TokenInheritedWidget extends InheritedWidget {
   }
 
 
-  static TokenInheritedWidget of(BuildContext context) {
+  static TokenInheritedWidget? of(BuildContext context) {
     // You could also just directly return the name here
     // as there's only one field
     return context.dependOnInheritedWidgetOfExactType();

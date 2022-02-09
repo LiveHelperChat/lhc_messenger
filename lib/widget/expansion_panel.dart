@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class AnimateExpanded extends StatefulWidget {
-  AnimateExpanded({this.title,this.subtitle,@required this.contentWidgetList});
+  AnimateExpanded({required this.title,required this.subtitle,required this.contentWidgetList});
   final String title;
   final String subtitle;
   final List<Widget> contentWidgetList;
@@ -15,25 +15,25 @@ class _AnimateExpandedState extends State<AnimateExpanded> {
   bool _isExpanded = false;
   @override
   Widget build(BuildContext context) {
-    return  new SingleChildScrollView(
-      child: new Column(
+    return  SingleChildScrollView(
+      child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
-          new Card(
-            child: new Container(
+          Card(
+            child: SizedBox(
               height: 65.0,
-              child: new Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: <Widget>[
-              new Expanded(child:  new ListTile(
-                    title: new Text(widget.title ?? ""),
-                  subtitle: new Text(widget.subtitle ?? "",style: new TextStyle(fontSize: 10.0),overflow: TextOverflow.fade,),
-                  trailing: new IconButton(icon: _isExpanded ? new Icon(Icons.keyboard_arrow_up) :new Icon(Icons.keyboard_arrow_down) , onPressed: () {
-                    setState((){
-                      this._isExpanded ? this._isExpanded =false :this._isExpanded =true;
-                    });
-                  },) ,),),
-          /*       new Expanded(
+                  Expanded(child:  ListTile(
+                    title: Text(widget.title),
+                    subtitle:Text(widget.subtitle,style: new TextStyle(fontSize: 10.0),overflow: TextOverflow.fade,),
+                    trailing:IconButton(icon: _isExpanded ? new Icon(Icons.keyboard_arrow_up) :new Icon(Icons.keyboard_arrow_down) , onPressed: () {
+                      setState((){
+                        this._isExpanded ? this._isExpanded =false :this._isExpanded =true;
+                      });
+                    },) ,),),
+                  /*       new Expanded(
                      child:new Padding(
                          padding:const EdgeInsets.all(12.0),
                          child: new Text(widget.title ?? "") )),
@@ -50,18 +50,18 @@ class _AnimateExpandedState extends State<AnimateExpanded> {
           /*new Card(
             child:
           ), */
-          new AnimatedContainer(
-              child: new Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: widget.contentWidgetList,
-              ),
-              curve: Curves.easeInOut,
-              duration: const Duration(milliseconds: 500),
-              height: _isExpanded ? 100.0 : 0.0,
-              //width:100.0,
-              // color: Colors.red,
+          AnimatedContainer(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: widget.contentWidgetList,
             ),
+            curve: Curves.easeInOut,
+            duration: const Duration(milliseconds: 500),
+            height: _isExpanded ? 100.0 : 0.0,
+            //width:100.0,
+            // color: Colors.red,
+          ),
         ],
       ),
     );

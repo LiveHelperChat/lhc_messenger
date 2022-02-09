@@ -3,7 +3,7 @@ import 'package:equatable/equatable.dart';
 // ignore_for_file: non_constant_identifier_names
 class Chat extends Equatable {
   // Database table name
-  static final String tableName = "chat";
+  static const String tableName = "chat";
 
   static final Map columns = {
     "db_id": "id",
@@ -26,11 +26,9 @@ class Chat extends Equatable {
     "db_last_user_msg_time": "last_user_msg_time",
     "db_phone": "phone",
     "db_user_status_front": "user_status_front",
-    "db_subject_front": "subject_front",
-    "db_aicon_front": "aicon_front"
   };
 
-  final int id,
+  final int? id,
       serverid,
       time,
       last_msg_id,
@@ -40,7 +38,7 @@ class Chat extends Equatable {
       last_user_msg_time,
       last_op_msg_time,
       user_status_front;
-  final String nick,
+  final String? nick,
       email,
       ip,
       country_code,
@@ -50,79 +48,72 @@ class Chat extends Equatable {
       department_name,
       user_typing_txt,
       owner,
-      phone,
-      subject_front,
-      aicon_front;
+      phone;
 
   int get last_msg_time {
     if (last_op_msg_time != null && last_user_msg_time != null) {
-      if (last_op_msg_time > last_user_msg_time)
-        return last_op_msg_time;
-      else
-        return last_user_msg_time;
+      if (last_op_msg_time! > last_user_msg_time!) {
+        return last_op_msg_time!;
+      } else {
+        return last_user_msg_time!;
+      }
     } else if (last_user_msg_time != null) {
-      return last_user_msg_time;
+      return last_user_msg_time!;
     } else if (last_op_msg_time != null) {
-      return last_op_msg_time;
+      return last_op_msg_time!;
     } else
       return 0;
   }
 
   Chat(
       {this.id,
-      this.serverid,
-      this.status,
-      this.nick,
-      this.email,
-      this.ip,
-      this.time,
-      this.last_msg_id,
-      this.user_id,
-      this.country_code,
-      this.country_name,
-      this.referrer,
-      this.uagent,
-      this.department_name,
-      this.user_typing_txt,
-      this.owner,
-      this.has_unread_messages,
-      this.last_user_msg_time,
-      this.last_op_msg_time,
-      this.phone,
-      this.user_status_front,
-      this.subject_front,
-      this.aicon_front,
-      });
+        this.serverid,
+        this.status,
+        this.nick,
+        this.email,
+        this.ip,
+        this.time,
+        this.last_msg_id,
+        this.user_id,
+        this.country_code,
+        this.country_name,
+        this.referrer,
+        this.uagent,
+        this.department_name,
+        this.user_typing_txt,
+        this.owner,
+        this.has_unread_messages,
+        this.last_user_msg_time,
+        this.last_op_msg_time,
+        this.phone,
+        this.user_status_front});
 
   Chat copyWith(
-      {int id,
-      int serverid,
-      String status,
-      String nick,
-      String email,
-      String ip,
-      int time,
-      int last_msg_id,
-      int user_id,
-      String country_code,
-      String country_name,
-      String referrer,
-      String uagent,
-      String department_name,
-      String user_typing_txt,
-      String owner,
-      has_unread_messages,
-      last_user_msg_time,
-      last_op_msg_time,
-      String phone,
-      String user_status_front,
-      String subject_front,
-      String aicon_front
-      }) {
+      {int? id,
+        int? serverid,
+        String? status,
+        String? nick,
+        String? email,
+        String? ip,
+        int? time,
+        int? last_msg_id,
+        int? user_id,
+        String? country_code,
+        String? country_name,
+        String? referrer,
+        String? uagent,
+        String? department_name,
+        String? user_typing_txt,
+        String? owner,
+        has_unread_messages,
+        last_user_msg_time,
+        last_op_msg_time,
+        String? phone,
+        String? user_status_front}) {
     return Chat(
         id: id ?? this.id,
         serverid: serverid ?? this.serverid,
-        status: status ?? this.status,
+        status: (status ?? this.status) as int,
         nick: nick ?? this.nick,
         email: email ?? this.email,
         ip: ip ?? this.ip,
@@ -140,43 +131,38 @@ class Chat extends Equatable {
         last_user_msg_time: last_user_msg_time ?? this.last_user_msg_time,
         last_op_msg_time: last_op_msg_time ?? this.last_op_msg_time,
         phone: phone ?? this.phone,
-        user_status_front: user_status_front ?? this.user_status_front,
-        subject_front: subject_front ?? this.subject_front,
-        aicon_front: aicon_front ?? this.aicon_front
-    );
+        user_status_front: (user_status_front ?? this.user_status_front) as int);
   }
 
-  static int checkInt(dynamic value) {
+  static int? checkInt(dynamic value) {
     if (value == null) return null;
     return value is int ? value : int.parse(value);
   }
 
-  Chat.fromJson(Map<String, dynamic> map)
+  Chat.fromJson(Map<dynamic, dynamic> map)
       : this(
-          id: checkInt(map[columns['db_id']]),
-          serverid: checkInt(map[columns['db_serverid']]),
-          status: checkInt(map[columns['db_status']]),
-          nick: map[columns['db_nick']],
-          email: map[columns['db_email']],
-          ip: map[columns['db_ip']],
-          time: checkInt(map[columns['db_time']]),
-          last_msg_id: checkInt(map[columns['db_last_msg_id']]),
-          user_id: checkInt(map[columns['db_user_id']]),
-          country_code: map[columns['db_country_code']],
-          country_name: map[columns['db_country_name']],
-          referrer: map[columns['db_referrer']],
-          uagent: map[columns['db_uagent']],
-          department_name: map[columns['db_department_name']],
-          user_typing_txt: map[columns['db_user_typing_txt']],
-          owner: map[columns['db_owner']],
-          has_unread_messages: checkInt(map[columns['db_has_unread_messages']]),
-          last_user_msg_time: checkInt(map['last_user_msg_time']),
-          last_op_msg_time: checkInt(map['last_op_msg_time']),
-          phone: map['phone'] ?? "",
-          user_status_front: map['user_status_front'] ?? 0,
-          subject_front: map['subject_front'] ?? "",
-          aicon_front: map['aicon_front'] ?? "",
-        );
+    id: checkInt(map[columns['db_id']]),
+    serverid: checkInt(map[columns['db_serverid']]),
+    status: checkInt(map[columns['db_status']]),
+    nick: map[columns['db_nick']],
+    email: map[columns['db_email']],
+    ip: map[columns['db_ip']],
+    time: checkInt(map[columns['db_time']]),
+    last_msg_id: checkInt(map[columns['db_last_msg_id']]),
+    user_id: checkInt(map[columns['db_user_id']]),
+    country_code: map[columns['db_country_code']],
+    country_name: map[columns['db_country_name']],
+    referrer: map[columns['db_referrer']],
+    uagent: map[columns['db_uagent']],
+    department_name: map[columns['db_department_name']],
+    user_typing_txt: map[columns['db_user_typing_txt']],
+    owner: map[columns['db_owner']],
+    has_unread_messages: checkInt(map[columns['db_has_unread_messages']]),
+    last_user_msg_time: checkInt(map['last_user_msg_time']),
+    last_op_msg_time: checkInt(map['last_op_msg_time']),
+    phone: map['phone'] ?? "",
+    user_status_front: map['user_status_front'] ?? 0,
+  );
 
   Map<String, dynamic> toJson() {
     return {
@@ -200,35 +186,31 @@ class Chat extends Equatable {
       'last_msg_time': last_msg_time,
       columns['db_phone']: phone,
       columns['db_user_status_front']: user_status_front,
-      columns['db_subject_front']: subject_front,
-      columns['db_aicon_front']: aicon_front,
     };
   }
 
   @override
-  List<Object> get props => [
-        id,
-        serverid,
-        status,
-        nick,
-        email,
-        ip,
-        time,
-        last_msg_id,
-        user_id,
-        country_code,
-        country_name,
-        referrer,
-        uagent,
-        department_name,
-        user_typing_txt,
-        owner,
-        has_unread_messages,
-        last_user_msg_time,
-        last_op_msg_time,
-        phone,
-        user_status_front,
-        subject_front,
-        aicon_front,
-      ];
+  List<Object?> get props => [
+    id,
+    serverid,
+    status,
+    nick,
+    email,
+    ip,
+    time,
+    last_msg_id,
+    user_id,
+    country_code,
+    country_name,
+    referrer,
+    uagent,
+    department_name,
+    user_typing_txt,
+    owner,
+    has_unread_messages,
+    last_user_msg_time,
+    last_op_msg_time,
+    phone,
+    user_status_front
+  ];
 }

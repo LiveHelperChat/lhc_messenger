@@ -6,14 +6,14 @@ import 'package:flutter/material.dart';
 ///@onButtonPress function to execute on button press
 ///
 class ErrorReloadButton extends StatelessWidget {
-  final Widget child;
+  final Widget? child;
   final String actionText;
   final Function onButtonPress;
-  ErrorReloadButton(
-      {Key key,
-      this.child,
-      @required this.onButtonPress,
-      @required this.actionText})
+  const ErrorReloadButton(
+      {Key? key,
+        this.child,
+        required this.onButtonPress,
+        required this.actionText})
       : super(key: key);
 
   @override
@@ -22,11 +22,11 @@ class ErrorReloadButton extends StatelessWidget {
         child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-          child ?? Container(),
-          RaisedButton(
-            child: Text(actionText),
-            onPressed: onButtonPress,
-          ),
-        ]));
+              child ?? Container(),
+              RaisedButton(
+                child: Text(actionText),
+                onPressed: (){onButtonPress();},
+              ),
+            ]));
   }
 }

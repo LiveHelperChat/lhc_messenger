@@ -1,9 +1,9 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
-import 'package:livehelp/model/model.dart';
+import 'package:livehelperchat/model/model.dart';
 
-import 'package:livehelp/pages/main_page.dart';
-import 'package:livehelp/pages/pages.dart';
+import 'package:livehelperchat/pages/main_page.dart';
+import 'package:livehelperchat/pages/pages.dart';
 
 class AppRoutes {
   static const String home = "/";
@@ -20,25 +20,25 @@ class AppRoutes {
 ///
 /// Serves as a class to pass arguments to routes
 class RouteArguments extends Equatable {
-  final int chatId;
+  final int? chatId;
   RouteArguments({this.chatId});
 
   @override
-  List<Object> get props => [chatId];
+  List<Object> get props => [chatId!];
 }
 
 class FadeRoute<T> extends MaterialPageRoute<T> {
   bool isInitialRoute;
   FadeRoute(
-      {WidgetBuilder builder,
-      RouteSettings settings,
-      this.isInitialRoute = false})
-      : super(builder: builder, settings: settings);
+      {WidgetBuilder? builder,
+        RouteSettings? settings,
+        this.isInitialRoute = false})
+      : super(builder: builder!, settings: settings);
 
   @override
   Widget buildTransitions(BuildContext context, Animation<double> animation,
       Animation<double> secondaryAnimation, Widget child) {
-    if (this.isInitialRoute) return child;
+    if (isInitialRoute) return child;
     // Fades between routes. (If you don't want any animation,
     // just return child.)
     return FadeTransition(opacity: animation, child: child);
@@ -52,27 +52,27 @@ class Router {
       case AppRoutes.home:
         return FadeRoute(
           settings: settings,
-          builder: (BuildContext context) => MainPage(),
+          builder: (BuildContext context) => const MainPage(),
         );
 
       default:
         return MaterialPageRoute(
             builder: (_) => Scaffold(
-                  body: Center(
-                      child: Text('No route defined for ${settings.name}')),
-                ));
+              body: Center(
+                  child: Text('No route defined for ${settings.name}')),
+            ));
     }
   }
 
-  static Route<dynamic> generateRouteChatPage(RouteSettings settings, Chat chat,
-      Server server, bool isNewChat, Function refreshList) {
+  static Route<dynamic> generateRouteChatPage(RouteSettings settings, Chat? chat,
+      Server? server, bool isNewChat, Function refreshList) {
     return FadeRoute(
       settings: settings,
       builder: (BuildContext context) => ChatPage(
         server: server,
         chat: chat,
         isNewChat: isNewChat,
-        refreshList: refreshList,
+        refreshList: () => refreshList,
       ),
     );
   }
@@ -85,7 +85,7 @@ class Router {
         server: server,
         chat: user,
         isNewChat: isNewChat,
-        refreshList: refreshList,
+        refreshList:() => refreshList,
       ),
     );
   }
@@ -104,10 +104,10 @@ extension NavigatorStateExtension on NavigatorState {
   bool isCurrent(Route newRoute) {
     bool isCurrent = false;
     popUntil((oldRoute) {
-      final RouteArguments oldArgs = oldRoute.settings.arguments;
-      final RouteArguments newArgs = newRoute.settings.arguments;
+      final RouteArguments? oldArgs = oldRoute.settings.arguments as RouteArguments?;
+      final RouteArguments? newArgs = newRoute.settings.arguments as RouteArguments?;
       if (oldRoute.settings.name == newRoute.settings.name &&
-          oldArgs?.chatId == newArgs.chatId) {
+          oldArgs?.chatId == newArgs?.chatId) {
         isCurrent = true;
         return true;
       }

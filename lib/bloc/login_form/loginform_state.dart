@@ -17,27 +17,26 @@ class ServerLoginSuccess extends LoginformState {
   final bool isNew;
   final Server server;
 
-  const ServerLoginSuccess({@required this.server, this.isNew = false})
-      : assert(server != null);
+  const ServerLoginSuccess({required this.server, this.isNew = false});
 
   @override
   List<Object> get props => [server, isNew];
 }
 
 class ServerLoginError extends LoginformState {
-  final String message;
+  final String? message;
 
   const ServerLoginError({this.message}) : assert(message != null);
 
   @override
-  List<Object> get props => [message];
+  List<Object> get props => [message!];
 }
 
 class LoginServerSelected extends LoginformState {
-  final Server server;
+  final Server? server;
 
   const LoginServerSelected({this.server}) : assert(server != null);
 
   @override
-  List<Object> get props => [server];
+  List<Object> get props => [server!];
 }

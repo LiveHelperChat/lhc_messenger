@@ -11,20 +11,20 @@ class Message {
     "db_is_owner": "is_owner"
   };
 
-  int id, chat_id, user_id, time, is_owner;
-  String msg, name_support;
+  int? id, chat_id, user_id, time, is_owner;
+  String? msg, name_support;
 
   Message(
       {this.id,
-      this.chat_id,
-      this.user_id,
-      this.time,
-      this.msg,
-      this.name_support,
-      this.is_owner,
+        this.chat_id,
+        this.user_id,
+        this.time,
+        this.msg,
+        this.name_support,
+        this.is_owner,
       });
 
-  static int checkInt(dynamic value) {
+  static int? checkInt(dynamic value) {
     if (value == null) return null;
 
     return value is int ? value : int.parse(value);
@@ -32,16 +32,16 @@ class Message {
 
   Message.fromMap(Map<String, dynamic> map)
       : this(
-            id: checkInt(map[columns['db_id']]),
-            chat_id: checkInt(map[columns['db_chat_id']]),
-            time: checkInt(map[columns['db_time']]),
-            user_id: checkInt(map[columns['db_user_id']]),
-            msg: map[columns['db_msg']],
-            name_support: map[columns['db_name_support']],
-            is_owner: map[columns['db_is_owner']] ?? 0
+      id: checkInt(map[columns['db_id']]),
+      chat_id: checkInt(map[columns['db_chat_id']]),
+      time: checkInt(map[columns['db_time']]),
+      user_id: checkInt(map[columns['db_user_id']]),
+      msg: map[columns['db_msg']],
+      name_support: map[columns['db_name_support']],
+      is_owner: map[columns['db_is_owner']] ?? 0
   );
 
-  Map<String, dynamic> toMap() {
+  Map<String?, dynamic> toMap() {
     return {
       columns['db_id']: id,
       columns['db_chat_id']: chat_id,

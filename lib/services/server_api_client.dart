@@ -2,9 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:livehelp/model/model.dart';
+import 'package:livehelperchat/model/model.dart';
 import 'package:http/http.dart' as http;
-import 'package:livehelp/utils/widget_utils.dart';
+import 'package:livehelperchat/utils/widget_utils.dart';
 
 import 'dart:convert';
 import 'dart:developer' as developer;
@@ -26,7 +26,7 @@ const int NO_INTERNET = 404;
 class ServerApiClient {
   final http.Client httpClient;
 
-  ServerApiClient({@required this.httpClient}) : assert(httpClient != null);
+  ServerApiClient({required this.httpClient}) : assert(httpClient != null);
 
   String _encodeCredentials(Server server) {
     String credentials = "${server.username}:${server.password}";
@@ -36,15 +36,15 @@ class ServerApiClient {
   Future<ParsedResponse> apiGet(Server server, String path) async {
     String auth = _encodeCredentials(server);
     final response = await http.get(
-      server.getUrl() + path,
+      Uri.parse(server.getUrl().toString() + path),
       headers: {HttpHeaders.authorizationHeader: "Basic $auth"},
     ).catchError((resp) {
-      return new ParsedResponse(NO_INTERNET,
+      return ParsedResponse(NO_INTERNET,
           jsonDecode('{"error":"true","msg":"${resp.toString()}"'));
     });
     try {
       var respBody = {};
-      if (response.body != null && response.body.length > 0) {
+      if (response.body.isNotEmpty) {
         respBody = jsonDecode(response.body);
       }
       return ParsedResponse(response.statusCode, respBody);
@@ -59,23 +59,23 @@ class ServerApiClient {
 
     try {
       final response = await http.post(
-        server.getUrl() + path,
+          Uri.parse(server.getUrl().toString() + path),
         headers: {HttpHeaders.authorizationHeader: "Basic $auth"},
         body: jsonEncode(params),
       );
       var respBody = {};
-      if (response.body != null && response.body.length > 0) {
+      if (response.body.isNotEmpty) {
         respBody = jsonDecode(response.body);
       }
 
-      return new ParsedResponse(response.statusCode, respBody);
+      return ParsedResponse(response.statusCode, respBody);
     } catch (ex) {
       return ParsedResponse(
           NO_INTERNET, jsonDecode('{"error":"true","msg":"${ex.toString()}"'));
     }
   }
 
-  Future<ParsedResponse> makeRequest(Server server, String path, Map jsonParams,
+  Future<ParsedResponse> makeRequest(Server server, String path, Map? jsonParams,
       {bool asJson = false, method = 'post'}) async {
     Map parameters = {};
     parameters['username'] = server.username;
@@ -89,10 +89,10 @@ class ServerApiClient {
     try {
       var response;
 
-      if (server.username.isNotEmpty && server.password.isNotEmpty) {
+      if (server.username!.isNotEmpty && server.password!.isNotEmpty) {
         Map<String, String> headers = {
           'authorization': 'Basic ' +
-              base64Encode(utf8.encode(server.username + ":" + server.password))
+              base64Encode(utf8.encode(server.username! + ":" + server.password!))
         };
 
         if (asJson == true) {
@@ -101,11 +101,11 @@ class ServerApiClient {
         }
 
         if (method == 'post') {
-          response = await httpClient.post(url,
+          response = await httpClient.post(Uri.parse(url),
               body: (asJson ? jsonEncode(parameters) : parameters),
               headers: headers);
         } else if (method == 'put') {
-          response = await httpClient.put(url,
+          response = await httpClient.put(Uri.parse(url),
               body: (asJson ? jsonEncode(parameters) : parameters),
               headers: headers);
         }
@@ -118,11 +118,11 @@ class ServerApiClient {
         }
 
         if (method == 'post') {
-          response = await httpClient.post(url,
+          response = await httpClient.post(Uri.parse(url),
               body: (asJson ? jsonEncode(parameters) : parameters),
               headers: headers);
         } else if (method == 'put') {
-          response = await httpClient.put(url,
+          response = await httpClient.put(Uri.parse(url),
               body: (asJson ? jsonEncode(parameters) : parameters),
               headers: headers);
         }
@@ -169,73 +169,55 @@ class ServerApiClient {
   // fetch list and return a formatted Map of active,pending,... chat lists
   Future<Server> getChatLists(Server server) async {
     ParsedResponse response = await makeRequest(server, "/xml/lists", null);
-
-    if (response.isOk() && (response.body.isNotEmpty) ?? false) {
+   // print("getChatLists :  ${response.body.isNotEmpty}");
+    if (response.isOk() && (response.body.isNotEmpty)) {
 
       int activeSize = response.body['active_chats']['size'];
       if (activeSize > 0) {
         // activeList = Map.castFrom(activeJson).values.toList();
         Map activeJson = response.body['active_chats']['rows'];
         List<dynamic> newActiveList =
-            chatListToMap(server.id, activeJson.values.toList());
-        if (newActiveList != null && newActiveList.length > 0)
+        chatListToMap(server.id!, activeJson.values.toList());
+        if (newActiveList.isNotEmpty) {
           server.addChatsToList(newActiveList, 'active');
-      } else
+        }
+      } else {
         server.clearList('active');
+      }
 
       if (response.body['twilio_chats'] != null) {
         int twilioSize = response.body['twilio_chats']['size'];
         if (twilioSize > 0) {
           List<dynamic> newTwilioList =
-          chatListToMap(server.id, response.body['twilio_chats']['rows']);
-          if (newTwilioList != null && newTwilioList.length > 0)
+          chatListToMap(server.id!, response.body['twilio_chats']['rows']);
+          if (newTwilioList.isNotEmpty) {
             server.addChatsToList(newTwilioList, 'twilio');
-        } else
+          }
+        } else {
           server.clearList('twilio');
+        }
       }
 
       int pendingSize = response.body['pending_chats']['size'];
       if (pendingSize > 0) {
         Map pendingJson = response.body['pending_chats']['rows'];
         List<dynamic> newPendingList =
-            chatListToMap(server.id, pendingJson.values.toList());
+        chatListToMap(server.id!, pendingJson.values.toList());
         if (newPendingList != null && newPendingList.length > 0)
           server.addChatsToList(newPendingList, 'pending');
-      } else
+      } else {
         server.clearList('pending');
+      }
 
       int closedSize = response.body['closed_chats']['size'];
       if (closedSize > 0) {
         Map closedJson = response.body['closed_chats']['rows'];
         List<dynamic> newClosedList =
-            chatListToMap(server.id, closedJson.values.toList());
-        if (newClosedList != null && newClosedList.length > 0)
+        chatListToMap(server.id!, closedJson.values.toList());
+        if (newClosedList != null && newClosedList.isNotEmpty)
           server.addChatsToList(newClosedList, 'closed');
-      } else
+      } else {
         server.clearList('closed');
-
-      if (response.body['bot_chats'] != null) {
-        int botSize = response.body['bot_chats']['size'];
-        if (botSize > 0) {
-          Map botJson = response.body['bot_chats']['rows'];
-          List<dynamic> newBotList =
-          chatListToMap(server.id, botJson.values.toList());
-          if (newBotList != null && newBotList.length > 0)
-            server.addChatsToList(newBotList, 'bot');
-        } else
-          server.clearList('bot');
-      }
-
-      if (response.body['subject_chats'] != null) {
-        int subjectSize = response.body['subject_chats']['size'];
-        if (subjectSize > 0) {
-          Map subjectJson = response.body['subject_chats']['rows'];
-          List<dynamic> newSubjectList =
-          chatListToMap(server.id, subjectJson.values.toList());
-          if (newSubjectList != null && newSubjectList.length > 0)
-            server.addChatsToList(newSubjectList, 'subject');
-        } else
-          server.clearList('subject');
       }
 
       if (response.body['operators_chats'] != null) {
@@ -243,9 +225,10 @@ class ServerApiClient {
         if (operatorsSize > 0) {
           Map operatorsJson = response.body['operators_chats']['rows'];
           List<dynamic> newOperatorsList =
-          operatorListToMap(server.id, operatorsJson.values.toList());
-          if (newOperatorsList != null && newOperatorsList.length > 0)
+          operatorListToMap(server.id!, operatorsJson.values.toList());
+          if (newOperatorsList.length > 0) {
             server.addChatsToList(newOperatorsList, 'operators');
+          }
         } else
           server.clearList('operators');
       }
@@ -253,10 +236,10 @@ class ServerApiClient {
       int transferSize = response.body['transfered_chats']['size'];
       if (transferSize > 0) {
         List<dynamic> transferredList =
-            response.body['transfered_chats']['rows'];
+        response.body['transfered_chats']['rows'];
 
         List<dynamic> newTransferList =
-            chatListToMap(server.id, transferredList);
+        chatListToMap(server.id!, transferredList);
         if (newTransferList != null && newTransferList.length > 0)
           server.addChatsToList(newTransferList, 'transfer');
       } else
@@ -279,7 +262,8 @@ class ServerApiClient {
 
   Future<Server> login(Server server) async {
     var response = await makeRequest(server, "/xml/checklogin", null);
-
+    print("Login");
+    print(response.body.toString());
     if (response.isOk() && response.body["result"].toString() == "true") {
       server.isLoggedIn = true;
       return server;
@@ -319,7 +303,7 @@ class ServerApiClient {
     param["regId"] = server.installationid;
     var response = await makeRequest(server, "/restapi/login", param);
 
-    String resp;
+    String resp="";
     if (response.isOk() && response.body["error"].toString() == "false") {
       resp = response.body["version"].toString();
     }
@@ -330,7 +314,7 @@ class ServerApiClient {
   List<dynamic> chatListToMap(int serverId, List jsonList) {
     // dynamically pick the fields from the json returned
     // matching the database columns
-    var listToStore = new List<Map<dynamic, dynamic>>();
+    var listToStore = <Map<dynamic, dynamic>>[];
     jsonList.forEach((k) {
       // Add Server id to chat
       k["${Chat.columns['db_serverid']}"] = serverId;
@@ -349,7 +333,7 @@ class ServerApiClient {
   List<dynamic> operatorListToMap(int serverId, List jsonList) {
     // dynamically pick the fields from the json returned
     // matching the database columns
-    var listToStore = new List<Map<dynamic, dynamic>>();
+    var listToStore = <Map<dynamic, dynamic>>[];
     jsonList.forEach((k) {
       // Add Server id to chat
       k["${Chat.columns['db_serverid']}"] = serverId;
@@ -395,20 +379,23 @@ class ServerApiClient {
 
   Future<bool> deleteChat(Server server, Chat chat, {list: "active"}) async {
     ParsedResponse response =
-        await makeRequest(server, "/xml/deletechat/${chat.id}", null);
+    await makeRequest(server, "/xml/deletechat/${chat.id}", null);
 
-    if (response.isOk()) server.removeChat(chat.id, list);
+    if (response.isOk()) server.removeChat(chat.id!, list);
 
     return response.isOk() ? true : false;
   }
 
   Future<Map<String, dynamic>> getUserFromServer(Server server) async {
+    print(server.id);
     Map param = {};
     param["by_login"] = "1";
 
     var response = await makeRequest(server, "/restapi/getuser", param);
-
-    Map<String, dynamic> user;
+    print("getUserFromServer");
+    print(response.isOk());
+    print(response.body.toString());
+    Map<String, dynamic> user={};
     if (response.isOk() && response.body["error"].toString() == "false") {
       user = Map.castFrom(response.body['result']);
     }
@@ -422,9 +409,9 @@ class ServerApiClient {
       "dep_ids": [server.departments_ids]
     });
     ParsedResponse response =
-        await makeRequest(server, "/restapi/user_departments", params);
+    await makeRequest(server, "/restapi/user_departments", params);
 
-    List<Department> departments = new List<Department>();
+    List<Department> departments = <Department>[];
 
     if (response.isOk() && response.body["error"].toString() == "false") {
       if (response.body['result'] != null) {
@@ -440,9 +427,9 @@ class ServerApiClient {
   }
 
   Future<Map<String, dynamic>> setDepartmentWorkHours(
-      Server server, Department department) async {
+      Server server, Department? department) async {
     Map params = {};
-    var postData = department.toMapWorkHours();
+    var postData = department !=null ?department.toMapWorkHours():{};
     params['post_body'] = json.encode(postData);
     params['request_method'] = 'PUT';
     params['raw_attr'] = '1';
@@ -491,21 +478,21 @@ class ServerApiClient {
 
   Future<bool> transferChatUser(Server server, Chat chat, int userid) async {
     ParsedResponse response =
-        await makeRequest(server, "/xml/transferuser/${chat.id}/$userid", null);
+    await makeRequest(server, "/xml/transferuser/${chat.id}/$userid", null);
 
     return response.isOk() ? true : false;
   }
 
   Future<bool> acceptChatTransfer(Server server, Chat chat) async {
     ParsedResponse response =
-        await makeRequest(server, "/xml/accepttransferbychat/${chat.id}", null);
+    await makeRequest(server, "/xml/accepttransferbychat/${chat.id}", null);
 
     return response.isOk() ? true : false;
   }
 
   Future<bool> getUserOnlineStatus(Server server) async {
     ParsedResponse response =
-        await makeRequest(server, "/xml/getuseronlinestatus", null);
+    await makeRequest(server, "/xml/getuseronlinestatus", null);
 
     if (response.isOk() && response.body != null && response.body.isNotEmpty) {
       /*
@@ -544,10 +531,10 @@ class ServerApiClient {
     params["chats"] = listChats;
 
     ParsedResponse response =
-        await makeRequest(server, "/groupchat/sync?rest_api=true", params, asJson: true, method: 'post');
+    await makeRequest(server, "/groupchat/sync?rest_api=true", params, asJson: true, method: 'post');
 
-    Map<String, dynamic> messagesChatStatus = new Map<String, dynamic>();
-    List<Message> listToMsgs = new List<Message>();
+    Map<String, dynamic> messagesChatStatus = <String, dynamic>{};
+    List<Message> listToMsgs = <Message>[];
 
     if (response.isOk() && response.body["error"].toString() == "false") {
       Map results = {};
@@ -556,7 +543,7 @@ class ServerApiClient {
 
         if (results['content'] is List) {
           results['content'].forEach((value) {
-            listToMsgs.add(new Message.fromMap(value));
+            listToMsgs.add(Message.fromMap(value));
           });
           messagesChatStatus['messages'] = listToMsgs;
         }
@@ -572,28 +559,25 @@ class ServerApiClient {
         ? chat.id.toString()
         : chat.id.toString() + '|' + lastMsgId.toString();
     ParsedResponse response =
-        await makeRequest(server, "/xml/chatssynchro", params);
+    await makeRequest(server, "/xml/chatssynchro", params);
 
-    Map<String, dynamic> messagesChatStatus = new Map<String, dynamic>();
-    List<Message> listToMsgs = new List<Message>();
-
+    Map<String, dynamic> messagesChatStatus = <String, dynamic>{};
+    List<Message> listToMsgs = <Message>[];
     if (response.isOk() && response.body["error"].toString() == "false") {
       Map results = {};
       results.addAll(response.body["result"]);
       Map level1 = results['${chat.id}'];
-
       messagesChatStatus['chat_status'] = level1["chat_status"].toString();
       messagesChatStatus['chat_scode'] = level1["chat_scode"] ?? 0;
 
       if (level1['messages'] is Map) {
         Map msgs = level1['messages'];
-
         List msgsList = lastMsgId == 0 ? msgs[""] : msgs["$lastMsgId"];
 
-        if (msgsList.length > 0) {
-          msgsList.forEach((value) {
-            listToMsgs.add(new Message.fromMap(value));
-          });
+        if (msgsList.isNotEmpty) {
+          for (var value in msgsList) {
+            listToMsgs.add(Message.fromMap(value));
+          }
 
           messagesChatStatus['messages'] = listToMsgs;
         }
@@ -606,24 +590,27 @@ class ServerApiClient {
     Map params = {};
     params["msg"] = msg;
     ParsedResponse response =
-        await makeRequest(server, "/xml/addmsgadmin/${chat.id}", params);
+    await makeRequest(server, "/xml/addmsgadmin/${chat.id}", params);
 
     return response.isOk() ? true : false;
   }
 
   Future<bool> postOperatorsMesssage(Server server, User chat, String msg) async {
+    print("postOperatorsMesssage");
     Map params = {};
     params["msg"] = msg;
+    print(chat.chat_id);
     ParsedResponse response = await makeRequest(server, "/groupchat/addmessage/${chat.chat_id}?rest_api=true", params);
-
+    print(response.isOk());
+    print(response.body.toString());
     return response.isOk() ? true : false;
   }
 
   Future<Map<String, dynamic>> chatData(Server server, Chat chat) async {
     ParsedResponse response =
-        await makeRequest(server, "/xml/chatdata/${chat.id}", null);
+    await makeRequest(server, "/xml/chatdata/${chat.id}", null);
 
-    Map<String, dynamic> chatData;
+    Map<String, dynamic> chatData={};
 
     if (response.isOk() && response.body["error"].toString() == "false") {
       chatData = Map.castFrom(response.body);
@@ -633,20 +620,20 @@ class ServerApiClient {
 
   Future<Map<String, dynamic>> chatOperatorsData(Server server, User chat) async {
     ParsedResponse response =
-        await makeRequest(server, "/restapi/startchatwithoperator/${chat.user_id}", null);
+    await makeRequest(server, "/restapi/startchatwithoperator/${chat.user_id}", null);
 
-        Map<String, dynamic> chatData;
+    Map<String, dynamic> chatData={};
 
-        if (response.isOk()) {
-          chatData = Map.castFrom(response.body);
-        }
+    if (response.isOk()) {
+      chatData = Map.castFrom(response.body);
+    }
 
     return chatData;
   }
 
   Future<List<TwilioPhone>> getTwilioPhones(Server server) async {
     var resp = await makeRequest(server, "/restapi/twilio_phones", null);
-    List<TwilioPhone> phonesList = List<TwilioPhone>();
+    List<TwilioPhone> phonesList = <TwilioPhone>[];
     if (resp.isOk()) {
       var response = resp.body;
       if (response['error'] == false) {
@@ -684,9 +671,9 @@ class ServerApiClient {
     }
   }
 
-  Future<bool> pushNotificationStatus(Server server, {bool newStatus}) async {
-    Map<String, dynamic> params =
-        newStatus == null ? null : {"status": newStatus.toString()};
+  Future<bool> pushNotificationStatus(Server server, {bool? newStatus}) async {
+    Map<String, dynamic>? params =
+    newStatus == null ? null : {"status": newStatus.toString()};
     bool asJson = params != null;
 
     try {
@@ -694,7 +681,7 @@ class ServerApiClient {
           server, "/restapi/notifications/${server.installationid}", params,
           asJson: asJson);
       if (response.isOk()) {
-        return WidgetUtils.checkInt(response.body['status']) == 1 ?? false;
+        return WidgetUtils.checkInt(response.body['status']) == 1;
       } else
         return false;
     } catch (ex) {

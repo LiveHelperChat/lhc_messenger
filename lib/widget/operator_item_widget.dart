@@ -2,23 +2,23 @@ import 'package:intl/intl.dart';
 import 'package:flutter/foundation.dart';
 
 import 'package:flutter/material.dart';
-import 'package:livehelp/model/model.dart';
-import 'package:livehelp/utils/utils.dart';
+import 'package:livehelperchat/model/model.dart';
+import 'package:livehelperchat/utils/utils.dart';
 
 import 'dart:convert';
 import 'dart:developer' as developer;
 
 class OperatorItemWidget extends StatelessWidget {
   OperatorItemWidget(
-      {Key key,
+      {Key? key,
         this.server,
         this.chat,
-        @required this.onMenuSelected,
-        @required this.menuBuilder})
+        required this.onMenuSelected,
+        required this.menuBuilder})
       : super(key: key);
 
-  final User chat;
-  final Server server;
+  final User? chat;
+  final Server? server;
 
   final ValueChanged<ChatItemMenuOption> onMenuSelected;
 
@@ -64,8 +64,8 @@ class OperatorItemWidget extends StatelessWidget {
                           margin: const EdgeInsetsDirectional.only(end: 16.0),
                           width: 40.0,
                           child: new Icon(
-                            (chat.hide_online == 1 ? Icons.flash_off : Icons.flash_on),
-                            color: chat.hide_online == 1 ? Colors.red : Colors.green,
+                            (chat?.hide_online == 1 ? Icons.flash_off : Icons.flash_on),
+                            color: chat?.hide_online == 1 ? Colors.red : Colors.green,
                           ),
                         ),
                         Expanded(
@@ -76,7 +76,7 @@ class OperatorItemWidget extends StatelessWidget {
                                   new AnimatedDefaultTextStyle(
                                     style: styling,
                                     duration: kThemeChangeDuration,
-                                    child: new Text(chat.name_official,
+                                    child: new Text(chat!.name_official!,
                                         textAlign: TextAlign.left,
                                         style: styling.copyWith(
                                             color: Colors.black,
@@ -85,7 +85,7 @@ class OperatorItemWidget extends StatelessWidget {
                                   ),
                                   new AnimatedDefaultTextStyle(
                                       duration: kThemeChangeDuration,
-                                      child: Text(chat.last_msg), // 'last  asd message asd ${chat.user_id ?? "-"}'
+                                      child: Text(chat!.last_msg!), // 'last  asd message asd ${chat.user_id ?? "-"}'
                                       textAlign: TextAlign.left,
                                       style: styling.copyWith(
                                         color: Colors.indigo.shade400,
@@ -117,7 +117,7 @@ class OperatorItemWidget extends StatelessWidget {
                                   size: 14,
                                   color: Theme.of(context).primaryColor,
                                 ),
-                                Text(' ${server.servername}',
+                                Text(' ${server!.servername}',
                                     textAlign: TextAlign.left,
                                     style: styling.copyWith(
                                         color: Colors.black,
@@ -131,49 +131,49 @@ class OperatorItemWidget extends StatelessWidget {
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: <Widget>[
-                            new Icon(
-                              Icons.chat,
-                              size: 14,
-                              color: Colors.green.shade400,
-                            ),
-                            Padding(
+                              new Icon(
+                                Icons.chat,
+                                size: 14,
+                                color: Colors.green.shade400,
+                              ),
+                              Padding(
                                   padding: EdgeInsets.fromLTRB(5, 0, 5, 0),
                                   child: Text(
-                                  chat.active_chats.toString(),
-                                  textAlign: TextAlign.end,
-                                  style: styling.copyWith(
-                                    color: Colors.black87,
-                                    fontSize: 14.0,
-                                  ),
-                            )),
-                            new Icon(
-                              Icons.timer,
-                              size: 14,
-                              color: Theme.of(context).primaryColor,
-                            ),
-                            Padding(
+                                    chat!.active_chats.toString(),
+                                    textAlign: TextAlign.end,
+                                    style: styling.copyWith(
+                                      color: Colors.black87,
+                                      fontSize: 14.0,
+                                    ),
+                                  )),
+                              new Icon(
+                                Icons.timer,
+                                size: 14,
+                                color: Theme.of(context).primaryColor,
+                              ),
+                              Padding(
                                   padding: EdgeInsets.fromLTRB(5, 0, 5, 0),
                                   child: Text(
-                                  chat.lastactivity_ago,
-                                  textAlign: TextAlign.end,
-                                  style: styling.copyWith(
+                                    chat!.lastactivity_ago!,
+                                    textAlign: TextAlign.end,
+                                    style: styling.copyWith(
+                                      color: Colors.black87,
+                                      fontSize: 14.0,
+                                    ),
+                                  )),
+                              new Icon(
+                                Icons.home,
+                                size: 14,
+                                color: Theme.of(context).primaryColor,
+                              ),
+                              Text(
+                                chat!.departments_names!,
+                                textAlign: TextAlign.end,
+                                style: styling.copyWith(
                                   color: Colors.black87,
                                   fontSize: 14.0,
                                 ),
-                            )),
-                            new Icon(
-                              Icons.home,
-                              size: 14,
-                              color: Theme.of(context).primaryColor,
-                            ),
-                            Text(
-                              chat.departments_names,
-                              textAlign: TextAlign.end,
-                              style: styling.copyWith(
-                                color: Colors.black87,
-                                fontSize: 14.0,
-                              ),
-                            )
+                              )
                             ]),
                       ],
                     ),
@@ -182,7 +182,7 @@ class OperatorItemWidget extends StatelessWidget {
   }
 
   Color backColor(BuildContext context) {
-    if (chat.has_unread == 1)
+    if (chat!.has_unread == 1)
       return Colors.yellow.shade300;
     else
       return Theme.of(context).cardColor;

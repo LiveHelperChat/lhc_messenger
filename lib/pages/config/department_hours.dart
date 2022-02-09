@@ -1,34 +1,32 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 
-import 'package:async_loader/async_loader.dart';
 import 'package:http/http.dart' as http;
 
-import 'package:livehelp/data/database.dart';
-import 'package:livehelp/model/model.dart';
-import 'package:livehelp/services/server_api_client.dart';
-import 'package:livehelp/utils/utils.dart';
-import 'package:livehelp/widget/widget.dart';
+import 'package:livehelperchat/data/database.dart';
+import 'package:livehelperchat/model/model.dart';
+import 'package:livehelperchat/services/server_api_client.dart';
+import 'package:livehelperchat/utils/utils.dart';
+import 'package:livehelperchat/widget/widget.dart';
 
 class DepartmentHours extends StatefulWidget {
-  DepartmentHours({this.server});
-  final Server server;
+  const DepartmentHours({this.server});
+  final Server? server;
   @override
-  _DepartmentHoursState createState() => new _DepartmentHoursState();
+  _DepartmentHoursState createState() => _DepartmentHoursState();
 }
 
 class _DepartmentHoursState extends State<DepartmentHours> {
-  DatabaseHelper _dbHelper;
-  ServerApiClient _serverRequest;
+  DatabaseHelper? _dbHelper;
+  ServerApiClient? _serverRequest;
 
-  Server _localServer;
-  List<Server> listServers = new List<Server>();
-  List<Department> userDepartments = new List<Department>();
-  Department _department;
+  Future<dynamic>? _myInitState;
+  Server? _localServer;
+  List<Server> listServers = <Server>[];
+  List<Department> userDepartments = <Department>[];
+  Department? _department;
 
-  GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
-  final GlobalKey<AsyncLoaderState> _asyncLoaderState =
-      new GlobalKey<AsyncLoaderState>();
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   bool _onlineHoursActive = false;
   bool _sundayHoursActive = false;
@@ -41,30 +39,31 @@ class _DepartmentHoursState extends State<DepartmentHours> {
 
   bool _isLoading = false;
 
-  ValueChanged<TimeOfDay> selectTime;
+  ValueChanged<TimeOfDay>? selectTime;
 
-  TimeOfDay selectedTime;
+  TimeOfDay? selectedTime;
 
   @override
   void initState() {
     super.initState();
-    _dbHelper = new DatabaseHelper();
-    _serverRequest = new ServerApiClient(httpClient: http.Client());
+    _dbHelper = DatabaseHelper();
+    _serverRequest = ServerApiClient(httpClient: http.Client());
     _localServer = widget.server;
 
     _syncServerData();
+    _myInitState=_initAsyncloader();
   }
 
   @override
   Widget build(BuildContext context) {
     Widget loadingIndicator =
-        _isLoading ? new CircularProgressIndicator() : new Container();
-    var scaff = new Scaffold(
+        _isLoading ? const CircularProgressIndicator() : Container();
+    var scaff =  Scaffold(
         backgroundColor: Colors.white,
         key: _scaffoldKey,
-        appBar: new AppBar(
+        appBar: AppBar(
           title:
-              new Text(widget.server.servername), // new Text("Server Details"),
+              Text(widget.server!.servername!), // new Text("Server Details"),
           elevation:
               Theme.of(context).platform == TargetPlatform.android ? 6.0 : 0.0,
           actions: <Widget>[
@@ -77,21 +76,21 @@ class _DepartmentHoursState extends State<DepartmentHours> {
 
             FlatButton(
                 shape:
-                    CircleBorder(side: BorderSide(color: Colors.transparent)),
+                    const CircleBorder(side: BorderSide(color: Colors.transparent)),
                 textColor: Colors.white,
-                child: new Text("Refresh"),
+                child: const Text("Refresh"),
                 onPressed: () {
                   _initAsyncloader();
                 }),
           ],
         ),
-        body: new Stack(children: <Widget>[
+        body: Stack(children: <Widget>[
           Column(
             children: <Widget>[
               Align(
                 alignment: Alignment.centerLeft,
                 child: ListTile(
-                  title: Text(
+                  title: const Text(
                     "Select Department",
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
@@ -104,30 +103,30 @@ class _DepartmentHoursState extends State<DepartmentHours> {
               Container(
                 decoration: BoxDecoration(color: Colors.white),
                 margin: const EdgeInsets.only(bottom: 4.0),
-                child: new ListTile(
-                  trailing: new Offstage(
+                child: ListTile(
+                  trailing: Offstage(
                     offstage: _department == null,
-                    child: new Checkbox(
+                    child: Checkbox(
                         value: _onlineHoursActive,
                         onChanged: (val) {
                           setState(() {
-                            _onlineHoursActive = val;
+                            _onlineHoursActive = val!;
                           });
                         }),
                   ),
                   title: _department == null
-                      ? new Text(
+                      ? const Text(
                           "Could not load department hours from server.\nCheck your network connection. ",
-                          style: new TextStyle(
+                          style: TextStyle(
                               fontSize: 14.0, fontWeight: FontWeight.bold),
                         )
                       : DropdownButton(
                           isExpanded: true,
                           value: _department,
                           items: userDepartments.map((dept) {
-                            return new DropdownMenuItem(
+                            return DropdownMenuItem(
                               value: dept,
-                              child: new Text('${dept?.name}'),
+                              child: new Text('${dept.name}'),
                             );
                           }).toList(),
                           onChanged: _onDeptListChanged),
@@ -144,15 +143,15 @@ class _DepartmentHoursState extends State<DepartmentHours> {
                       children: <Widget>[
                         Offstage(
                           offstage: !_onlineHoursActive,
-                          child: new ListTile(
-                              title: new Text('Sunday'),
-                              subtitle: new OfficeTimePicker(
+                          child: ListTile(
+                              title: const Text('Sunday'),
+                              subtitle: OfficeTimePicker(
                                   isChecked:
                                       _sundayHoursActive || _department != null
-                                          ? _department.sundayActive
+                                          ? _department!.sundayActive
                                           : false,
-                                  startTime: _department?.sud_start_hour,
-                                  endTime: _department?.sud_end_hour,
+                                  startTime: _department != null ? _department!.sud_start_hour! : '',
+                                  endTime: _department != null ? _department!.sud_end_hour! : '',
                                   startTimeChanged: (time) {
                                     setState(() {
                                       _department?.sud_start_hour = time;
@@ -166,19 +165,19 @@ class _DepartmentHoursState extends State<DepartmentHours> {
                               onTap: () {
                                 _selectTime(context);
                               },
-                              trailing: new Checkbox(
+                              trailing: Checkbox(
                                 value: _sundayHoursActive || _department != null
-                                    ? _department.sundayActive
+                                    ? _department!.sundayActive
                                     : false,
                                 onChanged: (val) {
-                                  if (!val) {
+                                  if (!val!) {
                                     setState(() {
-                                      _department.sud_start_hour = "-1";
-                                      _department.sud_end_hour = "-1";
+                                      _department!.sud_start_hour = "-1";
+                                      _department!.sud_end_hour = "-1";
                                     });
                                   } else {
-                                    _department.sud_start_hour = "00";
-                                    _department.sud_end_hour = "00";
+                                    _department!.sud_start_hour = "00";
+                                    _department!.sud_end_hour = "00";
                                   }
                                   setState(() {
                                     _mondayHoursActive = val;
@@ -186,17 +185,17 @@ class _DepartmentHoursState extends State<DepartmentHours> {
                                 },
                               )),
                         ),
-                        new Offstage(
+                        Offstage(
                           offstage: !_onlineHoursActive,
-                          child: new ListTile(
-                              title: new Text('Monday'),
-                              subtitle: new OfficeTimePicker(
+                          child: ListTile(
+                              title: const Text('Monday'),
+                              subtitle: OfficeTimePicker(
                                   isChecked:
                                       _mondayHoursActive || _department != null
-                                          ? _department.mondayActive
+                                          ? _department!.mondayActive
                                           : false,
-                                  startTime: _department?.mod_start_hour,
-                                  endTime: _department?.mod_end_hour,
+                                  startTime:_department != null ? _department!.mod_start_hour! : '',
+                                  endTime:_department != null ? _department!.mod_end_hour! : '',
                                   startTimeChanged: (time) {
                                     setState(() {
                                       _department?.mod_start_hour = time;
@@ -212,17 +211,17 @@ class _DepartmentHoursState extends State<DepartmentHours> {
                               },
                               trailing: new Checkbox(
                                 value: _mondayHoursActive || _department != null
-                                    ? _department.mondayActive
+                                    ? _department!.mondayActive
                                     : false,
                                 onChanged: (val) {
-                                  if (!val) {
+                                  if (!val!) {
                                     setState(() {
-                                      _department.mod_start_hour = "-1";
-                                      _department.mod_end_hour = "-1";
+                                      _department!.mod_start_hour = "-1";
+                                      _department!.mod_end_hour = "-1";
                                     });
                                   } else {
-                                    _department.mod_start_hour = "00";
-                                    _department.mod_end_hour = "00";
+                                    _department!.mod_start_hour = "00";
+                                    _department!.mod_end_hour = "00";
                                   }
                                   setState(() {
                                     _mondayHoursActive = val;
@@ -230,17 +229,17 @@ class _DepartmentHoursState extends State<DepartmentHours> {
                                 },
                               )),
                         ),
-                        new Offstage(
+                        Offstage(
                           offstage: !_onlineHoursActive,
-                          child: new ListTile(
+                          child: ListTile(
                               title: new Text('Tuesday'),
-                              subtitle: new OfficeTimePicker(
+                              subtitle: OfficeTimePicker(
                                   isChecked:
                                       _tuesdayHoursActive || _department != null
-                                          ? _department.tuesdayActive
+                                          ? _department!.tuesdayActive
                                           : false,
-                                  startTime: _department?.tud_start_hour,
-                                  endTime: _department?.tud_end_hour,
+                                  startTime:_department != null ? _department!.tud_start_hour! : '',
+                                  endTime:_department != null ? _department!.tud_end_hour! : '',
                                   startTimeChanged: (time) {
                                     setState(() {
                                       _department?.tud_start_hour = time;
@@ -257,17 +256,17 @@ class _DepartmentHoursState extends State<DepartmentHours> {
                               trailing: new Checkbox(
                                 value:
                                     _tuesdayHoursActive || _department != null
-                                        ? _department.tuesdayActive
+                                        ? _department!.tuesdayActive
                                         : false,
                                 onChanged: (val) {
-                                  if (!val) {
+                                  if (!val!) {
                                     setState(() {
-                                      _department.tud_start_hour = "-1";
-                                      _department.tud_end_hour = "-1";
+                                      _department!.tud_start_hour = "-1";
+                                      _department!.tud_end_hour = "-1";
                                     });
                                   } else {
-                                    _department.tud_start_hour = "00";
-                                    _department.tud_end_hour = "00";
+                                    _department!.tud_start_hour = "00";
+                                    _department!.tud_end_hour = "00";
                                   }
                                   setState(() {
                                     _tuesdayHoursActive = val;
@@ -275,17 +274,17 @@ class _DepartmentHoursState extends State<DepartmentHours> {
                                 },
                               )),
                         ),
-                        new Offstage(
+                        Offstage(
                           offstage: !_onlineHoursActive,
-                          child: new ListTile(
+                          child: ListTile(
                               title: new Text('Wednesday'),
-                              subtitle: new OfficeTimePicker(
+                              subtitle: OfficeTimePicker(
                                   isChecked: _wednesdayHoursActive ||
                                           _department != null
-                                      ? _department.wednesdayActive
+                                      ? _department!.wednesdayActive
                                       : false,
-                                  startTime: _department?.wed_start_hour,
-                                  endTime: _department?.wed_end_hour,
+                                  startTime:_department != null ? _department!.wed_start_hour! : '',
+                                  endTime:_department != null ? _department!.wed_end_hour! : '',
                                   startTimeChanged: (time) {
                                     setState(() {
                                       _department?.wed_start_hour = time;
@@ -302,17 +301,17 @@ class _DepartmentHoursState extends State<DepartmentHours> {
                               trailing: new Checkbox(
                                 value:
                                     _wednesdayHoursActive || _department != null
-                                        ? _department.wednesdayActive
+                                        ? _department!.wednesdayActive
                                         : false,
                                 onChanged: (val) {
-                                  if (!val) {
+                                  if (!val!) {
                                     setState(() {
-                                      _department.wed_start_hour = "-1";
-                                      _department.wed_end_hour = "-1";
+                                      _department!.wed_start_hour = "-1";
+                                      _department!.wed_end_hour = "-1";
                                     });
                                   } else {
-                                    _department.wed_start_hour = "00";
-                                    _department.wed_end_hour = "00";
+                                    _department!.wed_start_hour = "00";
+                                    _department!.wed_end_hour = "00";
                                   }
                                   setState(() {
                                     _wednesdayHoursActive = val;
@@ -320,17 +319,17 @@ class _DepartmentHoursState extends State<DepartmentHours> {
                                 },
                               )),
                         ),
-                        new Offstage(
+                        Offstage(
                           offstage: !_onlineHoursActive,
-                          child: new ListTile(
+                          child: ListTile(
                               title: new Text('Thursday'),
-                              subtitle: new OfficeTimePicker(
+                              subtitle: OfficeTimePicker(
                                   isChecked: _thursdayHoursActive ||
                                           _department != null
-                                      ? _department.thursdayActive
+                                      ? _department!.thursdayActive
                                       : false,
-                                  startTime: _department?.thd_start_hour,
-                                  endTime: _department?.thd_end_hour,
+                                  startTime:_department != null ? _department!.thd_start_hour! : '',
+                                  endTime:_department != null ? _department!.thd_end_hour! : '',
                                   startTimeChanged: (time) {
                                     setState(() {
                                       _department?.thd_start_hour = time;
@@ -347,17 +346,17 @@ class _DepartmentHoursState extends State<DepartmentHours> {
                               trailing: new Checkbox(
                                 value:
                                     _thursdayHoursActive || _department != null
-                                        ? _department.thursdayActive
+                                        ? _department!.thursdayActive
                                         : false,
                                 onChanged: (val) {
-                                  if (!val) {
+                                  if (!val!) {
                                     setState(() {
-                                      _department.thd_start_hour = "-1";
-                                      _department.thd_end_hour = "-1";
+                                      _department!.thd_start_hour = "-1";
+                                      _department!.thd_end_hour = "-1";
                                     });
                                   } else {
-                                    _department.thd_start_hour = "00";
-                                    _department.thd_end_hour = "00";
+                                    _department!.thd_start_hour = "00";
+                                    _department!.thd_end_hour = "00";
                                   }
                                   setState(() {
                                     _thursdayHoursActive = val;
@@ -365,17 +364,17 @@ class _DepartmentHoursState extends State<DepartmentHours> {
                                 },
                               )),
                         ),
-                        new Offstage(
+                        Offstage(
                           offstage: !_onlineHoursActive,
-                          child: new ListTile(
-                              title: new Text('Friday'),
-                              subtitle: new OfficeTimePicker(
+                          child: ListTile(
+                              title: const Text('Friday'),
+                              subtitle: OfficeTimePicker(
                                   isChecked:
                                       _fridayHoursActive || _department != null
-                                          ? _department.fridayActive
+                                          ? _department!.fridayActive
                                           : false,
-                                  startTime: _department?.frd_start_hour,
-                                  endTime: _department?.frd_end_hour,
+                                  startTime:_department != null ? _department!.frd_start_hour! : '',
+                                  endTime:_department != null ? _department!.frd_end_hour! : '',
                                   startTimeChanged: (time) {
                                     setState(() {
                                       _department?.frd_start_hour = time;
@@ -389,19 +388,19 @@ class _DepartmentHoursState extends State<DepartmentHours> {
                               onTap: () {
                                 _selectTime(context);
                               },
-                              trailing: new Checkbox(
+                              trailing: Checkbox(
                                 value: _fridayHoursActive || _department != null
-                                    ? _department.fridayActive
+                                    ? _department!.fridayActive
                                     : false,
                                 onChanged: (val) {
-                                  if (!val) {
+                                  if (!val!) {
                                     setState(() {
-                                      _department.frd_start_hour = "-1";
-                                      _department.frd_end_hour = "-1";
+                                      _department!.frd_start_hour = "-1";
+                                      _department!.frd_end_hour = "-1";
                                     });
                                   } else {
-                                    _department.frd_start_hour = "00";
-                                    _department.frd_end_hour = "00";
+                                    _department!.frd_start_hour = "00";
+                                    _department!.frd_end_hour = "00";
                                   }
                                   setState(() {
                                     _fridayHoursActive = val;
@@ -409,17 +408,17 @@ class _DepartmentHoursState extends State<DepartmentHours> {
                                 },
                               )),
                         ),
-                        new Offstage(
+                        Offstage(
                           offstage: !_onlineHoursActive,
-                          child: new ListTile(
-                              title: new Text('Saturday'),
-                              subtitle: new OfficeTimePicker(
+                          child: ListTile(
+                              title: const Text('Saturday'),
+                              subtitle: OfficeTimePicker(
                                   isChecked: _saturdayHoursActive ||
                                           _department != null
-                                      ? _department.saturdayActive
+                                      ? _department!.saturdayActive
                                       : false,
-                                  startTime: _department?.sad_start_hour,
-                                  endTime: _department?.sad_end_hour,
+                                  startTime:_department != null ? _department!.sad_start_hour! : '',
+                                  endTime:_department != null ? _department!.sad_end_hour! : '',
                                   startTimeChanged: (time) {
                                     setState(() {
                                       _department?.sad_start_hour = time;
@@ -436,17 +435,17 @@ class _DepartmentHoursState extends State<DepartmentHours> {
                               trailing: Checkbox(
                                 value:
                                     _saturdayHoursActive || _department != null
-                                        ? _department.saturdayActive
+                                        ? _department!.saturdayActive
                                         : false,
                                 onChanged: (val) {
-                                  if (!val) {
+                                  if (!val!) {
                                     setState(() {
-                                      _department.sad_start_hour = "-1";
-                                      _department.sad_end_hour = "-1";
+                                      _department!.sad_start_hour = "-1";
+                                      _department!.sad_end_hour = "-1";
                                     });
                                   } else {
-                                    _department.sad_start_hour = "00";
-                                    _department.sad_end_hour = "00";
+                                    _department!.sad_start_hour = "00";
+                                    _department!.sad_end_hour = "00";
                                   }
                                   setState(() {
                                     _saturdayHoursActive = val;
@@ -461,10 +460,10 @@ class _DepartmentHoursState extends State<DepartmentHours> {
               ),
               RaisedButton(
                 onPressed: () {
-                  _department.online_hours_active = _onlineHoursActive;
+                  _department?.online_hours_active = _onlineHoursActive;
                   _isLoading = true;
                   _serverRequest
-                      .setDepartmentWorkHours(_localServer, _department)
+                      !.setDepartmentWorkHours(_localServer!, _department)
                       .then((value) {
                     if (value['error'] == false) {
                       WidgetUtils.creatDialog(
@@ -473,9 +472,9 @@ class _DepartmentHoursState extends State<DepartmentHours> {
                     _isLoading = false;
                   });
                 },
-                child: new Text(
+                child: const Text(
                   "Save Data",
-                  style: new TextStyle(color: Colors.white),
+                  style: TextStyle(color: Colors.white),
                 ),
                 color: Theme.of(context).primaryColor,
               ),
@@ -484,58 +483,61 @@ class _DepartmentHoursState extends State<DepartmentHours> {
           new Center(child: loadingIndicator),
         ]));
 
-    var _asyncLoader = new AsyncLoader(
-      key: _asyncLoaderState,
-      initState: () async => await _initAsyncloader(),
-      renderLoad: () => new Scaffold(
-        body: new Center(child: new CircularProgressIndicator()),
-      ),
-      renderError: ([error]) => new Scaffold(
-        body: new Center(
-          child: new Text('Something is wrong'),
-        ),
-      ),
-      renderSuccess: ({data}) {
-        return scaff;
-      },
+    return FutureBuilder<dynamic>(
+        future: _myInitState,
+        builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
+          if (snapshot.hasError) {
+            return  const Scaffold(
+              body: Center(
+                child: Text('Something is wrong'),
+              ),
+            );
+          } else if (snapshot.hasData) {
+            return scaff;
+          } else {
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
+          }
+        }
     );
-
-    return _asyncLoader;
   }
 
-  Future<Null> _initAsyncloader() async {
+  Future<dynamic> _initAsyncloader() async {
     _isLoading = true;
     //  await _fetchServerDetails();
     await _syncServerData();
-    _isLoading = false;
+    setState(() {
+      _isLoading = false;
+      print("_isLoading setState false");
+    });
+    return Future.value("complete");
   }
 
-  Future<Null> _syncServerData() async {
+  Future<void> _syncServerData() async {
     if (_localServer != null) {
-      var user = await _serverRequest.getUserFromServer(_localServer);
+      var user = await _serverRequest!.getUserFromServer(_localServer!);
 
-      if (user != null) {
-        setState(() {
-          _localServer.userid = user['id'];
-          _localServer.firstname = user['name'];
-          _localServer.surname = user['surname'];
-          _localServer.operatoremail = user['email'];
-          _localServer.job_title = user['job_title'];
-          _localServer.all_departments = user['all_departments'];
-          _localServer.departments_ids = user['departments_ids'];
-        });
-      }
+      setState(() {
+        _localServer!.userid = user['id'];
+        _localServer!.firstname = user['name'];
+        _localServer!.surname = user['surname'];
+        _localServer!.operatoremail = user['email'];
+        _localServer!.job_title = user['job_title'];
+        _localServer!.all_departments = user['all_departments'];
+        _localServer!.departments_ids = user['departments_ids'];
+      });
 
-      await _dbHelper.upsertServer(_localServer, "id=?", [_localServer.id]);
+      await _dbHelper!.upsertServer(_localServer!, "id=?", [_localServer!.id]);
 
       // fetch departments
       List<Department> listDepts =
-          await _serverRequest.getUserDepartments(_localServer);
+          await _serverRequest!.getUserDepartments(_localServer!);
 
-      if (listDepts is List) {
+      if (listDepts.isNotEmpty) {
         setState(() {
           userDepartments = listDepts;
-          if (userDepartments.length > 0) {
+          if (userDepartments.isNotEmpty) {
             _department = userDepartments.elementAt(0);
             _checkActiveHours();
           }
@@ -546,18 +548,18 @@ class _DepartmentHoursState extends State<DepartmentHours> {
 
   void _checkActiveHours() {
     setState(() {
-      _onlineHoursActive = _department.online_hours_active;
+      _onlineHoursActive = _department!.online_hours_active!;
     });
   }
 
-  _onDeptListChanged(Department dept) {
+  void _onDeptListChanged(Department? dept) {
     setState(() => _department = dept);
     _checkActiveHours();
   }
 
-  Future<TimeOfDay> _selectTime(BuildContext context) async {
-    final TimeOfDay picked = await showTimePicker(
+  Future<TimeOfDay?> _selectTime(BuildContext context) async {
+    final TimeOfDay? picked = await showTimePicker(
         context: context, initialTime: new TimeOfDay.now());
-    return picked ?? 00;
+    return picked ?? null;
   }
 }

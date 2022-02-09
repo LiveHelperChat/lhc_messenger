@@ -10,10 +10,9 @@ abstract class LoginformEvent extends Equatable {
 class ServerLogin extends LoginformEvent {
   final Server server;
   final bool isNew;
-  final String fcmToken;
+  final String? fcmToken;
 
-  const ServerLogin({@required this.server, this.isNew = false, this.fcmToken})
-      : assert(server != null);
+  const ServerLogin({required this.server, this.isNew = false, this.fcmToken});
 
   @override
   List<Object> get props => [server];
@@ -22,7 +21,7 @@ class ServerLogin extends LoginformEvent {
 class SetServerLoginError extends LoginformEvent {
   final String message;
 
-  const SetServerLoginError({@required this.message}) : assert(message != null);
+  const SetServerLoginError({required this.message});
 
   @override
   List<Object> get props => [message];
