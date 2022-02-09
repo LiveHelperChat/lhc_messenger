@@ -5,13 +5,13 @@ import 'bloc/simple_bloc_observer.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
 
-import 'package:livehelperchat/bloc/bloc.dart';
-import 'package:livehelperchat/pages/servers_manage.dart';
-import 'package:livehelperchat/data/database.dart';
-import 'package:livehelperchat/services/server_api_client.dart';
-import 'package:livehelperchat/services/server_repository.dart';
+import 'package:livehelp/bloc/bloc.dart';
+import 'package:livehelp/pages/servers_manage.dart';
+import 'package:livehelp/data/database.dart';
+import 'package:livehelp/services/server_api_client.dart';
+import 'package:livehelp/services/server_repository.dart';
 
-import 'package:livehelperchat/globals.dart' as globals;
+import 'package:livehelp/globals.dart' as globals;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();

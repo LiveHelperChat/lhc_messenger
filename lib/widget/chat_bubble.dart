@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_html/html_parser.dart';
-import 'package:livehelperchat/model/model.dart';
+import 'package:livehelp/model/model.dart';
 import 'package:intl/intl.dart';
 
 import 'package:flutter_html/flutter_html.dart';

@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:livehelperchat/data/database.dart';
-import 'package:livehelperchat/services/server_repository.dart';
+import 'package:livehelp/data/database.dart';
+import 'package:livehelp/services/server_repository.dart';
 
 part 'twilio_event.dart';
 part 'twilio_state.dart';

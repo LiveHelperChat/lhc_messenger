@@ -1,5 +1,5 @@
-import 'package:livehelperchat/model/model.dart';
-import 'package:livehelperchat/utils/utils.dart';
+import 'package:livehelp/model/model.dart';
+import 'package:livehelp/utils/utils.dart';
 
 import 'dart:convert';
 import 'dart:developer' as developer;

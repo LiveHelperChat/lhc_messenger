@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:livehelperchat/utils/utils.dart';
-import 'package:livehelperchat/model/model.dart';
-import 'package:livehelperchat/services/server_repository.dart';
+import 'package:livehelp/utils/utils.dart';
+import 'package:livehelp/model/model.dart';
+import 'package:livehelp/services/server_repository.dart';
 import 'package:meta/meta.dart';
 
 import 'package:bloc/bloc.dart';

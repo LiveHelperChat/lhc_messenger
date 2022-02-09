@@ -5,9 +5,9 @@ import 'package:flutter/services.dart';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'package:livehelperchat/model/model.dart';
-import 'package:livehelperchat/data/database.dart';
-import 'package:livehelperchat/services/server_repository.dart';
+import 'package:livehelp/model/model.dart';
+import 'package:livehelp/data/database.dart';
+import 'package:livehelp/services/server_repository.dart';
 
 class TwilioSMSChat extends StatefulWidget {
   TwilioSMSChat({Key? key, this.server, this.refreshList}) : super(key: key);

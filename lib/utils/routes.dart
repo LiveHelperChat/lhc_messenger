@@ -1,9 +1,9 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
-import 'package:livehelperchat/model/model.dart';
+import 'package:livehelp/model/model.dart';
 
-import 'package:livehelperchat/pages/main_page.dart';
-import 'package:livehelperchat/pages/pages.dart';
+import 'package:livehelp/pages/main_page.dart';
+import 'package:livehelp/pages/pages.dart';
 
 class AppRoutes {
   static const String home = "/";

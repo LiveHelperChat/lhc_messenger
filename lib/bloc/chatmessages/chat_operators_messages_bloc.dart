@@ -1,8 +1,8 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:livehelperchat/model/model.dart';
-import 'package:livehelperchat/services/server_repository.dart';
+import 'package:livehelp/model/model.dart';
+import 'package:livehelp/services/server_repository.dart';
 
 part 'chat_operators_messages_event.dart';
 part 'chat_operators_messages_state.dart';

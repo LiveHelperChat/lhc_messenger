@@ -7,19 +7,19 @@ import 'package:flutter/scheduler.dart';
 import 'package:after_layout/after_layout.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
-import 'package:livehelperchat/bloc/bloc.dart';
+import 'package:livehelp/bloc/bloc.dart';
 
-import 'package:livehelperchat/data/database.dart';
-import 'package:livehelperchat/model/model.dart';
-import 'package:livehelperchat/pages/lists/chat_list_twilio.dart';
-import 'package:livehelperchat/pages/lists/chat_list_operators.dart';
-import 'package:livehelperchat/pages/pages.dart';
-import 'package:livehelperchat/services/server_repository.dart';
-import 'package:livehelperchat/utils/utils.dart';
-import 'package:livehelperchat/utils/routes.dart' as LHCRouter;
-import 'package:livehelperchat/widget/widget.dart';
+import 'package:livehelp/data/database.dart';
+import 'package:livehelp/model/model.dart';
+import 'package:livehelp/pages/lists/chat_list_twilio.dart';
+import 'package:livehelp/pages/lists/chat_list_operators.dart';
+import 'package:livehelp/pages/pages.dart';
+import 'package:livehelp/services/server_repository.dart';
+import 'package:livehelp/utils/utils.dart';
+import 'package:livehelp/utils/routes.dart' as LHCRouter;
+import 'package:livehelp/widget/widget.dart';
 
-import 'package:livehelperchat/globals.dart' as globals;
+import 'package:livehelp/globals.dart' as globals;
 
 class MainPage extends StatefulWidget {
   const MainPage();

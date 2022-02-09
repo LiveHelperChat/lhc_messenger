@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:livehelperchat/bloc/bloc.dart';
-import 'package:livehelperchat/model/model.dart';
-import 'package:livehelperchat/pages/pages.dart';
-import 'package:livehelperchat/utils/utils.dart';
-import 'package:livehelperchat/utils/routes.dart' as LHCRouter;
-import 'package:livehelperchat/widget/widget.dart';
+import 'package:livehelp/bloc/bloc.dart';
+import 'package:livehelp/model/model.dart';
+import 'package:livehelp/pages/pages.dart';
+import 'package:livehelp/utils/utils.dart';
+import 'package:livehelp/utils/routes.dart' as LHCRouter;
+import 'package:livehelp/widget/widget.dart';
 
-import 'package:livehelperchat/globals.dart' as globals;
+import 'package:livehelp/globals.dart' as globals;
 
 class ServersManage extends StatefulWidget {
   ServersManage({this.returnToList = false});

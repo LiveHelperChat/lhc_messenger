@@ -4,8 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 
-import 'package:livehelperchat/model/model.dart';
-import 'package:livehelperchat/services/server_repository.dart';
+import 'package:livehelp/model/model.dart';
+import 'package:livehelp/services/server_repository.dart';
 
 import 'dart:convert';
 import 'dart:developer' as developer;

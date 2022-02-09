@@ -2,9 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:livehelperchat/model/model.dart';
+import 'package:livehelp/model/model.dart';
 import 'package:http/http.dart' as http;
-import 'package:livehelperchat/utils/widget_utils.dart';
+import 'package:livehelp/utils/widget_utils.dart';
 
 import 'dart:convert';
 import 'dart:developer' as developer;

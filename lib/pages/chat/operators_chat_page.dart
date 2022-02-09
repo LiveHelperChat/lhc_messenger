@@ -6,19 +6,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:livehelperchat/bloc/bloc.dart';
+import 'package:livehelp/bloc/bloc.dart';
 
-import 'package:livehelperchat/services/server_api_client.dart';
-import 'package:livehelperchat/services/server_repository.dart';
+import 'package:livehelp/services/server_api_client.dart';
+import 'package:livehelp/services/server_repository.dart';
 
 import 'package:rxdart/rxdart.dart';
 
-import 'package:livehelperchat/model/model.dart';
-import 'package:livehelperchat/widget/widget.dart';
+import 'package:livehelp/model/model.dart';
+import 'package:livehelp/widget/widget.dart';
 
-import 'package:livehelperchat/utils/utils.dart';
+import 'package:livehelp/utils/utils.dart';
 
-import 'package:livehelperchat/globals.dart' as globals;
+import 'package:livehelp/globals.dart' as globals;
 
 /// place: "/chats/operatorschat"
 class OperatorsChatPage extends StatefulWidget {

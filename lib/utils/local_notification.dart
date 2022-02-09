@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:rxdart/subjects.dart';
 
-import 'package:livehelperchat/model/model.dart';
+import 'package:livehelp/model/model.dart';
 
 
 class LocalNotificationPlugin {

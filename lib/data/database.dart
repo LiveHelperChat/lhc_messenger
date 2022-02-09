@@ -7,7 +7,7 @@ import 'package:synchronized/synchronized.dart';
 
 import 'package:path_provider/path_provider.dart';
 
-import 'package:livehelperchat/model/model.dart';
+import 'package:livehelp/model/model.dart';
 
 class DatabaseHelper {
   static DatabaseHelper? _livehelpDatabase;
