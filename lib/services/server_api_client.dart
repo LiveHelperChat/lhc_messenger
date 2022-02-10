@@ -26,7 +26,7 @@ const int NO_INTERNET = 404;
 class ServerApiClient {
   final http.Client httpClient;
 
-  ServerApiClient({required this.httpClient}) : assert(httpClient != null);
+  ServerApiClient({required this.httpClient});
 
   String _encodeCredentials(Server server) {
     String credentials = "${server.username}:${server.password}";
@@ -203,7 +203,7 @@ class ServerApiClient {
         Map pendingJson = response.body['pending_chats']['rows'];
         List<dynamic> newPendingList =
         chatListToMap(server.id!, pendingJson.values.toList());
-        if (newPendingList != null && newPendingList.length > 0)
+        if (newPendingList.length > 0)
           server.addChatsToList(newPendingList, 'pending');
       } else {
         server.clearList('pending');
@@ -214,10 +214,34 @@ class ServerApiClient {
         Map closedJson = response.body['closed_chats']['rows'];
         List<dynamic> newClosedList =
         chatListToMap(server.id!, closedJson.values.toList());
-        if (newClosedList != null && newClosedList.isNotEmpty)
+        if (newClosedList.isNotEmpty)
           server.addChatsToList(newClosedList, 'closed');
       } else {
         server.clearList('closed');
+      }
+
+      if (response.body['bot_chats'] != null) {
+        int botSize = response.body['bot_chats']['size'];
+        if (botSize > 0) {
+          Map botJson = response.body['bot_chats']['rows'];
+          List<dynamic> newBotList =
+          chatListToMap(server.id!, botJson.values.toList());
+          if (newBotList.length > 0)
+            server.addChatsToList(newBotList, 'bot');
+        } else
+          server.clearList('bot');
+      }
+
+      if (response.body['subject_chats'] != null) {
+        int subjectSize = response.body['subject_chats']['size'];
+        if (subjectSize > 0) {
+          Map subjectJson = response.body['subject_chats']['rows'];
+          List<dynamic> newSubjectList =
+          chatListToMap(server.id!, subjectJson.values.toList());
+          if (newSubjectList.length > 0)
+            server.addChatsToList(newSubjectList, 'subject');
+        } else
+          server.clearList('subject');
       }
 
       if (response.body['operators_chats'] != null) {
@@ -240,7 +264,7 @@ class ServerApiClient {
 
         List<dynamic> newTransferList =
         chatListToMap(server.id!, transferredList);
-        if (newTransferList != null && newTransferList.length > 0)
+        if (newTransferList.length > 0)
           server.addChatsToList(newTransferList, 'transfer');
       } else
         server.clearList('transfer');

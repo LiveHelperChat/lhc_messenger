@@ -44,6 +44,8 @@ class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
               transferChatList: server.transferChatList,
               twilioChatList: server.twilioChatList,
               closedChatList: server.closedChatList,
+              botChatList: server.botChatList,
+              subjectChatList: server.subjectChatList,
               operatorsChatList: server.operatorsChatList
           ));
         } catch (ex) {
@@ -61,6 +63,8 @@ class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
         List<Chat> transferChats = List.from(currentState.transferChatList);
         List<Chat> twilioChats = List.from(currentState.twilioChatList);
         List<Chat> closedChats = List.from(currentState.closedChatList);
+        List<Chat> botChats  = List.from(currentState.botChatList);
+        List<Chat> subjectChats  = List.from(currentState.subjectChatList);
         List<User> operatorsChatChats = List.from(currentState.operatorsChatList);
 
         List<Chat> activeList =
@@ -68,6 +72,12 @@ class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
 
         List<Chat> closedList =
         await _cleanList(ChatListName.closed, server, closedChats);
+
+        List<Chat> botList =
+        await _cleanList(ChatListName.bot, server, botChats);
+
+        List<Chat> subjectList =
+        await _cleanList(ChatListName.subject, server, subjectChats);
 
         List<User> operatorsList =
         await _cleanListOperator(ChatListName.operators, server, operatorsChatChats);
@@ -86,6 +96,8 @@ class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
             transferChatList: transferList,
             twilioChatList: _sortByLastMessageTime(twilioList),
             closedChatList: _sortById(closedList),
+            botChatList: _sortByLastMessageTime(botList),
+            subjectChatList: _sortByLastMessageTime(subjectList),
             operatorsChatList: _sortByLastOperatorMessageTime(operatorsList)
         ));
       }
@@ -165,6 +177,28 @@ class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
         } else {
           listToClean =
           await _updateChatList(listToClean, server.pendingChatList);
+        }
+        return listToClean;
+
+      case ChatListName.bot:
+        if (server.botChatList.length == 0) {
+          if (listToClean.length > 0) {
+            listToClean.removeWhere((chat) => chat.serverid == server.id);
+          }
+        } else {
+          listToClean =
+          await _updateChatList(listToClean, server.botChatList);
+        }
+        return listToClean;
+
+      case ChatListName.subject:
+        if (server.subjectChatList.length == 0) {
+          if (listToClean.length > 0) {
+            listToClean.removeWhere((chat) => chat.serverid == server.id);
+          }
+        } else {
+          listToClean =
+          await _updateChatList(listToClean, server.subjectChatList);
         }
         return listToClean;
 

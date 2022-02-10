@@ -173,6 +173,15 @@ class FcmTokenBloc extends Bloc<FcmTokenEvent, FcmTokenState> {
               body: data['msg'].toString());
         }
 
+        if (data["chat_type"].toString() == "subject") {
+          return ReceivedNotification(
+              server: server,
+              chat: Chat.fromJson(chat),
+              type: NotificationType.SUBJECT,
+              title: "New subject",
+              body: data['msg'].toString());
+        }
+
         if (data["chat_type"].toString() == "unread") {
           return ReceivedNotification(
               server: server,

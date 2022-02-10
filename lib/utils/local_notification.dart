@@ -57,6 +57,15 @@ class LocalNotificationPlugin {
         playSound: true,
       );
 
+      const AndroidNotificationChannel subjectMessage = AndroidNotificationChannel(
+        'com.livehelperchat.chat.channel.SUBJECT', // id
+        'New subject', // title
+        description: 'New subject notifications while app is in the background', // description
+        importance: Importance.high,
+        enableVibration: true,
+        playSound: true,
+      );
+
       flutterLocalNotificationsPlugin
           ?.resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin>()
@@ -71,6 +80,12 @@ class LocalNotificationPlugin {
           ?.resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin>()
           ?.createNotificationChannel(channelGroupMessage);
+
+      flutterLocalNotificationsPlugin
+          ?.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>()
+          ?.createNotificationChannel(subjectMessage);
+
     }
 
     initializePlatformSpecifics();
@@ -112,6 +127,12 @@ class LocalNotificationPlugin {
       name: "New group messages (open app)",
       description: "New group messages notifications while app is open",
       number: 4444);
+
+  static final NotificationChannel channelSubject = NotificationChannel(
+      id: "com.livehelperchat.chat.channel.SUBJECT",
+      name: "New subject (open app)",
+      description: "New subject while app is open",
+      number: 5555);
 
   initializePlatformSpecifics() {
     var initializationSettingsAndroid = AndroidInitializationSettings('icon');
@@ -183,6 +204,9 @@ class LocalNotificationPlugin {
         break;
       case NotificationType.UNREAD:
         channel = channelUnreadMsg;
+        break;
+      case NotificationType.SUBJECT:
+        channel = channelSubject;
         break;
       default:
         break;
@@ -310,4 +334,4 @@ class ReceivedNotification {
   }
 }
 
-enum NotificationType { INFO, NEW_MESSAGE, PENDING, UNREAD, NEW_GROUP_MESSAGE }
+enum NotificationType { INFO, NEW_MESSAGE, PENDING, UNREAD, NEW_GROUP_MESSAGE, SUBJECT}

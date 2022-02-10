@@ -21,6 +21,9 @@ import 'package:livehelp/widget/widget.dart';
 
 import 'package:livehelp/globals.dart' as globals;
 
+import 'lists/chat_list_bot.dart';
+import 'lists/chat_list_subject.dart';
+
 class MainPage extends StatefulWidget {
   const MainPage();
 
@@ -45,6 +48,8 @@ class _MainPageState extends State<MainPage>
   List<dynamic> pendingChatStore = <dynamic>[];
   List<dynamic> transferChatStore = <dynamic>[];
   List<dynamic> closedChatStore = <dynamic>[];
+  List<dynamic> botChatStore = <dynamic>[];
+  List<dynamic> subjectChatStore = <dynamic>[];
   List<dynamic> operatorsStore = <dynamic>[];
 
   Timer? _timerChatList;
@@ -192,6 +197,40 @@ class _MainPageState extends State<MainPage>
                   builder: (context, state) {
                     if (state is ChatListLoaded) {
                       return ChatNumberIndcator(
+                        title: "Bot",
+                        offstage: state.botChatList.length == 0,
+                        number: state.botChatList.length.toString(),
+                      );
+                    }
+                    return ChatNumberIndcator(
+                      title: "Bot",
+                      offstage: true,
+                      number: "0",
+                    );
+                  }),
+            ),
+            Tab(
+              child: BlocBuilder<ChatslistBloc, ChatListState>(
+                  builder: (context, state) {
+                    if (state is ChatListLoaded) {
+                      return ChatNumberIndcator(
+                        title: "Subject",
+                        offstage: state.subjectChatList.length == 0,
+                        number: state.subjectChatList.length.toString(),
+                      );
+                    }
+                    return ChatNumberIndcator(
+                      title: "Subject",
+                      offstage: true,
+                      number: "0",
+                    );
+                  }),
+            ),
+            Tab(
+              child: BlocBuilder<ChatslistBloc, ChatListState>(
+                  builder: (context, state) {
+                    if (state is ChatListLoaded) {
+                      return ChatNumberIndcator(
                         title: "Pending",
                         offstage: state.pendingChatList.isEmpty,
                         number: state.pendingChatList.length.toString(),
@@ -243,7 +282,7 @@ class _MainPageState extends State<MainPage>
                   builder: (context, state) {
                     if (state is ChatListLoaded) {
                       return ChatNumberIndcator(
-                        title: "Ops",
+                        title: "Operators",
                         offstage: state.operatorsChatList.isEmpty,
                         number: state.operatorsChatList.length.toString(),
                       );
@@ -268,6 +307,30 @@ class _MainPageState extends State<MainPage>
               callBackDeleteChat: (server, chat) {
                 _chatListBloc
                 !.add(DeleteChatMainPage(server: server, chat: chat));
+              },
+            ),
+            BotListWidget(
+              listOfServers: listServers,
+              refreshList: _loadChatList,
+              callbackCloseChat: (server, chat) {
+                _chatListBloc
+                    !.add(CloseChatMainPage(server: server, chat: chat));
+              },
+              callBackDeleteChat: (server, chat) {
+                _chatListBloc
+                    !.add(DeleteChatMainPage(server: server, chat: chat));
+              },
+            ),
+            SubjectListWidget(
+              listOfServers: listServers,
+              refreshList: _loadChatList,
+              callbackCloseChat: (server, chat) {
+                _chatListBloc
+                    !.add(CloseChatMainPage(server: server, chat: chat));
+              },
+              callBackDeleteChat: (server, chat) {
+                _chatListBloc
+                    !.add(DeleteChatMainPage(server: server, chat: chat));
               },
             ),
             PendingListWidget(
@@ -619,7 +682,10 @@ class _MainPageState extends State<MainPage>
         notification.chat, notification.server, isNewChat, _loadChatList);
 
     if (notification.type == NotificationType.NEW_MESSAGE ||
-        notification.type == NotificationType.UNREAD) {
+        notification.type == NotificationType.UNREAD ||
+        notification.type == NotificationType.SUBJECT
+    ) {
+      Navigator.of(context).popUntil(ModalRoute.withName(AppRoutes.home));
       SchedulerBinding.instance?.addPostFrameCallback((_) async {
         Navigator.of(context).pushRouteIfNotCurrent(routeChat);
       });

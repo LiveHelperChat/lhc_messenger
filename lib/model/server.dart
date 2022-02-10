@@ -74,6 +74,8 @@ class Server {
   List<Chat> transferChatList=[];
   List<Chat> twilioChatList=[];
   List<Chat> closedChatList=[];
+  List<Chat> botChatList=[];
+  List<Chat> subjectChatList=[];
   List<User> operatorsChatList=[];
 
   Server(
@@ -105,6 +107,8 @@ class Server {
     transferChatList = <Chat>[];
     twilioChatList = <Chat>[];
     closedChatList = <Chat>[];
+    botChatList = <Chat>[];
+    subjectChatList = <Chat>[];
     operatorsChatList = <User>[];
   }
 
@@ -176,6 +180,14 @@ class Server {
       case "closed":
         closedChatList = _cleanUpLists(closedChatList, newChatList);
         closedChatList.sort((a, b) => a.id!.compareTo(b.id!));
+        break;
+      case "bot":
+        this.botChatList = _cleanUpLists(this.botChatList, newChatList);
+        this.botChatList.sort((a, b) => a.id!.compareTo(b.id!));
+        break;
+      case "subject":
+        this.subjectChatList = _cleanUpLists(this.subjectChatList, newChatList);
+        this.subjectChatList.sort((a, b) => a.id!.compareTo(b.id!));
         break;
       case "twilio":
         twilioChatList = _cleanUpLists(twilioChatList, newChatList);
@@ -273,6 +285,12 @@ class Server {
       case 'transfer':
         transferChatList.clear();
         break;
+      case 'bot':
+        this.botChatList.clear();
+        break;
+      case 'subject':
+        this.subjectChatList.clear();
+        break;
       case 'closed':
         closedChatList.clear();
         break;
@@ -294,6 +312,12 @@ class Server {
         break;
       case 'pending':
         pendingChatList.removeWhere((chat) => chat.id == id);
+        break;
+      case 'subject':
+        this.subjectChatList.removeWhere((chat) => chat.id == id);
+        break;
+      case 'bot':
+        this.botChatList.removeWhere((chat) => chat.id == id);
         break;
       case 'transfer':
         transferChatList.removeWhere((chat) => chat.id == id);

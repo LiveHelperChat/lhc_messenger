@@ -10,14 +10,36 @@ class ChatNumberIndcator extends StatelessWidget{
 
   @override
   Widget build(BuildContext context) {
+
+    Map <String,IconData> icons = {
+      'Operators' : Icons.support_agent,
+      'Bot' : Icons.android,
+      'Transfer' : Icons.transfer_within_a_station,
+      'Subject' : Icons.label,
+    };
+    IconData? icon = icons.containsKey(title) ? icons[title] : Icons.message;
+
+    Map <String,Color> colors = {
+      'Operators' : Colors.green.shade400,
+      'Bot' : Colors.green.shade400,
+      'Transfer' : Colors.green.shade400,
+      'Subject' :Colors.green.shade400,
+      'Pending' :Colors.yellow.shade400,
+      'Closed' :Colors.red.shade400,
+    };
+
+    Color? colorIcon = colors.containsKey(title) ? colors[title] : Colors.green.shade400;
+
     return
       Stack(
         children: <Widget>[
           Align(
             alignment: Alignment.bottomCenter,
-            child:Text(title,textAlign: TextAlign.center,
-              style:  const TextStyle(
-                  fontSize: 12.0),),
+            child: new Icon(
+                icon,
+                size: 14,
+                color: colorIcon
+            ),
           ),
           Offstage(
             offstage: offstage,
