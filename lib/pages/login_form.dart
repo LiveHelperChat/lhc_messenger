@@ -77,6 +77,29 @@ class LoginFormState extends State<LoginForm> {
       },
     );
 
+    var loginDemoBtn = BlocBuilder<LoginformBloc, LoginformState>(
+      builder: (context, state) {
+        if (state is ServerLoginStarted) {
+          return CircularProgressIndicator();
+        } else {
+          return Container(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: new RaisedButton(
+                onPressed: () {
+                  _fillDemo(context);
+                },
+                child: new Text(
+                  "Demo logins",
+                  style: new TextStyle(color: Colors.white),
+                ),
+                color: Colors.grey.shade500,
+              ));
+        }
+      },
+    );
+
+
+
     var loginForm = Column(
       children: <Widget>[
         Form(
@@ -155,7 +178,13 @@ class LoginFormState extends State<LoginForm> {
                 },
                 //          onSaved: (val) => _password = val,
               ),
-              loginBtn,
+              Row(
+                  children: <Widget>[
+                    loginBtn,
+                    Spacer(),
+                    loginDemoBtn,
+                  ]
+              ),
               Container(
                 padding: const EdgeInsets.only(top: 8.0),
                 child: Text('* indicates required field',
@@ -215,6 +244,13 @@ class LoginFormState extends State<LoginForm> {
         }, builder: (context, state) {
       return scaffoldLoginForm;
     });
+  }
+
+  void _fillDemo(BuildContext context) async {
+    _nameController.text = 'Live Helper Chat Demo';
+    _userNameController.text = 'admin';
+    _passwordController.text = 'demo';
+    _urlController.text = 'https://demo.livehelperchat.com';
   }
 
   void _submit(BuildContext context) async {
