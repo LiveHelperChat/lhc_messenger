@@ -25,9 +25,9 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
 
-/* def keystorePropertiesFile = rootProject.file("key.properties")
+def keystorePropertiesFile = rootProject.file("key.properties")
 def keystoreProperties = new Properties()
-keystoreProperties.load(new FileInputStream(keystorePropertiesFile)) */
+keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 
 android {
     compileSdkVersion 31
@@ -45,20 +45,20 @@ android {
         applicationId "com.livehelperchat.chat"
         minSdkVersion 19
         targetSdkVersion 30
-        versionCode 38
-        versionName "1.8"
+        versionCode 40
+        versionName "2.0"
         multiDexEnabled true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 	
-	/* signingConfigs {
+	signingConfigs {
         release {
             keyAlias keystoreProperties['keyAlias']
             keyPassword keystoreProperties['keyPassword']
             storeFile file(keystoreProperties['storeFile'])
             storePassword keystoreProperties['storePassword']
         }
-	} */
+	}
 	
     buildTypes {
         release {

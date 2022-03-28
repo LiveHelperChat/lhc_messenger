@@ -30,6 +30,7 @@ class ChatListLoaded extends ChatListState {
   final List<Chat> subjectChatList;
   final List<User> operatorsChatList;
   final bool isLoading;
+  final bool userOnline;
 
   ChatListLoaded(
       {this.activeChatList = const [],
@@ -40,6 +41,7 @@ class ChatListLoaded extends ChatListState {
         this.botChatList = const [],
         this.subjectChatList = const [],
         this.operatorsChatList = const [],
+        this.userOnline = false,
         this.isLoading = false});
 
   ChatListLoaded copyWith(
@@ -51,6 +53,7 @@ class ChatListLoaded extends ChatListState {
         List<Chat>? botChatList,
         List<Chat>? subjectChatList,
         List<User>? operatorsChatList,
+        bool userOnline = false,
         bool isLoading = false}) {
     return ChatListLoaded(
         activeChatList: activeChatList ?? this.activeChatList,
@@ -61,6 +64,7 @@ class ChatListLoaded extends ChatListState {
         botChatList: botChatList ?? this.botChatList,
         subjectChatList: subjectChatList ?? this.subjectChatList,
         operatorsChatList: operatorsChatList ?? this.operatorsChatList,
+        userOnline : userOnline,
         isLoading: isLoading);
   }
 
@@ -74,6 +78,7 @@ class ChatListLoaded extends ChatListState {
     botChatList,
     subjectChatList,
     operatorsChatList,
+    userOnline,
     isLoading
   ];
 }

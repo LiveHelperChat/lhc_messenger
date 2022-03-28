@@ -170,7 +170,12 @@ class ServerApiClient {
   Future<Server> getChatLists(Server server) async {
     ParsedResponse response = await makeRequest(server, "/xml/lists", null);
    // print("getChatLists :  ${response.body.isNotEmpty}");
+
     if (response.isOk() && (response.body.isNotEmpty)) {
+
+      if (response.body['is_online'] != null && server.userOnline != response.body['is_online']) {
+        server.userOnline = response.body['is_online'];
+      }
 
       int activeSize = response.body['active_chats']['size'];
       if (activeSize > 0) {
@@ -411,14 +416,17 @@ class ServerApiClient {
   }
 
   Future<Map<String, dynamic>> getUserFromServer(Server server) async {
-    print(server.id);
+
     Map param = {};
     param["by_login"] = "1";
 
     var response = await makeRequest(server, "/restapi/getuser", param);
+
+    print(server.id);
     print("getUserFromServer");
     print(response.isOk());
     print(response.body.toString());
+
     Map<String, dynamic> user={};
     if (response.isOk() && response.body["error"].toString() == "false") {
       user = Map.castFrom(response.body['result']);

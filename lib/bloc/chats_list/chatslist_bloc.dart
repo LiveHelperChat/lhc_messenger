@@ -27,7 +27,6 @@ class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
   }
 
   Future<void> _onChatListInitialise(ChatListInitialise event,Emitter<ChatListState> emit) async {
-  //  print("ChatListInitialise");
     emit(ChatslistInitial());
   }
 
@@ -38,7 +37,7 @@ class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
         try {
           var server = await serverRepository!.fetchChatList(event.server);
 
-          emit(ChatListLoaded(
+    emit(ChatListLoaded(
               activeChatList: server.activeChatList,
               pendingChatList: server.pendingChatList,
               transferChatList: server.transferChatList,
@@ -46,7 +45,8 @@ class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
               closedChatList: server.closedChatList,
               botChatList: server.botChatList,
               subjectChatList: server.subjectChatList,
-              operatorsChatList: server.operatorsChatList
+              operatorsChatList: server.operatorsChatList,
+              userOnline: server.userOnline
           ));
         } catch (ex) {
           print("error here");
@@ -98,7 +98,8 @@ class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
             closedChatList: _sortById(closedList),
             botChatList: _sortByLastMessageTime(botList),
             subjectChatList: _sortByLastMessageTime(subjectList),
-            operatorsChatList: _sortByLastOperatorMessageTime(operatorsList)
+            operatorsChatList: _sortByLastOperatorMessageTime(operatorsList),
+            userOnline: server.userOnline
         ));
       }
     } on Exception {

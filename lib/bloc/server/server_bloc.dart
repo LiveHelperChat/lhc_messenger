@@ -79,10 +79,17 @@ class ServerBloc extends Bloc<ServerEvent, ServerState> {
             return server;
           }
         }).toList());
+
+        if (listServer.isEmpty){
+          return;
+        }
+
         emit(currentState.copyWith(
             serverList: listServer,
             isActionLoading: false,
             selectedServer: listServer.elementAt(0)));
+
+
       }
     }
   }

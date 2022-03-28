@@ -1,6 +1,6 @@
 name: livehelp
 description: A messenger for Live Helper Chat
-version: 1.0.14+14
+version: 1.0.16+16
 
 environment:
   sdk: ">=2.15.1 <3.0.0"

@@ -178,7 +178,7 @@ class ServersManageState extends State<ServersManage> with RouteAware {
         position: RelativeRect.fromRect(_tapPosition & const Size(40, 40),
             Offset.zero & overlay!.semanticBounds.size));
     // This is how you handle user selection
-      print(value);
+
       //  if (option == null) return;
       switch (value) {
         case ServerItemMenuOption.MODIFY:

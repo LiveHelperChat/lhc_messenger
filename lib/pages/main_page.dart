@@ -425,7 +425,6 @@ class _MainPageState extends State<MainPage>
           actionText: 'Reload');
     }
               */
-
                     if (state is ServerListFromDBLoaded) {
                       if (state.serverList.isNotEmpty) {
                         listServers = state.serverList;
@@ -524,49 +523,55 @@ class _MainPageState extends State<MainPage>
                                                     style: TextStyle(
                                                         color: Colors.redAccent)),
                                               ),
-                                              ListTile(
-                                                title: Text(
-                                                    "${state.selectedServer?.firstname ?? ""} ${state.selectedServer?.surname ?? ""}"),
-                                                subtitle:
-                                                state.selectedServer?.userOnline ??
-                                                    false
-                                                    ? Text(
-                                                  "Operator Online",
-                                                  style: new TextStyle(
-                                                      fontSize: 10.0),
-                                                )
-                                                    : Text("Operator Offline",
-                                                    style: new TextStyle(
-                                                        fontSize: 10.0)),
-                                                trailing: state.isActionLoading
-                                                    ? CircularProgressIndicator()
-                                                    : IconButton(
-                                                  icon: state.selectedServer
-                                                      ?.userOnline ??
-                                                      false
-                                                      ? const Icon(
-                                                    Icons.flash_on,
-                                                    color: Colors.green,
-                                                  )
-                                                      : Icon(
-                                                    Icons.flash_off,
-                                                    color: Colors.red,
-                                                  ),
-                                                  onPressed: () {
-                                                    if ((state.selectedServer
-                                                        ?.isLoggedIn ??
-                                                        false)) {
-                                                      _serverBloc!.add(
-                                                          SetUserOnlineStatus(
-                                                              server: state
-                                                                  .selectedServer!));
-                                                    } else {
-                                                      Navigator.of(context).pop();
-                                                      _showSnackBar(
-                                                          "You are not logged in to the server");
-                                                    }
-                                                  },
-                                                ),
+                                              Container(
+                                                child:
+                                                      BlocBuilder<ChatslistBloc, ChatListState>(
+                                                      builder: (context, stateList) {
+                                                        return ListTile(
+                                                          title: Text(
+                                                              "${state.selectedServer?.firstname ?? ""} ${state.selectedServer?.surname ?? ""}"),
+                                                          subtitle:
+                                                          state.selectedServer?.userOnline ??
+                                                              false
+                                                              ? Text(
+                                                            "Operator Online",
+                                                            style: new TextStyle(
+                                                                fontSize: 10.0),
+                                                          )
+                                                              : Text("Operator Offline",
+                                                              style: new TextStyle(
+                                                                  fontSize: 10.0)),
+                                                          trailing: state.isActionLoading
+                                                              ? CircularProgressIndicator()
+                                                              : IconButton(
+                                                            icon: state.selectedServer
+                                                                ?.userOnline ??
+                                                                false
+                                                                ? const Icon(
+                                                              Icons.flash_on,
+                                                              color: Colors.green,
+                                                            )
+                                                                : Icon(
+                                                              Icons.flash_off,
+                                                              color: Colors.red,
+                                                            ),
+                                                            onPressed: () {
+                                                              if ((state.selectedServer
+                                                                  ?.isLoggedIn ??
+                                                                  false)) {
+                                                                _serverBloc!.add(
+                                                                    SetUserOnlineStatus(
+                                                                        server: state
+                                                                            .selectedServer!));
+                                                              } else {
+                                                                Navigator.of(context).pop();
+                                                                _showSnackBar(
+                                                                    "You are not logged in to the server");
+                                                              }
+                                                            },
+                                                          ),
+                                                        );}
+                                                      )
                                               ),
                                             ],
                                           ),
@@ -715,7 +720,6 @@ class _MainPageState extends State<MainPage>
   }
 
   void _loadChatList() {
-   // print("reload list");
     for (var server in listServers) {
       if (server.isLoggedIn) {
         _chatListBloc?.add(FetchChatsList(server: server));
