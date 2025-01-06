@@ -9,10 +9,3 @@ project 'Runner', {
   'Profile' => :release,
   'Release' => :release,
 }
-
-# Flutter dependencies
-flutter_application_path = '../'
-load File.join(flutter_application_path, '.ios', 'Flutter', 'podhelper.rb')
-
-# Integrate Flutter framework
-flutter_ios_podfile_setup
