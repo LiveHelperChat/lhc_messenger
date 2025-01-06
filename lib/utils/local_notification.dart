@@ -1,13 +1,12 @@
-// ignore_for_file: unused_local_variable
-
 import 'dart:convert';
-import 'dart:io' show Platform;
 import 'dart:typed_data';
+import 'dart:io' show Platform;
 
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:livehelp/model/model.dart';
 import 'package:rxdart/subjects.dart';
+
+import 'package:livehelp/model/model.dart';
 
 class LocalNotificationPlugin {
   //
@@ -31,8 +30,8 @@ class LocalNotificationPlugin {
       const AndroidNotificationChannel channel = AndroidNotificationChannel(
         'com.livehelperchat.chat.channel.NEWCHAT', // id
         'New chat (background)', // title
-        description:
-            'New chat notifications while app is in the background', // description
+        description: 'New chat notifications while app is in the background',
+        // description
         importance: Importance.high,
         enableVibration: true,
         playSound: true,
@@ -43,7 +42,8 @@ class LocalNotificationPlugin {
         'com.livehelperchat.chat.channel.NEWMESSAGE', // id
         'New messages (background)', // title
         description:
-            'New chat messages notifications while app is in the background', // description
+            'New chat messages notifications while app is in the background',
+        // description
         importance: Importance.high,
         enableVibration: true,
         playSound: true,
@@ -54,7 +54,8 @@ class LocalNotificationPlugin {
         'com.livehelperchat.chat.channel.NEWGROUPMESSAGE', // id
         'New group messages (background)', // title
         description:
-            'New group messages notifications while app is in the background', // description
+            'New group messages notifications while app is in the background',
+        // description
         importance: Importance.high,
         enableVibration: true,
         playSound: true,
@@ -64,8 +65,8 @@ class LocalNotificationPlugin {
           AndroidNotificationChannel(
         'com.livehelperchat.chat.channel.SUBJECT', // id
         'New subject', // title
-        description:
-            'New subject notifications while app is in the background', // description
+        description: 'New subject notifications while app is in the background',
+        // description
         importance: Importance.high,
         enableVibration: true,
         playSound: true,
@@ -140,15 +141,18 @@ class LocalNotificationPlugin {
 
   initializePlatformSpecifics() {
     var initializationSettingsAndroid = AndroidInitializationSettings('icon');
-    // var initializationSettingsIOS = IOSInitializationSettings(
-    //   requestAlertPermission: true,
-    //   requestBadgePermission: true,
-    //   requestSoundPermission: false,
-    // );
-
-    initializationSettings = InitializationSettings(
-      android: initializationSettingsAndroid,
+    var initializationSettingsIOS = DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: false,
+      onDidReceiveLocalNotification: (id, title, body, payload) async {
+        ReceivedNotification receivedNotification = ReceivedNotification(
+            id: id, title: title!, body: body!, payload: payload);
+        didReceivedLocalNotificationSubject.add(receivedNotification);
+      },
     );
+    initializationSettings = InitializationSettings(
+        android: initializationSettingsAndroid, iOS: initializationSettingsIOS);
   }
 
   _requestIOSPermission() {
@@ -182,12 +186,11 @@ class LocalNotificationPlugin {
   }
 
   setOnNotificationClick(Function onNotificationClick) async {
-    await flutterLocalNotificationsPlugin?.initialize(
-      initializationSettings,
-      onDidReceiveNotificationResponse: (NotificationResponse response) {
-        onNotificationClick(response.payload);
-      },
-    );
+    await flutterLocalNotificationsPlugin?.initialize(initializationSettings,
+        onDidReceiveNotificationResponse:
+            (NotificationResponse notificationResponse) async {
+      onNotificationClick(notificationResponse.payload);
+    });
 
     _createDefaultNotificationChannel();
   }
@@ -249,10 +252,10 @@ class LocalNotificationPlugin {
         playSound: playSound,
         sound: const RawResourceAndroidNotificationSound('slow_spring_board'),
         styleInformation: const DefaultStyleInformation(true, true));
-    // var iOSPlatformChannelSpecifics = const IOSNotificationDetails();
+    var iOSPlatformChannelSpecifics = const DarwinNotificationDetails();
     NotificationDetails platformChannelSpecifics = NotificationDetails(
-      android: androidPlatformChannelSpecifics,
-    );
+        android: androidPlatformChannelSpecifics,
+        iOS: iOSPlatformChannelSpecifics);
 
     await flutterLocalNotificationsPlugin?.show(channel.number,
         notification.title, notification.body, platformChannelSpecifics,
@@ -295,6 +298,7 @@ class ReceivedNotification {
   final String title;
   final String body;
   String? payload;
+
   ReceivedNotification({
     required this.title,
     required this.body,
