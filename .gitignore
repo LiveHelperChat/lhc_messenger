@@ -32,3 +32,4 @@ ios/.generated/
 .history
 .flutter-plugins-dependencies
 ios/Flutter/flutter_export_environment.sh
+android/app/.cxx

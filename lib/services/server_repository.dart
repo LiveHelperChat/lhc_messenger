@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:livehelp/data/database.dart';
+import 'package:livehelp/model/file_upload_response.dart';
 import 'package:livehelp/model/model.dart';
 import 'package:livehelp/services/server_api_client.dart';
 
@@ -20,6 +22,7 @@ class ServerRepository {
   }
 
   Future<Server> loginServer(Server server) {
+    
     return serverApiClient.login(server);
   }
 
@@ -69,8 +72,27 @@ class ServerRepository {
     return serverApiClient.syncOperatorsMessages(server, chat, lastMsgId);
   }
 
-  Future<bool> postMesssage(Server server, Chat chat, String msg) {
-    return serverApiClient.postMesssage(server, chat, msg);
+  Future<bool> postMesssage(Server server, Chat chat, String msg,{String? sender}) {
+    return serverApiClient.postMesssage(server, chat, msg,sender: sender);
+  }
+
+  //upload file
+  Future<FileUploadResponse?> uploadFile(
+    Server server,
+    File file, {
+    String? namePrepend,
+    String? nameReplace,
+    bool? persistent,
+    int? chatId,
+  }) {
+    return serverApiClient.uploadFile(
+      server,
+      file,
+      namePrepend: namePrepend,
+      nameReplace: nameReplace,
+      persistent: persistent,
+      chatId: chatId,
+    );
   }
 
   Future<bool> postOperatorsMesssage(Server server, User chat, String msg) {
@@ -79,30 +101,30 @@ class ServerRepository {
   }
 
   Future<bool> closeChat(
-      Server server,
-      Chat chat,
-      ) {
+    Server server,
+    Chat chat,
+  ) {
     return serverApiClient.closeChat(server, chat);
   }
 
   Future<bool> closeOperatorsChat(
-      Server server,
-      User chat,
-      ) {
+    Server server,
+    User chat,
+  ) {
     return serverApiClient.closeOperatorsChat(server, chat);
   }
 
   Future<bool> deleteChat(
-      Server server,
-      Chat chat,
-      ) {
+    Server server,
+    Chat chat,
+  ) {
     return serverApiClient.deleteChat(server, chat);
   }
 
   Future<bool> deleteOperatorsChat(
-      Server server,
-      User chat,
-      ) {
+    Server server,
+    User chat,
+  ) {
     return serverApiClient.deleteOperatorsChat(server, chat);
   }
 

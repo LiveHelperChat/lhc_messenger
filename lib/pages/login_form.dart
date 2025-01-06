@@ -2,17 +2,15 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:http/http.dart' as http;
-
 import 'package:flutter_bloc/flutter_bloc.dart';
-
+import 'package:http/http.dart' as http;
 import 'package:livehelp/bloc/bloc.dart';
-
-import 'package:livehelp/model/model.dart';
 import 'package:livehelp/data/database.dart';
+import 'package:livehelp/main.dart';
+import 'package:livehelp/model/model.dart';
+import 'package:livehelp/pages/main_page.dart';
 import 'package:livehelp/services/server_api_client.dart';
 import 'package:livehelp/utils/utils.dart';
-import 'package:livehelp/pages/main_page.dart';
 
 const TIMEOUT = const Duration(seconds: 5);
 
@@ -56,53 +54,42 @@ class LoginFormState extends State<LoginForm> {
   //
   @override
   Widget build(BuildContext context) {
-    var loginBtn = BlocBuilder<LoginformBloc, LoginformState>(
-      builder: (context, state) {
-        if (state is ServerLoginStarted) {
-          return CircularProgressIndicator();
-        } else {
-          return Container(
-              padding: const EdgeInsets.only(top: 8.0),
-              child: new ElevatedButton(
-                onPressed: () {
-                  _submit(context);
-                },
-                child: new Text(
-                  "LOGIN",
-                  style: new TextStyle(color: Colors.white),
-                ),
-                  style: ElevatedButton.styleFrom(
-                      primary: Theme.of(context).primaryColor, // Background color
-                  )
-              ));
-        }
-      },
-    );
+    var loginBtn = Container(
+        width: 150,
+        padding: const EdgeInsets.only(top: 8.0),
+        child: new ElevatedButton(
+          style: ButtonStyle(
+            backgroundColor: WidgetStateProperty.resolveWith(
+              (states) => Colors.grey.shade500,
+            ),
+          ),
+          onPressed: () {
+            _submit(context);
+          },
+          child: new Text(
+            "LOGIN",
+            style: new TextStyle(color: Colors.white),
+          ),
+        ));
 
-    var loginDemoBtn = BlocBuilder<LoginformBloc, LoginformState>(
-      builder: (context, state) {
-        if (state is ServerLoginStarted) {
-          return CircularProgressIndicator();
-        } else {
-          return Container(
-              padding: const EdgeInsets.only(top: 8.0),
-              child: new ElevatedButton(
-                onPressed: () {
-                  _fillDemo(context);
-                },
-                child: new Text(
-                  "Demo logins",
-                  style: new TextStyle(color: Colors.white),
-                ),
-                style: ElevatedButton.styleFrom(
-                                      primary: Colors.grey.shade500, // Background color
-                                  )
-              ));
-        }
-      },
-    );
-
-
+    var loginDemoBtn = Container(
+        width: 150,
+        padding: const EdgeInsets.only(top: 8.0),
+        child: new ElevatedButton(
+          style: ButtonStyle(
+            backgroundColor: WidgetStateProperty.resolveWith(
+              (states) => Colors.grey.shade500,
+            ),
+          ),
+          onPressed: () {
+            _fillDemo(context);
+          },
+          child: new Text(
+            "Demo logins",
+            style: new TextStyle(color: Colors.white),
+          ),
+          // color: Colors.grey.shade500,
+        ));
 
     var loginForm = Column(
       children: <Widget>[
@@ -146,7 +133,7 @@ class LoginFormState extends State<LoginForm> {
                   children: <Widget>[
                     Checkbox(
                         value: _checkBoxUrlHasIndex,
-                        onChanged:(bool? value) {
+                        onChanged: (bool? value) {
                           onCheckBoxUrlHasIndexChanged(value!);
                         }),
                     Text('Append index.php to address'),
@@ -182,18 +169,33 @@ class LoginFormState extends State<LoginForm> {
                 },
                 //          onSaved: (val) => _password = val,
               ),
-              Row(
-                  children: <Widget>[
-                    loginBtn,
-                    Spacer(),
-                    loginDemoBtn,
-                  ]
+              SizedBox(
+                height: 10,
               ),
               Container(
                 padding: const EdgeInsets.only(top: 8.0),
                 child: Text('* indicates required field',
                     style: Theme.of(context).textTheme.bodySmall),
               ),
+              SizedBox(
+                height: 10,
+              ),
+              BlocBuilder<LoginformBloc, LoginformState>(
+                  builder: (context, state) {
+                if (state is ServerLoginStarted) {
+                  return CircularProgressIndicator();
+                } else {
+                  return Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        loginBtn,
+                        SizedBox(
+                          width: 10,
+                        ),
+                        loginDemoBtn,
+                      ]);
+                }
+              })
             ],
           ),
         ),
@@ -202,6 +204,7 @@ class LoginFormState extends State<LoginForm> {
     );
 
     var scaffoldLoginForm = Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: Text("Login"),
         centerTitle: true,
@@ -216,9 +219,9 @@ class LoginFormState extends State<LoginForm> {
             child: Container(
               decoration: new BoxDecoration(color: Colors.white),
               child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 30),
                 child: loginForm,
-                height: 450.0,
-                width: 300.0,
+                width: MediaQuery.of(context).size.width,
               ),
             )),
       ),
@@ -226,26 +229,27 @@ class LoginFormState extends State<LoginForm> {
 
     return BlocConsumer<LoginformBloc, LoginformState>(
         listener: (context, state) {
-          if (state is ServerLoginError) {
-            //Show Error message
-            _showSnackBar(state.message!);
-          }
-          if (state is LoginServerSelected) {
-            _currentServer = state.server;
-          }
-          if (state is ServerLoginSuccess) {
-            SchedulerBinding.instance.addPostFrameCallback((_) {
-              Navigator.of(context).pushAndRemoveUntil(
-                  FadeRoute(
-                    builder: (BuildContext context) => MainPage(),
-                    settings: RouteSettings(
-                      name: AppRoutes.home,
-                    ),
-                  ),
-                      (Route<dynamic> route) => false);
-            });
-          }
-        }, builder: (context, state) {
+      if (state is ServerLoginError) {
+        //Show Error message
+        _showSnackBar(state.message!);
+      }
+      if (state is LoginServerSelected) {
+        _currentServer = state.server;
+      }
+      if (state is ServerLoginSuccess) {
+        SchedulerBinding.instance.addPostFrameCallback((_) {
+          sharedPreferences?.setBool("isLoggedIn", true);
+          Navigator.of(context).pushAndRemoveUntil(
+              FadeRoute(
+                builder: (BuildContext context) => MainPage(),
+                settings: RouteSettings(
+                  name: AppRoutes.home,
+                ),
+              ),
+              (Route<dynamic> route) => false);
+        });
+      }
+    }, builder: (context, state) {
       return scaffoldLoginForm;
     });
   }
@@ -295,8 +299,8 @@ class LoginFormState extends State<LoginForm> {
   }
 
   void _showSnackBar(String text) {
-    //_scaffoldKey.currentState?.of(context).showSnackBar(new SnackBar(content: new Text(text)));
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+    ScaffoldMessenger.of(_scaffoldKey.currentContext!)
+        .showSnackBar(SnackBar(content: Text(text)));
   }
 
   void onCheckBoxUrlHasIndexChanged(bool value) {
@@ -312,20 +316,20 @@ class LoginFormState extends State<LoginForm> {
     return id;
   }
 
-  void _showAlertMsg(String title, String msg) {
-    SimpleDialog dialog = new SimpleDialog(
-      title: new Text(
-        title,
-        style: new TextStyle(fontSize: 14.0),
-      ),
-      children: <Widget>[
-        new Text(
-          msg,
-          style: new TextStyle(fontSize: 14.0),
-        )
-      ],
-    );
+  // void _showAlertMsg(String title, String msg) {
+  //   SimpleDialog dialog = new SimpleDialog(
+  //     title: new Text(
+  //       title,
+  //       style: new TextStyle(fontSize: 14.0),
+  //     ),
+  //     children: <Widget>[
+  //       new Text(
+  //         msg,
+  //         style: new TextStyle(fontSize: 14.0),
+  //       )
+  //     ],
+  //   );
 
-    showDialog(context: context, builder: (BuildContext context) => dialog);
-  }
+  //   showDialog(context: context, builder: (BuildContext context) => dialog);
+  // }
 }

@@ -1,4 +1,3 @@
-
 class NotificationChannel {
   final String id, name, description;
   final int number;

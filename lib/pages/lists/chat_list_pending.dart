@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:livehelp/bloc/bloc.dart';
-
 import 'package:livehelp/model/model.dart';
-import 'package:livehelp/widget/widget.dart';
-import 'package:livehelp/utils/utils.dart';
-
 import 'package:livehelp/utils/routes.dart' as LHCRouter;
+import 'package:livehelp/utils/utils.dart';
+import 'package:livehelp/widget/widget.dart';
 
 class PendingListWidget extends StatefulWidget {
   const PendingListWidget(
@@ -26,7 +24,6 @@ class PendingListWidget extends StatefulWidget {
 }
 
 class _PendingListWidgetState extends State<PendingListWidget> {
-
   @override
   void initState() {
     super.initState();
@@ -34,8 +31,7 @@ class _PendingListWidgetState extends State<PendingListWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<ChatslistBloc, ChatListState>(
-        builder: (context, state) {
+    return BlocBuilder<ChatslistBloc, ChatListState>(builder: (context, state) {
       if (state is ChatslistInitial) {
         return const Center(child: CircularProgressIndicator());
       }

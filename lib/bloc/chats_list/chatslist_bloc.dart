@@ -2,39 +2,36 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
-
 import 'package:livehelp/model/model.dart';
 import 'package:livehelp/services/server_repository.dart';
-
 
 part 'chatslist_event.dart';
 part 'chatslist_state.dart';
 
-
-
-
 class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
   final ServerRepository? serverRepository;
 
-  ChatslistBloc({this.serverRepository}) : super(ChatslistInitial()){
+  ChatslistBloc({this.serverRepository}) : super(ChatslistInitial()) {
     on<ChatListInitialise>(_onChatListInitialise);
     on<FetchChatsList>(_onFetchChatsList);
     on<CloseChatMainPage>(_onCloseChatMainPage);
     on<DeleteChatMainPage>(_onDeleteChatMainPage);
   }
 
-  Future<void> _onChatListInitialise(ChatListInitialise event,Emitter<ChatListState> emit) async {
+  Future<void> _onChatListInitialise(
+      ChatListInitialise event, Emitter<ChatListState> emit) async {
     emit(ChatslistInitial());
   }
 
-  Future<void> _onFetchChatsList(FetchChatsList event,Emitter<ChatListState> emit) async {
+  Future<void> _onFetchChatsList(
+      FetchChatsList event, Emitter<ChatListState> emit) async {
     final currentState = state;
     try {
       if (currentState is ChatslistInitial) {
         try {
           var server = await serverRepository!.fetchChatList(event.server);
 
-    emit(ChatListLoaded(
+          emit(ChatListLoaded(
               activeChatList: server.activeChatList,
               pendingChatList: server.pendingChatList,
               transferChatList: server.transferChatList,
@@ -43,8 +40,7 @@ class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
               botChatList: server.botChatList,
               subjectChatList: server.subjectChatList,
               operatorsChatList: server.operatorsChatList,
-              userOnline: server.userOnline
-          ));
+              userOnline: server.userOnline));
         } catch (ex) {
           print("error here");
           print(ex.toString());
@@ -60,33 +56,34 @@ class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
         List<Chat> transferChats = List.from(currentState.transferChatList);
         List<Chat> twilioChats = List.from(currentState.twilioChatList);
         List<Chat> closedChats = List.from(currentState.closedChatList);
-        List<Chat> botChats  = List.from(currentState.botChatList);
-        List<Chat> subjectChats  = List.from(currentState.subjectChatList);
-        List<User> operatorsChatChats = List.from(currentState.operatorsChatList);
+        List<Chat> botChats = List.from(currentState.botChatList);
+        List<Chat> subjectChats = List.from(currentState.subjectChatList);
+        List<User> operatorsChatChats =
+            List.from(currentState.operatorsChatList);
 
         List<Chat> activeList =
-        await _cleanList(ChatListName.active, server, activeChats);
+            await _cleanList(ChatListName.active, server, activeChats);
 
         List<Chat> closedList =
-        await _cleanList(ChatListName.closed, server, closedChats);
+            await _cleanList(ChatListName.closed, server, closedChats);
 
         List<Chat> botList =
-        await _cleanList(ChatListName.bot, server, botChats);
+            await _cleanList(ChatListName.bot, server, botChats);
 
         List<Chat> subjectList =
-        await _cleanList(ChatListName.subject, server, subjectChats);
+            await _cleanList(ChatListName.subject, server, subjectChats);
 
-        List<User> operatorsList =
-        await _cleanListOperator(ChatListName.operators, server, operatorsChatChats);
+        List<User> operatorsList = await _cleanListOperator(
+            ChatListName.operators, server, operatorsChatChats);
 
         List<Chat> pendingList =
-        await _cleanList(ChatListName.pending, server, pendingChats);
+            await _cleanList(ChatListName.pending, server, pendingChats);
 
         List<Chat> transferList =
-        await _cleanList(ChatListName.transfer, server, transferChats);
+            await _cleanList(ChatListName.transfer, server, transferChats);
 
         List<Chat> twilioList =
-        await _cleanList(ChatListName.twilio, server, twilioChats);
+            await _cleanList(ChatListName.twilio, server, twilioChats);
         emit(ChatListLoaded(
             activeChatList: _sortByLastMessageTime(activeList),
             pendingChatList: pendingList,
@@ -96,21 +93,21 @@ class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
             botChatList: _sortByLastMessageTime(botList),
             subjectChatList: _sortByLastMessageTime(subjectList),
             operatorsChatList: _sortByLastOperatorMessageTime(operatorsList),
-            userOnline: server.userOnline
-        ));
+            userOnline: server.userOnline));
       }
     } on Exception {
       emit(ChatListLoadError(message: "Chat list could not be loaded"));
     }
   }
 
-  Future<void> _onCloseChatMainPage(CloseChatMainPage event,Emitter<ChatListState> emit) async {
+  Future<void> _onCloseChatMainPage(
+      CloseChatMainPage event, Emitter<ChatListState> emit) async {
     final currentState = state;
     if (currentState is ChatListLoaded) {
       emit(currentState.copyWith(isLoading: true));
       try {
-          await serverRepository!.closeChat(event.server, event.chat);
-          add(FetchChatsList(server: event.server));
+        await serverRepository!.closeChat(event.server, event.chat);
+        add(FetchChatsList(server: event.server));
         emit(currentState.copyWith(isLoading: false));
       } catch (ex) {
         emit(currentState.copyWith(isLoading: false));
@@ -119,13 +116,14 @@ class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
     }
   }
 
-  Future<void> _onDeleteChatMainPage(DeleteChatMainPage event,Emitter<ChatListState> emit) async {
+  Future<void> _onDeleteChatMainPage(
+      DeleteChatMainPage event, Emitter<ChatListState> emit) async {
     final currentState = state;
     if (currentState is ChatListLoaded) {
       emit(currentState.copyWith(isLoading: true));
       try {
-          await serverRepository!.deleteChat(event.server, event.chat);
-          add(FetchChatsList(server: event.server));
+        await serverRepository!.deleteChat(event.server, event.chat);
+        add(FetchChatsList(server: event.server));
         emit(currentState.copyWith(isLoading: false));
       } catch (ex) {
         emit(currentState.copyWith(isLoading: false));
@@ -133,12 +131,11 @@ class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
       }
     }
   }
-
 
   Future<List<Server>> getChatList() async {
     // No logged in server
     var listServers =
-    await serverRepository!.getServersFromDB(onlyLoggedIn: true);
+        await serverRepository!.getServersFromDB(onlyLoggedIn: true);
 
     List<Server> serverList = <Server>[];
 
@@ -163,7 +160,7 @@ class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
           }
         } else {
           listToClean =
-          await _updateChatList(listToClean, server.activeChatList);
+              await _updateChatList(listToClean, server.activeChatList);
         }
         return listToClean;
 
@@ -174,7 +171,7 @@ class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
           }
         } else {
           listToClean =
-          await _updateChatList(listToClean, server.pendingChatList);
+              await _updateChatList(listToClean, server.pendingChatList);
         }
         return listToClean;
 
@@ -184,8 +181,7 @@ class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
             listToClean.removeWhere((chat) => chat.serverid == server.id);
           }
         } else {
-          listToClean =
-          await _updateChatList(listToClean, server.botChatList);
+          listToClean = await _updateChatList(listToClean, server.botChatList);
         }
         return listToClean;
 
@@ -196,7 +192,7 @@ class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
           }
         } else {
           listToClean =
-          await _updateChatList(listToClean, server.subjectChatList);
+              await _updateChatList(listToClean, server.subjectChatList);
         }
         return listToClean;
 
@@ -207,7 +203,7 @@ class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
           }
         } else {
           listToClean =
-          await _updateChatList(listToClean, server.closedChatList);
+              await _updateChatList(listToClean, server.closedChatList);
         }
         return listToClean;
 
@@ -218,7 +214,7 @@ class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
           }
         } else {
           listToClean =
-          await _updateChatList(listToClean, server.transferChatList);
+              await _updateChatList(listToClean, server.transferChatList);
         }
         return listToClean;
 
@@ -229,11 +225,12 @@ class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
           }
         } else {
           listToClean =
-          await _updateChatList(listToClean, server.twilioChatList);
+              await _updateChatList(listToClean, server.twilioChatList);
         }
         return listToClean;
+      default:
+        return listToClean;
     }
-    return listToClean;
   }
 
   Future<List<User>> _cleanListOperator(
@@ -246,11 +243,12 @@ class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
           }
         } else {
           listToClean =
-          await _updateOperatorList(listToClean, server.operatorsChatList);
+              await _updateOperatorList(listToClean, server.operatorsChatList);
         }
         return listToClean;
+      default:
+        return listToClean;
     }
-    return listToClean;
   }
 
   Future<List<User>> _updateOperatorList(
@@ -258,10 +256,10 @@ class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
     List<User> resultList = chatToUpdate;
 
     await Future.forEach(listFromServer, (User map) async {
-      if (resultList
-          .any((chat) => chat.user_id == map.user_id && chat.serverid == map.serverid)) {
-        int index = resultList.indexWhere(
-                (chat) => chat.user_id == map.user_id && chat.serverid == map.serverid);
+      if (resultList.any((chat) =>
+          chat.user_id == map.user_id && chat.serverid == map.serverid)) {
+        int index = resultList.indexWhere((chat) =>
+            chat.user_id == map.user_id && chat.serverid == map.serverid);
         resultList[index] = map;
       } else {
         resultList.add(map);
@@ -278,7 +276,7 @@ class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
       if (resultList
           .any((chat) => chat.id == map.id && chat.serverid == map.serverid)) {
         int index = resultList.indexWhere(
-                (chat) => chat.id == map.id && chat.serverid == map.serverid);
+            (chat) => chat.id == map.id && chat.serverid == map.serverid);
         resultList[index] = map;
       } else {
         resultList.add(map);
@@ -313,7 +311,7 @@ class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
       int? serverIdIncoming = listToCompare.first.serverid;
       resultList.asMap().forEach((index, chat) {
         if (!listToCompare.any(
-                (map) => map.id == chat.id && chat.serverid == chat.serverid)) {
+            (map) => map.id == chat.id && chat.serverid == chat.serverid)) {
           //assume listToCompare belongs to a single server
           if (chat.serverid == serverIdIncoming) {
             removedIndices.add(index);
@@ -339,8 +337,8 @@ class ChatslistBloc extends Bloc<ChatslistEvent, ChatListState> {
 
       int? serverIdIncoming = listToCompare.first.serverid;
       resultList.asMap().forEach((index, chat) {
-        if (!listToCompare.any(
-                (map) => map.user_id == chat.user_id && chat.serverid == chat.serverid)) {
+        if (!listToCompare.any((map) =>
+            map.user_id == chat.user_id && chat.serverid == chat.serverid)) {
           //assume listToCompare belongs to a single server
           if (chat.serverid == serverIdIncoming) {
             removedIndices.add(index);

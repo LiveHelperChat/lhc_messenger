@@ -9,21 +9,23 @@ part 'loginform_event.dart';
 part 'loginform_state.dart';
 
 class LoginformBloc extends Bloc<LoginformEvent, LoginformState> {
-  LoginformBloc({required this.serverRepository}) : super(LoginformInitial()){
+  LoginformBloc({required this.serverRepository}) : super(LoginformInitial()) {
     on<SetServerLoginError>(_onSetServerLoginError);
     on<ServerLogin>(_onServerLogin);
   }
 
   final ServerRepository serverRepository;
 
-  Future<void> _onSetServerLoginError(SetServerLoginError event, Emitter<LoginformState> emit) async {
+  Future<void> _onSetServerLoginError(
+      SetServerLoginError event, Emitter<LoginformState> emit) async {
     emit(ServerLoginError(message: event.message));
   }
 
-  Future<void> _onServerLogin(ServerLogin event, Emitter<LoginformState> emit) async {
+  Future<void> _onServerLogin(
+      ServerLogin event, Emitter<LoginformState> emit) async {
     emit(ServerLoginStarted());
-    final server=event.server;
-    final fcmToken=event.fcmToken!;
+    final server = event.server;
+    final fcmToken = event.fcmToken!;
     try {
       bool isNew = false;
       //  await updateToken(recToken);
@@ -32,8 +34,8 @@ class LoginformBloc extends Bloc<LoginformEvent, LoginformState> {
       // check if server already exists
       if (savedServersList.isNotEmpty) {
         Server found = savedServersList.firstWhere(
-                (srvr) =>
-            (srvr.url == server.url && srvr.username == server.username) ||
+            (srvr) =>
+                (srvr.url == server.url && srvr.username == server.username) ||
                 srvr.servername == server.servername,
             orElse: () => Server());
 
@@ -53,14 +55,14 @@ class LoginformBloc extends Bloc<LoginformEvent, LoginformState> {
 
       emit(ServerLoginFinished());
       if (srv.isLoggedIn) {
-        srv.twilioInstalled =
-        await serverRepository.isExtensionInstalled(srv, "twilio");
+        srv.twilioInstalled = await serverRepository.isExtensionInstalled(srv, "twilio");
+        srv.fbInstalled = await serverRepository.isExtensionInstalled(srv, "fbmessenger");
 
         // we use this to fetch the already saved serverid
         srv = isNew
-            ? await serverRepository.saveServerToDB(srv,null, [])
+            ? await serverRepository.saveServerToDB(srv, null, [])
             : await serverRepository.saveServerToDB(
-            srv, "${Server.columns['db_id']} = ? ", [srv.id]);
+                srv, "${Server.columns['db_id']} = ? ", [srv.id]);
 
         // fetch installation id
         // used for unique identification

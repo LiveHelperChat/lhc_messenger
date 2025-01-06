@@ -10,9 +10,9 @@ class ErrorReloadButton extends StatelessWidget {
   final Function onButtonPress;
   const ErrorReloadButton(
       {Key? key,
-        this.child,
-        required this.onButtonPress,
-        required this.actionText})
+      this.child,
+      required this.onButtonPress,
+      required this.actionText})
       : super(key: key);
 
   @override
@@ -21,11 +21,13 @@ class ErrorReloadButton extends StatelessWidget {
         child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              child ?? Container(),
-              ElevatedButton(
-                child: Text(actionText),
-                onPressed: (){onButtonPress();},
-              ),
-            ]));
+          child ?? Container(),
+          ElevatedButton(
+            child: Text(actionText),
+            onPressed: () {
+              onButtonPress();
+            },
+          ),
+        ]));
   }
 }

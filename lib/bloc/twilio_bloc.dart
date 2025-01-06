@@ -12,13 +12,10 @@ class TwilioBloc extends Bloc<TwilioEvent, TwilioState> {
   final ServerRepository? serverRepository;
   final DatabaseHelper? databaseHelper;
   TwilioBloc({this.serverRepository, this.databaseHelper})
-      : super(TwilioInitial()){
+      : super(TwilioInitial()) {
     on(mapEventToState);
   }
 
   Future<void> mapEventToState(
-    TwilioEvent event, Emitter<TwilioState> emit
-  ) async {
-    // TODO: implement mapEventToState
-  }
+      TwilioEvent event, Emitter<TwilioState> emit) async {}
 }

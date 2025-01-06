@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
 class AnimateExpanded extends StatefulWidget {
-  AnimateExpanded({required this.title,required this.subtitle,required this.contentWidgetList});
+  AnimateExpanded(
+      {required this.title,
+      required this.subtitle,
+      required this.contentWidgetList});
   final String title;
   final String subtitle;
   final List<Widget> contentWidgetList;
@@ -10,11 +13,10 @@ class AnimateExpanded extends StatefulWidget {
 }
 
 class _AnimateExpandedState extends State<AnimateExpanded> {
-
   bool _isExpanded = false;
   @override
   Widget build(BuildContext context) {
-    return  SingleChildScrollView(
+    return SingleChildScrollView(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
@@ -24,14 +26,28 @@ class _AnimateExpandedState extends State<AnimateExpanded> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: <Widget>[
-                  Expanded(child:  ListTile(
-                    title: Text(widget.title),
-                    subtitle:Text(widget.subtitle,style: new TextStyle(fontSize: 10.0),overflow: TextOverflow.fade,),
-                    trailing:IconButton(icon: _isExpanded ? new Icon(Icons.keyboard_arrow_up) :new Icon(Icons.keyboard_arrow_down) , onPressed: () {
-                      setState((){
-                        this._isExpanded ? this._isExpanded =false :this._isExpanded =true;
-                      });
-                    },) ,),),
+                  Expanded(
+                    child: ListTile(
+                      title: Text(widget.title),
+                      subtitle: Text(
+                        widget.subtitle,
+                        style: new TextStyle(fontSize: 10.0),
+                        overflow: TextOverflow.fade,
+                      ),
+                      trailing: IconButton(
+                        icon: _isExpanded
+                            ? new Icon(Icons.keyboard_arrow_up)
+                            : new Icon(Icons.keyboard_arrow_down),
+                        onPressed: () {
+                          setState(() {
+                            this._isExpanded
+                                ? this._isExpanded = false
+                                : this._isExpanded = true;
+                          });
+                        },
+                      ),
+                    ),
+                  ),
                   /*       new Expanded(
                      child:new Padding(
                          padding:const EdgeInsets.all(12.0),

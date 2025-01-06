@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -6,10 +8,10 @@ import 'package:livehelp/utils/utils.dart';
 class OfficeTimePicker extends StatefulWidget {
   OfficeTimePicker(
       {required this.isChecked,
-        required this.startTime,
-        required this.endTime,
-        required this.startTimeChanged,
-        required this.endTimeChanged});
+      required this.startTime,
+      required this.endTime,
+      required this.startTimeChanged,
+      required this.endTimeChanged});
 
   final ValueChanged<String> startTimeChanged;
   final ValueChanged<String> endTimeChanged;
@@ -58,7 +60,7 @@ class _OfficeTimePickerState extends State<OfficeTimePicker> {
           child: new ButtonBar(
             alignment: MainAxisAlignment.start,
             children: <Widget>[
-              new TextButton (
+              new TextButton(
                 child: new Text('From: $_startString'),
                 onPressed: () {
                   _selectTime(context, _startTime!).then((val) {
@@ -110,13 +112,13 @@ class _OfficeTimePickerState extends State<OfficeTimePicker> {
   Future<TimeOfDay> _selectTime(
       BuildContext context, TimeOfDay initialTime) async {
     final TimeOfDay? picked =
-    await showTimePicker(context: context, initialTime: initialTime);
+        await showTimePicker(context: context, initialTime: initialTime);
 
     return picked ?? new TimeOfDay(hour: 0, minute: 0);
   }
 
   TimeOfDay _parseTimeOfDay(String value) {
-    if (value!='') {
+    if (value != '') {
       String padded = "00";
       if (int.parse(value) >= 0) {
         padded = value.padLeft(4, '0');

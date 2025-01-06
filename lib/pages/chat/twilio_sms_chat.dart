@@ -1,11 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-
 import 'package:flutter_bloc/flutter_bloc.dart';
-
-import 'package:livehelp/model/model.dart';
 import 'package:livehelp/data/database.dart';
+import 'package:livehelp/model/model.dart';
 import 'package:livehelp/services/server_repository.dart';
 
 class TwilioSMSChat extends StatefulWidget {
@@ -25,14 +23,14 @@ class TwilioSMSChatState extends State<TwilioSMSChat> {
   final _scrollViewKey = GlobalKey<ScaffoldState>();
 
   static final TextEditingController _phoneNumberController =
-  TextEditingController();
+      TextEditingController();
   static final TextEditingController _messageController =
-  TextEditingController();
+      TextEditingController();
 
   Server? _currentServer;
   TwilioPhone? _selectedPhone;
 
-  List<TwilioPhone> twilioPhonesList =List<TwilioPhone>.empty();
+  List<TwilioPhone> twilioPhonesList = List<TwilioPhone>.empty();
   DatabaseHelper? dbHelper;
   ServerRepository? _serverRepository;
 
@@ -52,7 +50,7 @@ class TwilioSMSChatState extends State<TwilioSMSChat> {
   Widget build(BuildContext context) {
     var sendBtn = Container(
         padding: const EdgeInsets.only(top: 8.0),
-        child: ElevatedButton (
+        child: ElevatedButton(
           onPressed: () {
             _submit();
           },
@@ -60,9 +58,7 @@ class TwilioSMSChatState extends State<TwilioSMSChat> {
             "Send Twilio SMS",
             style: new TextStyle(color: Colors.white),
           ),
-          style: ElevatedButton.styleFrom(
-              primary: Theme.of(context).primaryColor, // Background color
-          )
+          // color: Theme.of(context).primaryColor,
         ));
     var messageForm = Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -210,8 +206,8 @@ class TwilioSMSChatState extends State<TwilioSMSChat> {
   }
 
   void _showSnackBar(String text) {
-   //_scaffoldKey.currentState!.showSnackBar(SnackBar(content: Text(text)));
-   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+    ScaffoldMessenger.of(_scaffoldKey.currentContext!)
+        .showSnackBar(SnackBar(content: Text(text)));
   }
 
   void onCheckBoxChanged(bool? value) {
@@ -245,9 +241,9 @@ Future<void> _ackAlert(BuildContext context) {
       return AlertDialog(
         title: Text('Twilio Phone'),
         content:
-        const Text('Please configure a Phone number in Twilio extension.'),
+            const Text('Please configure a Phone number in Twilio extension.'),
         actions: <Widget>[
-          TextButton(
+          ElevatedButton(
             child: Text('Ok'),
             onPressed: () {
               Navigator.of(context).pop();
