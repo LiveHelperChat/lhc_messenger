@@ -1,3 +1,5 @@
+// ignore_for_file: unused_field
+
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -9,11 +11,10 @@ class S extends WidgetsLocalizations {
 
   S(this._locale) {
     _lang = getLang(_locale!);
-    // print('Current locale: $_lang');
   }
 
   static final GeneratedLocalizationsDelegate delegate =
-  new GeneratedLocalizationsDelegate();
+      GeneratedLocalizationsDelegate();
 
   static S of(BuildContext context) {
     var s = Localizations.of<S>(context, WidgetsLocalizations);
@@ -24,23 +25,41 @@ class S extends WidgetsLocalizations {
   @override
   TextDirection get textDirection => TextDirection.ltr;
 
+  // Implement required abstract methods
+  @override
+  String get reorderItemDown => 'Reorder Item Down';
+  @override
+  String get reorderItemLeft => 'Reorder Item Left';
+  @override
+  String get reorderItemRight => 'Reorder Item Right';
+  @override
+  String get reorderItemToEnd => 'Reorder Item To End';
+  @override
+  String get reorderItemToStart => 'Reorder Item To Start';
+  @override
+  String get reorderItemUp => 'Reorder Item Up'; // Added this
+  String get cut => 'Cut';
+  String get copy => 'Copy';
+  String get paste => 'Paste';
+
+  String get selectAll => 'Select All';
 }
 
 class en extends S {
   en(Locale locale) : super(locale);
 }
-class GeneratedLocalizationsDelegate extends LocalizationsDelegate<WidgetsLocalizations> {
+
+class GeneratedLocalizationsDelegate
+    extends LocalizationsDelegate<WidgetsLocalizations> {
   const GeneratedLocalizationsDelegate();
 
   List<Locale> get supportedLocales {
-    return [
-      new Locale("en", ""),
-    ];
+    return [Locale("en", "")];
   }
 
   LocaleResolutionCallback resolution({Locale? fallback}) {
     return (Locale? locale, Iterable<Locale> supported) {
-      var languageLocale = new Locale(locale!.languageCode, "");
+      var languageLocale = Locale(locale!.languageCode, "");
       if (supported.contains(locale))
         return locale;
       else if (supported.contains(languageLocale))
@@ -52,18 +71,21 @@ class GeneratedLocalizationsDelegate extends LocalizationsDelegate<WidgetsLocali
     };
   }
 
+  @override
   Future<WidgetsLocalizations> load(Locale locale) {
     String lang = getLang(locale);
     switch (lang) {
       case "en":
-        return new SynchronousFuture<WidgetsLocalizations>(new en(locale));
+        return SynchronousFuture<WidgetsLocalizations>(en(locale));
       default:
-        return new SynchronousFuture<WidgetsLocalizations>(new S(locale));
+        return SynchronousFuture<WidgetsLocalizations>(S(locale));
     }
   }
 
+  @override
   bool isSupported(Locale locale) => supportedLocales.contains(locale);
 
+  @override
   bool shouldReload(GeneratedLocalizationsDelegate old) => false;
 }
 

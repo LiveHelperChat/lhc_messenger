@@ -1,7 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:livehelp/model/model.dart';
-
 import 'package:livehelp/pages/pages.dart';
 
 class AppRoutes {
@@ -30,8 +29,8 @@ class FadeRoute<T> extends MaterialPageRoute<T> {
   bool isInitialRoute;
   FadeRoute(
       {WidgetBuilder? builder,
-        RouteSettings? settings,
-        this.isInitialRoute = false})
+      RouteSettings? settings,
+      this.isInitialRoute = false})
       : super(builder: builder!, settings: settings);
 
   @override
@@ -57,14 +56,14 @@ class Router {
       default:
         return MaterialPageRoute(
             builder: (_) => Scaffold(
-              body: Center(
-                  child: Text('No route defined for ${settings.name}')),
-            ));
+                  body: Center(
+                      child: Text('No route defined for ${settings.name}')),
+                ));
     }
   }
 
-  static Route<dynamic> generateRouteChatPage(RouteSettings settings, Chat? chat,
-      Server? server, bool isNewChat, Function refreshList) {
+  static Route<dynamic> generateRouteChatPage(RouteSettings settings,
+      Chat? chat, Server? server, bool isNewChat, Function refreshList) {
     return FadeRoute(
       settings: settings,
       builder: (BuildContext context) => ChatPage(
@@ -76,20 +75,18 @@ class Router {
     );
   }
 
-  static Route<dynamic> generateRouteOperatorsChatPage(RouteSettings settings, User user,
-      Server server, bool isNewChat, Function refreshList) {
+  static Route<dynamic> generateRouteOperatorsChatPage(RouteSettings settings,
+      User user, Server server, bool isNewChat, Function refreshList) {
     return FadeRoute(
       settings: settings,
       builder: (BuildContext context) => OperatorsChatPage(
         server: server,
         chat: user,
         isNewChat: isNewChat,
-        refreshList:() => refreshList,
+        refreshList: () => refreshList,
       ),
     );
   }
-
-
 }
 
 extension NavigatorStateExtension on NavigatorState {
@@ -103,8 +100,10 @@ extension NavigatorStateExtension on NavigatorState {
   bool isCurrent(Route newRoute) {
     bool isCurrent = false;
     popUntil((oldRoute) {
-      final RouteArguments? oldArgs = oldRoute.settings.arguments as RouteArguments?;
-      final RouteArguments? newArgs = newRoute.settings.arguments as RouteArguments?;
+      final RouteArguments? oldArgs =
+          oldRoute.settings.arguments as RouteArguments?;
+      final RouteArguments? newArgs =
+          newRoute.settings.arguments as RouteArguments?;
       if (oldRoute.settings.name == newRoute.settings.name &&
           oldArgs?.chatId == newArgs?.chatId) {
         isCurrent = true;

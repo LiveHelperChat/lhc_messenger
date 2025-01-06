@@ -1,17 +1,15 @@
-import 'package:intl/intl.dart';
-
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:livehelp/model/model.dart';
 import 'package:livehelp/utils/utils.dart';
-
 
 class ChatItemWidget extends StatelessWidget {
   ChatItemWidget(
       {Key? key,
-        required this.server,
-        required this.chat,
-        required this.onMenuSelected,
-        required this.menuBuilder})
+      required this.server,
+      required this.chat,
+      required this.onMenuSelected,
+      required this.menuBuilder})
       : super(key: key);
 
   final Chat chat;
@@ -20,7 +18,7 @@ class ChatItemWidget extends StatelessWidget {
   final ValueChanged<ChatItemMenuOption> onMenuSelected;
 
   final List<PopupMenuEntry<ChatItemMenuOption>>
-  menuBuilder; // for populating the menu
+      menuBuilder; // for populating the menu
 
   @override
   Widget build(BuildContext context) {
@@ -32,8 +30,8 @@ class ChatItemWidget extends StatelessWidget {
 
     var popupMenuBtn = new PopupMenuButton<ChatItemMenuOption>(
         onSelected: (ChatItemMenuOption result) {
-          onMenuSelected(result);
-        }, itemBuilder: (BuildContext context) {
+      onMenuSelected(result);
+    }, itemBuilder: (BuildContext context) {
       return menuBuilder;
     });
 
@@ -44,7 +42,9 @@ class ChatItemWidget extends StatelessWidget {
       subjectsList.forEach((element) {
         subjects.add(Container(
           color: Colors.transparent,
-          margin: const EdgeInsets.only(right: 4.0,),
+          margin: const EdgeInsets.only(
+            right: 4.0,
+          ),
           child: new Container(
               decoration: new BoxDecoration(
                   color: Colors.lightGreen,
@@ -53,18 +53,15 @@ class ChatItemWidget extends StatelessWidget {
                     topRight: const Radius.circular(5.0),
                     bottomRight: const Radius.circular(5.0),
                     bottomLeft: const Radius.circular(5.0),
-                  )
-              ),
+                  )),
               child: Container(
                   margin: const EdgeInsets.all(4.0),
                   child: new Center(
-                    child: new Text(element, style: TextStyle(fontSize: 12.0, color: Colors.white)),
-                  )
-              )
-          ),
+                    child: new Text(element,
+                        style: TextStyle(fontSize: 12.0, color: Colors.white)),
+                  ))),
         ));
       });
-
     }
 
     if (chat.aicon_front != "") {
@@ -72,7 +69,9 @@ class ChatItemWidget extends StatelessWidget {
       aicons.forEach((element) {
         subjects.add(Container(
           color: Colors.transparent,
-          margin: const EdgeInsets.only(right: 4.0,),
+          margin: const EdgeInsets.only(
+            right: 4.0,
+          ),
           child: new Container(
               decoration: new BoxDecoration(
                   color: Colors.grey,
@@ -81,15 +80,13 @@ class ChatItemWidget extends StatelessWidget {
                     topRight: const Radius.circular(5.0),
                     bottomRight: const Radius.circular(5.0),
                     bottomLeft: const Radius.circular(5.0),
-                  )
-              ),
+                  )),
               child: Container(
                   margin: const EdgeInsets.all(4.0),
                   child: new Center(
-                    child: new Text(element, style: TextStyle(fontSize: 12.0, color: Colors.white)),
-                  )
-              )
-          ),
+                    child: new Text(element,
+                        style: TextStyle(fontSize: 12.0, color: Colors.white)),
+                  ))),
         ));
       });
     }
@@ -120,8 +117,8 @@ class ChatItemWidget extends StatelessWidget {
                             color: (chat.user_status_front == 0
                                 ? Colors.green.shade400
                                 : (chat.user_status_front == 2
-                                ? Colors.yellow.shade400
-                                : Colors.red.shade400)),
+                                    ? Colors.yellow.shade400
+                                    : Colors.red.shade400)),
                           ),
                         ),
                         Expanded(
@@ -129,40 +126,35 @@ class ChatItemWidget extends StatelessWidget {
                                 mainAxisSize: MainAxisSize.min,
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: <Widget>[
-                                  AnimatedDefaultTextStyle(
-                                    style: styling,
+                              AnimatedDefaultTextStyle(
+                                style: styling,
+                                duration: kThemeChangeDuration,
+                                child: Text(chat.nick ?? "",
+                                    textAlign: TextAlign.left,
+                                    style: styling.copyWith(
+                                        color: Colors.black,
+                                        fontSize: 18.0,
+                                        fontWeight: FontWeight.bold)),
+                              ),
+                              Row(children: <Widget>[
+                                AnimatedDefaultTextStyle(
                                     duration: kThemeChangeDuration,
-                                    child: Text(chat.nick ?? "",
-                                        textAlign: TextAlign.left,
-                                        style: styling.copyWith(
-                                            color: Colors.black,
-                                            fontSize: 18.0,
-                                            fontWeight: FontWeight.bold)),
+                                    child: Text(chat.country_name ?? ""),
+                                    textAlign: TextAlign.left,
+                                    style: styling.copyWith(
+                                      color: Colors.grey.shade400,
+                                      fontSize: 14.0,
+                                    )),
+                                new Expanded(
+                                  child: new Container(
+                                    height: 20.0,
+                                    child: ListView(
+                                        scrollDirection: Axis.horizontal,
+                                        children: subjects),
                                   ),
-                                  Row(
-                                      children: <Widget>[
-                                        AnimatedDefaultTextStyle(
-                                            duration: kThemeChangeDuration,
-                                            child: Text(chat.country_name ?? ""),
-                                            textAlign: TextAlign.left,
-                                            style: styling.copyWith(
-                                              color: Colors.grey.shade400,
-                                              fontSize: 14.0,
-                                            )),
-                                        new Expanded(
-                                          child: new Container(
-                                            height: 20.0,
-                                            child: ListView(
-                                                scrollDirection: Axis.horizontal,
-                                                children: subjects
-                                            ),
-                                          ),
-                                        )
-                                      ]
-                                  ),
-
-
-                                ])),
+                                )
+                              ]),
+                            ])),
                         Align(
                           alignment: Alignment.topRight,
                           child: popupMenuBtn,
@@ -175,36 +167,38 @@ class ChatItemWidget extends StatelessWidget {
                     ),
                     Expanded(
                         child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Expanded(
-                              child: new AnimatedDefaultTextStyle(
-                                style: styling,
-                                duration: kThemeChangeDuration,
-                                child: new Text(chat.ip ?? "",
-                                    textAlign: TextAlign.left,
-                                    style: styling.copyWith(
-                                      color: Colors.black54,
-                                      fontSize: 14.0,
-                                    )),
-                              ),
-                            ),
-                            Text(
-                              "ID: ${chat.id}",
-                              textAlign: TextAlign.end,
-                              style: styling.copyWith(
-                                color: Colors.black87,
-                                fontSize: 12.0,
-                              ),
-                            )
-                          ],
-                        )),
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Expanded(
+                          child: new AnimatedDefaultTextStyle(
+                            style: styling,
+                            duration: kThemeChangeDuration,
+                            child: new Text(chat.ip ?? "",
+                                textAlign: TextAlign.left,
+                                style: styling.copyWith(
+                                  color: Colors.black54,
+                                  fontSize: 14.0,
+                                )),
+                          ),
+                        ),
+                        Text(
+                          "ID: ${chat.id}",
+                          textAlign: TextAlign.end,
+                          style: styling.copyWith(
+                            color: Colors.black87,
+                            fontSize: 12.0,
+                          ),
+                        )
+                      ],
+                    )),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: <Widget>[
                         new Icon(
-                          (chat.status == 5 && chat.user_id == null ? Icons.android : Icons.people),
+                          (chat.status == 5 && chat.user_id == null
+                              ? Icons.android
+                              : Icons.people),
                           size: 14,
                           color: Theme.of(context).primaryColor,
                         ),

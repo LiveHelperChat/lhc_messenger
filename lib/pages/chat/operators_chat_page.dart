@@ -1,31 +1,28 @@
-import 'dart:async';
-import 'package:after_layout/after_layout.dart';
-import 'package:http/http.dart' as http;
+// ignore_for_file: unused_field
 
+import 'dart:async';
+
+import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:http/http.dart' as http;
 import 'package:livehelp/bloc/bloc.dart';
-
+import 'package:livehelp/globals.dart' as globals;
+import 'package:livehelp/model/model.dart';
 import 'package:livehelp/services/server_api_client.dart';
 import 'package:livehelp/services/server_repository.dart';
-
-import 'package:rxdart/rxdart.dart';
-
-import 'package:livehelp/model/model.dart';
-import 'package:livehelp/widget/widget.dart';
-
 import 'package:livehelp/utils/utils.dart';
-
-import 'package:livehelp/globals.dart' as globals;
+import 'package:livehelp/widget/widget.dart';
+import 'package:rxdart/rxdart.dart';
 
 /// place: "/chats/operatorschat"
 class OperatorsChatPage extends StatefulWidget {
   OperatorsChatPage(
       {Key? key,
-        this.server,
-        this.chat,
-        this.refreshList,
-        required this.isNewChat})
+      this.server,
+      this.chat,
+      this.refreshList,
+      required this.isNewChat})
       : super(key: key);
 
   final User? chat; // not final because we will update it
@@ -73,7 +70,7 @@ class OperatorsChatPageState extends State<OperatorsChatPage>
 
   BehaviorSubject<bool> _isWritingSubject = BehaviorSubject<bool>.seeded(false);
   BehaviorSubject<bool> _isActionLoadingSubject =
-  BehaviorSubject<bool>.seeded(false);
+      BehaviorSubject<bool>.seeded(false);
 
   set _isWriting(bool value) => _isWritingSubject.add(value);
   bool get _isWriting => _isWritingSubject.value;
@@ -98,7 +95,6 @@ class OperatorsChatPageState extends State<OperatorsChatPage>
       ..add(OperatorsChatOpenedEvent(chat: _chatCopy!));
 
     _acceptChat();
-
   }
 
   @override
@@ -156,14 +152,14 @@ class OperatorsChatPageState extends State<OperatorsChatPage>
   void _checkState() {
     switch (_lastLifecyleState) {
       case AppLifecycleState.resumed:
-      // stop sending notifications for this chat
+        // stop sending notifications for this chat
         _fcmTokenBloc!.add(OperatorsChatOpenedEvent(chat: _chatCopy!));
         _syncMessages();
         _msgsTimer = _syncMsgsTimer(5);
         break;
       case AppLifecycleState.paused:
       case AppLifecycleState.inactive:
-      //allow showing notifications for this chat
+        //allow showing notifications for this chat
         _fcmTokenBloc!.add(OperatorsChatPausedEvent(chat: _chatCopy!));
         if (_msgsTimer!.isActive) _msgsTimer!.cancel();
         if (_operatorTimer != null && _operatorTimer!.isActive) {
@@ -187,10 +183,10 @@ class OperatorsChatPageState extends State<OperatorsChatPage>
 
   @override
   Widget build(BuildContext context) {
-
     var _serverRepository = context.watch<ServerRepository>();
     // Chat page creates and manages it's own bloc.
-    _chatPageBloc = ChatOperatorsMessagesBloc(serverRepository: _serverRepository);
+    _chatPageBloc =
+        ChatOperatorsMessagesBloc(serverRepository: _serverRepository);
     TextStyle headerbottom = const TextStyle(
       fontSize: 12.0,
       height: 1,
@@ -198,45 +194,44 @@ class OperatorsChatPageState extends State<OperatorsChatPage>
       fontWeight: FontWeight.w300,
     );
 
-    var msgsStreamBuilder = BlocBuilder<ChatOperatorsMessagesBloc, ChatOperatorsMessagesState>(
-        bloc: _chatPageBloc,
-        builder: (context, state) {
+    var msgsStreamBuilder =
+        BlocBuilder<ChatOperatorsMessagesBloc, ChatOperatorsMessagesState>(
+            bloc: _chatPageBloc,
+            builder: (context, state) {
+              if (state is ChatOperatorsMessagesInitial) {
+                return const Center(
+                  child: CircularProgressIndicator(),
+                );
+              }
 
+              if (state is ChatOperatorsMessagesLoadError) {
+                return Center(child: Text('Error: ${state.message}'));
+              }
+              if (state is ChatOperatorsMessagesLoaded) {
+                _addMessages(state.messages);
 
-          if (state is ChatOperatorsMessagesInitial) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          }
-
-          if (state is ChatOperatorsMessagesLoadError) {
-            return Center(child: Text('Error: ${state.message}'));
-          }
-          if (state is ChatOperatorsMessagesLoaded) {
-            _addMessages(state.messages);
-
-            return ListView.builder(
-              scrollDirection: Axis.vertical,
-              reverse: true,
-              padding: EdgeInsets.all(6.0),
-              itemBuilder: (BuildContext context, int index) {
-                return _msgsHandlerList[index];
-              },
-              itemCount: _msgsHandlerList.length,
-            );
-          }
-          return const Text("No messages");
-        });
+                return ListView.builder(
+                  scrollDirection: Axis.vertical,
+                  reverse: true,
+                  padding: EdgeInsets.all(6.0),
+                  itemBuilder: (BuildContext context, int index) {
+                    return _msgsHandlerList[index];
+                  },
+                  itemCount: _msgsHandlerList.length,
+                );
+              }
+              return const Text("No messages");
+            });
 
     var popupMenuBtn = PopupMenuButton<ChatItemMenuOption>(
         onSelected: (ChatItemMenuOption result) {
-          onMenuOptionChanged(result);
-        }, itemBuilder: (BuildContext context) {
+      onMenuOptionChanged(result);
+    }, itemBuilder: (BuildContext context) {
       return _itemMenuBuilder();
     });
 
     Widget loadingIndicator =
-    _isActionLoading ? const CircularProgressIndicator() : Container();
+        _isActionLoading ? const CircularProgressIndicator() : Container();
 
     var mainScaffold = BlocProvider<ChatOperatorsMessagesBloc>(
         create: (context) => _chatPageBloc!,
@@ -255,24 +250,24 @@ class OperatorsChatPageState extends State<OperatorsChatPage>
                         WidgetSpan(
                             style: const TextStyle(height: 1, fontSize: 17),
                             child: BlocBuilder<ChatOperatorsMessagesBloc,
-                                ChatOperatorsMessagesState>(
+                                    ChatOperatorsMessagesState>(
                                 bloc: _chatPageBloc,
                                 builder: (context, state) {
-                              if (state is ChatOperatorsMessagesLoaded) {
-                                return Icon(Icons.person,
-                                    size: 14,
-                                    color: state.chatStatusCode == 0
-                                        ? Colors.green.shade400
-                                        : (state.chatStatusCode == 2
-                                        ? Colors.yellow.shade400
-                                        : Colors.red.shade400));
-                              }
-                              return Icon(Icons.person,
-                                  size: 14, color: Colors.green.shade400);
-                            })),
+                                  if (state is ChatOperatorsMessagesLoaded) {
+                                    return Icon(Icons.person,
+                                        size: 14,
+                                        color: state.chatStatusCode == 0
+                                            ? Colors.green.shade400
+                                            : (state.chatStatusCode == 2
+                                                ? Colors.yellow.shade400
+                                                : Colors.red.shade400));
+                                  }
+                                  return Icon(Icons.person,
+                                      size: 14, color: Colors.green.shade400);
+                                })),
                         TextSpan(
                           style: const TextStyle(height: 2, fontSize: 15),
-                          text:' ${_chatCopy!.name_official}',
+                          text: ' ${_chatCopy!.name_official}',
                         ),
                       ],
                     ),
@@ -308,7 +303,8 @@ class OperatorsChatPageState extends State<OperatorsChatPage>
                       padding: const EdgeInsets.only(
                           top: 0.0, left: 73.0, right: 8.0),
                       alignment: Alignment.centerLeft,
-                      child: BlocBuilder<ChatOperatorsMessagesBloc, ChatOperatorsMessagesState>(
+                      child: BlocBuilder<ChatOperatorsMessagesBloc,
+                          ChatOperatorsMessagesState>(
                         bloc: _chatPageBloc,
                         builder: (context, state) {
                           if (state is ChatOperatorsMessagesLoaded) {
@@ -326,7 +322,8 @@ class OperatorsChatPageState extends State<OperatorsChatPage>
                         },
                       ))),
             ),
-            body: BlocConsumer<ChatOperatorsMessagesBloc, ChatOperatorsMessagesState>(
+            body: BlocConsumer<ChatOperatorsMessagesBloc,
+                ChatOperatorsMessagesState>(
               listener: (context, state) {
                 if (state is ChatOperatorsMessagesLoaded) {
                   if (state.isChatClosed) {
@@ -342,9 +339,9 @@ class OperatorsChatPageState extends State<OperatorsChatPage>
                       children: <Widget>[
                         Flexible(
                             child: Padding(
-                              padding: const EdgeInsets.only(left: 8.0, right: 8.0),
-                              child: msgsStreamBuilder,
-                            )),
+                          padding: const EdgeInsets.only(left: 8.0, right: 8.0),
+                          child: msgsStreamBuilder,
+                        )),
                         new Divider(
                           height: 1.0,
                         ),
@@ -406,11 +403,11 @@ class OperatorsChatPageState extends State<OperatorsChatPage>
   void onMenuOptionChanged(ChatItemMenuOption result) {
     switch (result) {
       case ChatItemMenuOption.CLOSE:
-      //     widget.loadingState(true);
+        //     widget.loadingState(true);
         _closeChat();
         break;
       case ChatItemMenuOption.REJECT:
-      //   widget.loadingState(true);
+        //   widget.loadingState(true);
         _deleteChat();
         break;
       default:
@@ -434,36 +431,33 @@ class OperatorsChatPageState extends State<OperatorsChatPage>
         builder: (BuildContext context) {
           return SingleChildScrollView(
               child: Column(
-                children: <Widget>[
-                  ListTile(
-                    leading: Text("Server", style: styling),
-                    title: Text("${widget.server!.servername}"),
-                    onTap: () {},
-                  ),
-                  ListTile(
-                    leading: Text("ID", style: styling),
-                    title: Text(_chatCopy!.user_id.toString()),
-                    onTap: () {},
-                  )
-                ],
-              ));
+            children: <Widget>[
+              ListTile(
+                leading: Text("Server", style: styling),
+                title: Text("${widget.server!.servername}"),
+                onTap: () {},
+              ),
+              ListTile(
+                leading: Text("ID", style: styling),
+                title: Text(_chatCopy!.user_id.toString()),
+                onTap: () {},
+              )
+            ],
+          ));
         });
   }
 
   Widget _buildComposer() {
-
     var iconButton = IconButton(
         icon: const Icon(Icons.send),
         onPressed: () {
-          print("mesg enter");
-          print(_textController.text);
           if (_textController.text.isNotEmpty) _submitMsg(_textController.text);
         });
 
     return IconTheme(
-      data: IconThemeData(color: Theme.of(context).colorScheme.secondary),
+      data: IconThemeData(color: Colors.accents.first),
       child: Container(
-          margin: const EdgeInsets.fromLTRB(5.0,0,0,0),
+          margin: const EdgeInsets.fromLTRB(5.0, 0, 0, 0),
           child: Row(
             children: <Widget>[
               Flexible(
@@ -481,28 +475,25 @@ class OperatorsChatPageState extends State<OperatorsChatPage>
                           focusedBorder: InputBorder.none,
                           enabledBorder: InputBorder.none,
                           errorBorder: InputBorder.none,
-                          disabledBorder: InputBorder.none)
-                  )),
+                          disabledBorder: InputBorder.none))),
               new Container(
                 margin: new EdgeInsets.symmetric(horizontal: 0.0),
-                child:
-                iconButton
-                ,
+                child: iconButton,
               )
             ],
           ),
           decoration: Theme.of(context).platform == TargetPlatform.iOS
               ? new BoxDecoration(
-              border: new Border(top: new BorderSide(color: Colors.brown)))
+                  border: new Border(top: new BorderSide(color: Colors.brown)))
               : null),
     );
   }
 
   void _acceptChat() async {
-    _serverApiClient!.chatOperatorsData(widget.server!, _chatCopy!).then((chatData) {
-
+    _serverApiClient!
+        .chatOperatorsData(widget.server!, _chatCopy!)
+        .then((chatData) {
       setState(() {
-
         //developer.log(jsonEncode(chat.toJson()), name: 'my.app.category');
         //print(chatData['id']);
 
@@ -516,7 +507,6 @@ class OperatorsChatPageState extends State<OperatorsChatPage>
         _syncMessages();
 
         _msgsTimer = _syncMsgsTimer(5);
-
       });
       _isLoading(false);
     });
@@ -530,8 +520,8 @@ class OperatorsChatPageState extends State<OperatorsChatPage>
     _textController.clear();
     _isWriting = false;
     //post message to server and update messages instantly
-    _chatPageBloc!.add(
-        PostOperatorsMessage(server: widget.server!, chat: widget.chat!, message: msg));
+    _chatPageBloc!.add(PostOperatorsMessage(
+        server: widget.server!, chat: widget.chat!, message: msg));
   }
 
   void _textChanged(String text) {
@@ -560,8 +550,8 @@ class OperatorsChatPageState extends State<OperatorsChatPage>
   }
 
   Future<void> _syncMessages() async {
-    _chatPageBloc
-        ?.add(FetchOperatorsChatMessages(server: widget.server!, chat: _chatCopy!));
+    _chatPageBloc?.add(
+        FetchOperatorsChatMessages(server: widget.server!, chat: _chatCopy!));
   }
 
   @override
@@ -585,7 +575,7 @@ class OperatorsMsgHandler extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Expanded(
-                child: Bubble(
+                child: ChatBubbleCustom(
                   message: msg!,
                 ),
               )

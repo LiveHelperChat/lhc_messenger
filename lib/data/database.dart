@@ -1,18 +1,16 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:livehelp/model/model.dart';
 import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:synchronized/synchronized.dart';
-
-import 'package:path_provider/path_provider.dart';
-
-import 'package:livehelp/model/model.dart';
 
 class DatabaseHelper {
   static DatabaseHelper? _livehelpDatabase;
 
-  final int dbVersion = 3; // previous 1
+  final int dbVersion = 4; // previous 1
   final String configTable = "app_config";
   final String tokenColumn = "fcm_token";
   final String extVersionColumn = "ext_version";
@@ -57,30 +55,10 @@ class DatabaseHelper {
         "${Server.columns['db_all_departments']} BIT,"
         "${Server.columns['db_departments_ids']} TEXT,"
         "${Server.columns['db_user_online']} BIT,"
-        "${Server.columns['db_twilio_installed']} BIT"
+        "${Server.columns['db_twilio_installed']} BIT,"
+        "${Server.columns['db_fb_installed']} BIT"
         ")");
-/*
-      await db.execute(
-          "CREATE TABLE ${Chat.tableName} ("
-              "${Chat.columns['db_id']} INTEGER,"
-              "${Chat.columns['db_serverid']} INTEGER,"
-              "${Chat.columns['db_status']} INTEGER,"
-              "${Chat.columns['db_nick']} TEXT,"
-              "${Chat.columns['db_email']} TEXT,"
-              "${Chat.columns['db_ip']} TEXT,"
-              "${Chat.columns['db_time']} INTEGER,"
-              "${Chat.columns['db_last_msg_id']} INTEGER,"
-              "${Chat.columns['db_user_id']} INTEGER,"
-              "${Chat.columns['db_country_code']} TEXT,"
-              "${Chat.columns['db_country_name']} TEXT,"
-              "${Chat.columns['db_referrer']} TEXT,"
-              "${Chat.columns['db_uagent']} TEXT,"
-              "${Chat.columns['db_department_name']} TEXT,"
-              "${Chat.columns['db_user_typing_txt']} TEXT,"
-              "${Chat.columns['db_owner']} TEXT,"
-              "${Chat.columns['db_has_unread_messages']} INTEGER"
-              ")");
-      */
+
     await db.execute("CREATE TABLE $configTable ("
         "'id' INTEGER PRIMARY KEY AUTOINCREMENT,"
         "$tokenColumn TEXT,"
@@ -104,11 +82,11 @@ class DatabaseHelper {
       await _lock.synchronized(() async {
         // Check again once entering the synchronized block
         _db ??= await openDatabase(
-            path,
-            version: dbVersion,
-            onCreate: _create,
-            onUpgrade: _upgradeDB,
-          );
+          path,
+          version: dbVersion,
+          onCreate: _create,
+          onUpgrade: _upgradeDB,
+        );
       });
     }
 
@@ -124,6 +102,10 @@ class DatabaseHelper {
       db.execute(
           "ALTER TABLE ${Server.tableName} ADD COLUMN ${Server.columns['db_twilio_installed']} BIT;");
     }
+    if (oldVersion < 4) {
+      db.execute(
+          "ALTER TABLE ${Server.tableName} ADD COLUMN ${Server.columns['db_fb_installed']} BIT;");
+    }
   }
 
   /// Get an item by its id, if there is not entry for that ID, returns null.
@@ -131,7 +113,7 @@ class DatabaseHelper {
       String tableName, String condition, List arguments) async {
     var db = await getDb();
     var result =
-    await db.query(tableName, where: condition, whereArgs: arguments); //
+        await db.query(tableName, where: condition, whereArgs: arguments); //
     if (result.length == 0) return null;
     // print(result[0].toString());
     return result[0];
@@ -153,7 +135,7 @@ class DatabaseHelper {
     tkn[tokenColumn] = token;
 
     List<Map<String, dynamic>> listMap =
-    await db.rawQuery("SELECT * FROM $configTable");
+        await db.rawQuery("SELECT * FROM $configTable");
     if (listMap.length == 0) {
       await db.insert(configTable, tkn);
     } else {
@@ -168,7 +150,7 @@ class DatabaseHelper {
     var db = await getDb();
     var count = Sqflite.firstIntValue(await db.rawQuery(
         "SELECT COUNT(*) FROM ${Chat.tableName}"
-            " WHERE id = ? and status= ? and serverid= ?",
+        " WHERE id = ? and status= ? and serverid= ?",
         [chat.id, chat.status, chat.serverid]));
     if (count == 0) {
       int id = await db.insert(Chat.tableName, chat.toJson());
@@ -185,7 +167,7 @@ class DatabaseHelper {
     var db = await getDb();
     var count = Sqflite.firstIntValue(await db.rawQuery(
         "SELECT COUNT(*) FROM $tableName"
-            " WHERE $condition",
+        " WHERE $condition",
         whereArg));
     return count;
   }
@@ -201,7 +183,7 @@ class DatabaseHelper {
 
       List<Map<String, dynamic>> listMap = await db.rawQuery(
           "SELECT COUNT(*) FROM chat"
-              " WHERE id = ? and status= ? and serverid= ?",
+          " WHERE id = ? and status= ? and serverid= ?",
           [chat.id, chat.status, chat.serverid]);
       var count = listMap.first.values.first;
       if (count == 0) {
@@ -215,12 +197,10 @@ class DatabaseHelper {
 
   Future<Server> upsertServer(
       Server server, String? condition, List whereArg) async {
-    print("upsertServer");
-    print(condition);
     var db = await getDb();
     List<Map<String, dynamic>> listMap = await db.rawQuery(
         "SELECT COUNT(*) FROM ${Server.tableName}"
-            " WHERE $condition",
+        " WHERE $condition",
         whereArg);
 
     var count = listMap.first.values.first;

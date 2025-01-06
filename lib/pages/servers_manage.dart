@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:livehelp/bloc/bloc.dart';
+import 'package:livehelp/globals.dart' as globals;
 import 'package:livehelp/model/model.dart';
 import 'package:livehelp/pages/pages.dart';
-import 'package:livehelp/utils/utils.dart';
 import 'package:livehelp/utils/routes.dart' as LHCRouter;
+import 'package:livehelp/utils/utils.dart';
 import 'package:livehelp/widget/widget.dart';
-
-import 'package:livehelp/globals.dart' as globals;
 
 class ServersManage extends StatefulWidget {
   ServersManage({this.returnToList = false});
@@ -82,12 +80,13 @@ class ServersManageState extends State<ServersManage> with RouteAware {
     if (state is ServerInitial || state is ServerListLoading) {
       return const Scaffold(
           body: Center(
-            child: CircularProgressIndicator(),
-          ));
+        child: CircularProgressIndicator(),
+      ));
     }
     if (state is ServerListFromDBLoaded) {
       //If any server is logged in
-      if (state.serverList.any((server) => server.isLoggedIn) && !widget.returnToList) {
+      if (state.serverList.any((server) => server.isLoggedIn) &&
+          !widget.returnToList) {
         Navigator.of(context).pop();
         SchedulerBinding.instance.addPostFrameCallback((_) {
           Navigator.of(context).pushAndRemoveUntil(
@@ -97,7 +96,7 @@ class ServersManageState extends State<ServersManage> with RouteAware {
                   name: AppRoutes.home,
                 ),
               ),
-                  (Route<dynamic> route) => false);
+              (Route<dynamic> route) => false);
         });
       }
       return Scaffold(
@@ -106,7 +105,7 @@ class ServersManageState extends State<ServersManage> with RouteAware {
         appBar: AppBar(
           title: const Text("Manage Servers"),
           elevation:
-          Theme.of(context).platform == TargetPlatform.android ? 6.0 : 0.0,
+              Theme.of(context).platform == TargetPlatform.android ? 6.0 : 0.0,
           actions: const <Widget>[],
         ),
         body: ListView.builder(
@@ -170,26 +169,27 @@ class ServersManageState extends State<ServersManage> with RouteAware {
   }
 
   Future<void> _showCustomMenu(Server sv) async {
-    final RenderObject? overlay = Overlay.of(context).context.findRenderObject();
+    final RenderObject? overlay =
+        Overlay.of(context).context.findRenderObject();
 
-    ServerItemMenuOption? value=await showMenu(
+    ServerItemMenuOption? value = await showMenu(
         context: context,
         items: _itemMenuBuilder(),
         position: RelativeRect.fromRect(_tapPosition & const Size(40, 40),
             Offset.zero & overlay!.semanticBounds.size));
     // This is how you handle user selection
 
-      //  if (option == null) return;
-      switch (value) {
-        case ServerItemMenuOption.MODIFY:
-          _addServer(svr: sv);
-          break;
-        case ServerItemMenuOption.REMOVE:
-          _showAlert(context, sv);
-          break;
-        default:
-          break;
-      }
+    //  if (option == null) return;
+    switch (value) {
+      case ServerItemMenuOption.MODIFY:
+        _addServer(svr: sv);
+        break;
+      case ServerItemMenuOption.REMOVE:
+        _showAlert(context, sv);
+        break;
+      default:
+        break;
+    }
   }
 
   void _storePosition(TapDownDetails details) {

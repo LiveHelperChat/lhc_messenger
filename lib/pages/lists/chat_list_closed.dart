@@ -1,19 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:livehelp/bloc/bloc.dart';
-
 import 'package:livehelp/model/model.dart';
-import 'package:livehelp/widget/widget.dart';
-import 'package:livehelp/utils/utils.dart';
-
 import 'package:livehelp/utils/routes.dart' as LHCRouter;
+import 'package:livehelp/utils/utils.dart';
+import 'package:livehelp/widget/widget.dart';
 
 class ClosedListWidget extends StatefulWidget {
   const ClosedListWidget(
       {Key? key,
-        this.listOfServers,
-        required this.callBackDeleteChat,
-        this.refreshList})
+      this.listOfServers,
+      required this.callBackDeleteChat,
+      this.refreshList})
       : super(key: key);
 
   final List<Server>? listOfServers;
@@ -33,9 +31,7 @@ class _ClosedListWidgetState extends State<ClosedListWidget> {
 
   @override
   Widget build(BuildContext context) {
-
-    return BlocBuilder<ChatslistBloc, ChatListState>(
-        builder: (context, state) {
+    return BlocBuilder<ChatslistBloc, ChatListState>(builder: (context, state) {
       if (state is ChatslistInitial) {
         return const Center(child: CircularProgressIndicator());
       }
@@ -51,7 +47,7 @@ class _ClosedListWidgetState extends State<ClosedListWidget> {
               itemBuilder: (BuildContext context, int index) {
                 Chat chat = state.closedChatList.reversed.toList()[index];
                 Server server = widget.listOfServers!.firstWhere(
-                        (srvr) => srvr.id == chat.serverid,
+                    (srvr) => srvr.id == chat.serverid,
                     orElse: () => new Server());
 
                 return GestureDetector(
@@ -68,7 +64,11 @@ class _ClosedListWidgetState extends State<ClosedListWidget> {
                     final routeSettings = RouteSettings(
                         name: AppRoutes.chatPage, arguments: routeArgs);
                     var route = LHCRouter.Router.generateRouteChatPage(
-                        routeSettings, chat, server, false, widget.refreshList!);
+                        routeSettings,
+                        chat,
+                        server,
+                        false,
+                        widget.refreshList!);
                     Navigator.of(context).push(route);
                   },
                 );
@@ -113,7 +113,7 @@ class _ClosedListWidgetState extends State<ClosedListWidget> {
       case ChatItemMenuOption.PREVIEW:
         final routeArgs = RouteArguments(chatId: chat.id);
         final routeSettings =
-        RouteSettings(name: AppRoutes.chatPage, arguments: routeArgs);
+            RouteSettings(name: AppRoutes.chatPage, arguments: routeArgs);
         var route = LHCRouter.Router.generateRouteChatPage(
             routeSettings, chat, srvr, true, widget.refreshList!);
         Navigator.of(ctxt).push(route);
