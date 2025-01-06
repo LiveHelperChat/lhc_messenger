@@ -57,7 +57,11 @@ class App extends StatelessWidget {
         navigatorObservers: [globals.routeObserver],
         theme: ThemeData(
           primarySwatch: Colors.indigo,
-          scaffoldBackgroundColor: Colors.white,
+          appBarTheme: AppBarTheme(
+            foregroundColor: Colors.white,
+            backgroundColor: Colors.indigo,
+          ),
+          scaffoldBackgroundColor: Colors.indigo,
         ),
         home: const MyHomePage());
   }

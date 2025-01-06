@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -53,7 +52,7 @@ class TwilioSMSChatState extends State<TwilioSMSChat> {
   Widget build(BuildContext context) {
     var sendBtn = Container(
         padding: const EdgeInsets.only(top: 8.0),
-        child: RaisedButton(
+        child: ElevatedButton (
           onPressed: () {
             _submit();
           },
@@ -61,7 +60,9 @@ class TwilioSMSChatState extends State<TwilioSMSChat> {
             "Send Twilio SMS",
             style: new TextStyle(color: Colors.white),
           ),
-          color: Theme.of(context).primaryColor,
+          style: ElevatedButton.styleFrom(
+              primary: Theme.of(context).primaryColor, // Background color
+          )
         ));
     var messageForm = Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -137,7 +138,7 @@ class TwilioSMSChatState extends State<TwilioSMSChat> {
         Container(
           padding: const EdgeInsets.only(top: 8.0),
           child: new Text('* indicates required field',
-              style: Theme.of(context).textTheme.caption),
+              style: Theme.of(context).textTheme.bodySmall),
         ),
       ],
     );
@@ -209,7 +210,8 @@ class TwilioSMSChatState extends State<TwilioSMSChat> {
   }
 
   void _showSnackBar(String text) {
-    _scaffoldKey.currentState!.showSnackBar(SnackBar(content: Text(text)));
+   //_scaffoldKey.currentState!.showSnackBar(SnackBar(content: Text(text)));
+   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
   }
 
   void onCheckBoxChanged(bool? value) {
@@ -223,7 +225,7 @@ class TwilioSMSChatState extends State<TwilioSMSChat> {
     twilioPhonesList.clear();
     var phones = await _serverRepository!.getTwilioPhones(_currentServer!);
     setState(() => _isLoading = false);
-    if (phones != null && phones.length > 0) {
+    if (phones.length > 0) {
       phones.forEach((item) {
         setState(() {
           twilioPhonesList.add(item);
@@ -245,7 +247,7 @@ Future<void> _ackAlert(BuildContext context) {
         content:
         const Text('Please configure a Phone number in Twilio extension.'),
         actions: <Widget>[
-          FlatButton(
+          TextButton(
             child: Text('Ok'),
             onPressed: () {
               Navigator.of(context).pop();

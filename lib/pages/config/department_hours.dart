@@ -74,10 +74,12 @@ class _DepartmentHoursState extends State<DepartmentHours> {
                       backgroundColor: Colors.white,
                       ),onPressed: null,)),  */
 
-            FlatButton(
-                shape:
-                    const CircleBorder(side: BorderSide(color: Colors.transparent)),
-                textColor: Colors.white,
+            TextButton(
+                //shape: const CircleBorder(side: BorderSide(color: Colors.transparent)),
+                // textColor: Colors.white,
+                style: TextButton.styleFrom(
+                                    primary: Colors.white, // Text Color
+                                  ),
                 child: const Text("Refresh"),
                 onPressed: () {
                   _initAsyncloader();
@@ -458,7 +460,7 @@ class _DepartmentHoursState extends State<DepartmentHours> {
                   ),
                 ),
               ),
-              RaisedButton(
+              ElevatedButton (
                 onPressed: () {
                   _department?.online_hours_active = _onlineHoursActive;
                   _isLoading = true;
@@ -475,8 +477,9 @@ class _DepartmentHoursState extends State<DepartmentHours> {
                 child: const Text(
                   "Save Data",
                   style: TextStyle(color: Colors.white),
-                ),
-                color: Theme.of(context).primaryColor,
+                ),style: ElevatedButton.styleFrom(
+                  primary: Theme.of(context).primaryColor, // Background color
+                )
               ),
             ],
           ),

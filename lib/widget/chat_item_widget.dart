@@ -1,12 +1,9 @@
 import 'package:intl/intl.dart';
-import 'package:flutter/foundation.dart';
 
 import 'package:flutter/material.dart';
 import 'package:livehelp/model/model.dart';
 import 'package:livehelp/utils/utils.dart';
 
-import 'dart:developer' as developer;
-import 'dart:convert';
 
 class ChatItemWidget extends StatelessWidget {
   ChatItemWidget(

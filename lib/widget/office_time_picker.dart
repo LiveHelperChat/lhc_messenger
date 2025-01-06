@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:livehelp/utils/utils.dart';
 
@@ -59,7 +58,7 @@ class _OfficeTimePickerState extends State<OfficeTimePicker> {
           child: new ButtonBar(
             alignment: MainAxisAlignment.start,
             children: <Widget>[
-              new FlatButton(
+              new TextButton (
                 child: new Text('From: $_startString'),
                 onPressed: () {
                   _selectTime(context, _startTime!).then((val) {
@@ -78,7 +77,7 @@ class _OfficeTimePickerState extends State<OfficeTimePicker> {
                   });
                 },
               ),
-              new FlatButton(
+              new TextButton(
                 child: new Text('To: $_endString'),
                 onPressed: () {
                   _selectTime(context, _endTime!).then((val) {

@@ -82,10 +82,12 @@ class _ServerDetailsState extends State<ServerSettings> {
                       backgroundColor: Colors.white,
                       ),onPressed: null,)),  */
 
-            FlatButton(
-                shape:
-                    const CircleBorder(side: BorderSide(color: Colors.transparent)),
-                textColor: Colors.white,
+            TextButton(
+                //shape: const CircleBorder(side: BorderSide(color: Colors.transparent)),
+                // textColor: Colors.white,
+                style: TextButton.styleFrom(
+                    primary: Colors.white, // Text Color
+                  ),
                 child: _isLoading
                     ? const CircularProgressIndicator(
                         backgroundColor: Colors.white,

@@ -2,7 +2,6 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:livehelp/model/model.dart';
 
-import 'package:livehelp/pages/main_page.dart';
 import 'package:livehelp/pages/pages.dart';
 
 class AppRoutes {
