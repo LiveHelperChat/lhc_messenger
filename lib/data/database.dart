@@ -154,7 +154,7 @@ class DatabaseHelper {
 
     List<Map<String, dynamic>> listMap =
     await db.rawQuery("SELECT * FROM $configTable");
-    if (listMap == null || listMap.length == 0) {
+    if (listMap.length == 0) {
       await db.insert(configTable, tkn);
     } else {
       if (listMap.contains(tkn)) {

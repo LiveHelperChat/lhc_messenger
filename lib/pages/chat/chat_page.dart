@@ -3,8 +3,6 @@ import 'package:after_layout/after_layout.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:livehelp/bloc/bloc.dart';
 
@@ -88,7 +86,7 @@ class ChatPageState extends State<ChatPage>
   initState() {
     super.initState();
 
-    WidgetsBinding.instance?.addObserver(this);
+    WidgetsBinding.instance.addObserver(this);
     _chatCopy = widget.chat; // copy chat so that we can update it later
     _isNewChat = widget.isNewChat;
     _serverApiClient = ServerApiClient(httpClient: http.Client());
@@ -123,7 +121,7 @@ class ChatPageState extends State<ChatPage>
     _isWritingSubject.close();
     _isActionLoadingSubject.close();
     _fcmTokenBloc!.add(ChatClosedEvent(chat: _chatCopy!));
-    WidgetsBinding.instance?.removeObserver(this);
+    WidgetsBinding.instance.removeObserver(this);
     globals.routeObserver.unsubscribe(this);
     super.dispose();
   }
@@ -521,7 +519,7 @@ class ChatPageState extends State<ChatPage>
         });
 
     return IconTheme(
-      data: IconThemeData(color: Theme.of(context).accentColor),
+      data: IconThemeData(color: Theme.of(context).colorScheme.secondary),
       child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 0.0),
           child: Row(
@@ -713,7 +711,7 @@ class ChatDetailTile extends StatelessWidget {
                 children: <Widget>[
                   new Text(info!,
                       textAlign: TextAlign.left,
-                      style: Theme.of(context).accentTextTheme.subtitle2),
+                      style: Theme.of(context).textTheme.subtitle2),
                 ]))
       ],
     );

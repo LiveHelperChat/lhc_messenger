@@ -63,7 +63,7 @@ class LoginFormState extends State<LoginForm> {
         } else {
           return Container(
               padding: const EdgeInsets.only(top: 8.0),
-              child: new RaisedButton(
+              child: new ElevatedButton(
                 onPressed: () {
                   _submit(context);
                 },
@@ -71,7 +71,9 @@ class LoginFormState extends State<LoginForm> {
                   "LOGIN",
                   style: new TextStyle(color: Colors.white),
                 ),
-                color: Theme.of(context).primaryColor,
+                  style: ElevatedButton.styleFrom(
+                      primary: Theme.of(context).primaryColor, // Background color
+                  )
               ));
         }
       },
@@ -84,7 +86,7 @@ class LoginFormState extends State<LoginForm> {
         } else {
           return Container(
               padding: const EdgeInsets.only(top: 8.0),
-              child: new RaisedButton(
+              child: new ElevatedButton(
                 onPressed: () {
                   _fillDemo(context);
                 },
@@ -92,7 +94,9 @@ class LoginFormState extends State<LoginForm> {
                   "Demo logins",
                   style: new TextStyle(color: Colors.white),
                 ),
-                color: Colors.grey.shade500,
+                style: ElevatedButton.styleFrom(
+                                      primary: Colors.grey.shade500, // Background color
+                                  )
               ));
         }
       },
@@ -188,7 +192,7 @@ class LoginFormState extends State<LoginForm> {
               Container(
                 padding: const EdgeInsets.only(top: 8.0),
                 child: Text('* indicates required field',
-                    style: Theme.of(context).textTheme.caption),
+                    style: Theme.of(context).textTheme.bodySmall),
               ),
             ],
           ),
@@ -230,7 +234,7 @@ class LoginFormState extends State<LoginForm> {
             _currentServer = state.server;
           }
           if (state is ServerLoginSuccess) {
-            SchedulerBinding.instance?.addPostFrameCallback((_) {
+            SchedulerBinding.instance.addPostFrameCallback((_) {
               Navigator.of(context).pushAndRemoveUntil(
                   FadeRoute(
                     builder: (BuildContext context) => MainPage(),
@@ -291,8 +295,8 @@ class LoginFormState extends State<LoginForm> {
   }
 
   void _showSnackBar(String text) {
-    _scaffoldKey.currentState
-        ?.showSnackBar(new SnackBar(content: new Text(text)));
+    //_scaffoldKey.currentState?.of(context).showSnackBar(new SnackBar(content: new Text(text)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
   }
 
   void onCheckBoxUrlHasIndexChanged(bool value) {

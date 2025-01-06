@@ -89,7 +89,7 @@ class ServersManageState extends State<ServersManage> with RouteAware {
       //If any server is logged in
       if (state.serverList.any((server) => server.isLoggedIn) && !widget.returnToList) {
         Navigator.of(context).pop();
-        SchedulerBinding.instance?.addPostFrameCallback((_) {
+        SchedulerBinding.instance.addPostFrameCallback((_) {
           Navigator.of(context).pushAndRemoveUntil(
               FadeRoute(
                 builder: (BuildContext context) => const MainPage(),
@@ -170,7 +170,7 @@ class ServersManageState extends State<ServersManage> with RouteAware {
   }
 
   Future<void> _showCustomMenu(Server sv) async {
-    final RenderObject? overlay = Overlay.of(context)?.context.findRenderObject();
+    final RenderObject? overlay = Overlay.of(context).context.findRenderObject();
 
     ServerItemMenuOption? value=await showMenu(
         context: context,

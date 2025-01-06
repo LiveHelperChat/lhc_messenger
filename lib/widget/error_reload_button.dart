@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 ///ErrorReloadButton(String message, String actionText, void Function() buttonAction)
@@ -23,7 +22,7 @@ class ErrorReloadButton extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
               child ?? Container(),
-              RaisedButton(
+              ElevatedButton(
                 child: Text(actionText),
                 onPressed: (){onButtonPress();},
               ),

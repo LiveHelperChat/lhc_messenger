@@ -3,7 +3,6 @@ import 'dart:typed_data';
 import 'dart:io' show Platform;
 
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:rxdart/subjects.dart';
 
@@ -136,7 +135,7 @@ class LocalNotificationPlugin {
 
   initializePlatformSpecifics() {
     var initializationSettingsAndroid = AndroidInitializationSettings('icon');
-    var initializationSettingsIOS = IOSInitializationSettings(
+    var initializationSettingsIOS = DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
       requestSoundPermission: false,
@@ -182,8 +181,8 @@ class LocalNotificationPlugin {
 
   setOnNotificationClick(Function onNotificationClick) async {
     await flutterLocalNotificationsPlugin?.initialize(initializationSettings,
-        onSelectNotification: (String? payload) async {
-          onNotificationClick(payload);
+        onDidReceiveNotificationResponse: (NotificationResponse notificationResponse) async {
+          onNotificationClick(notificationResponse.payload);
         });
 
     _createDefaultNotificationChannel();
@@ -246,7 +245,7 @@ class LocalNotificationPlugin {
         playSound: playSound,
         sound: const RawResourceAndroidNotificationSound('slow_spring_board'),
         styleInformation: const DefaultStyleInformation(true, true));
-    var iOSPlatformChannelSpecifics = const IOSNotificationDetails();
+    var iOSPlatformChannelSpecifics = const DarwinNotificationDetails();
     NotificationDetails platformChannelSpecifics = NotificationDetails(
         android: androidPlatformChannelSpecifics, iOS: iOSPlatformChannelSpecifics);
 

@@ -3,8 +3,6 @@ import 'package:after_layout/after_layout.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:livehelp/bloc/bloc.dart';
 
@@ -87,7 +85,7 @@ class OperatorsChatPageState extends State<OperatorsChatPage>
   initState() {
     super.initState();
 
-    WidgetsBinding.instance?.addObserver(this);
+    WidgetsBinding.instance.addObserver(this);
     _chatCopy = widget.chat; // copy chat so that we can update it later
     _isNewChat = widget.isNewChat;
     _serverApiClient = ServerApiClient(httpClient: http.Client());
@@ -121,7 +119,7 @@ class OperatorsChatPageState extends State<OperatorsChatPage>
     _isWritingSubject.close();
     _isActionLoadingSubject.close();
     _fcmTokenBloc!.add(OperatorsChatClosedEvent(chat: _chatCopy!));
-    WidgetsBinding.instance?.removeObserver(this);
+    WidgetsBinding.instance.removeObserver(this);
     globals.routeObserver.unsubscribe(this);
     super.dispose();
   }
@@ -463,7 +461,7 @@ class OperatorsChatPageState extends State<OperatorsChatPage>
         });
 
     return IconTheme(
-      data: IconThemeData(color: Theme.of(context).accentColor),
+      data: IconThemeData(color: Theme.of(context).colorScheme.secondary),
       child: Container(
           margin: const EdgeInsets.fromLTRB(5.0,0,0,0),
           child: Row(

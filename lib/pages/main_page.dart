@@ -21,8 +21,6 @@ import 'package:livehelp/widget/widget.dart';
 
 import 'package:livehelp/globals.dart' as globals;
 
-import 'lists/chat_list_bot.dart';
-import 'lists/chat_list_subject.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage();
@@ -66,7 +64,7 @@ class _MainPageState extends State<MainPage>
   void initState() {
     super.initState();
 
-    WidgetsBinding.instance?.addObserver(this);
+    WidgetsBinding.instance.addObserver(this);
     Future.delayed(Duration.zero, ()
     {
       _serverBloc = context.read<ServerBloc>();
@@ -82,7 +80,7 @@ class _MainPageState extends State<MainPage>
   void dispose() {
     _timerChatList?.cancel();
 
-    WidgetsBinding.instance?.removeObserver(this);
+    WidgetsBinding.instance.removeObserver(this);
     globals.routeObserver.unsubscribe(this);
     super.dispose();
   }
@@ -691,12 +689,12 @@ class _MainPageState extends State<MainPage>
         notification.type == NotificationType.SUBJECT
     ) {
       Navigator.of(context).popUntil(ModalRoute.withName(AppRoutes.home));
-      SchedulerBinding.instance?.addPostFrameCallback((_) async {
+      SchedulerBinding.instance.addPostFrameCallback((_) async {
         Navigator.of(context).pushRouteIfNotCurrent(routeChat);
       });
     } else if (notification.type == NotificationType.PENDING) {
       Navigator.of(context).popUntil(ModalRoute.withName(AppRoutes.home));
-      SchedulerBinding.instance?.addPostFrameCallback((_) async {
+      SchedulerBinding.instance.addPostFrameCallback((_) async {
         Navigator.of(context).push(routeChat);
       });
     } else if (notification.type == NotificationType.NEW_GROUP_MESSAGE) {
@@ -712,7 +710,7 @@ class _MainPageState extends State<MainPage>
           _loadChatList
       );
 
-      SchedulerBinding.instance?.addPostFrameCallback((_) async {
+      SchedulerBinding.instance.addPostFrameCallback((_) async {
         Navigator.of(context).pushRouteIfNotCurrent(routeChat);
       });
 
@@ -776,7 +774,8 @@ class _MainPageState extends State<MainPage>
   }
 
   void _showSnackBar(String text) {
-    _scaffoldKey.currentState!.showSnackBar(SnackBar(content: Text(text)));
+    //_scaffoldKey.currentState!.showSnackBar(SnackBar(content: Text(text)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
   }
 
   @override

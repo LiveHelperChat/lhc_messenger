@@ -1,13 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:livehelp/model/model.dart';
 import 'package:http/http.dart' as http;
 import 'package:livehelp/utils/widget_utils.dart';
 
-import 'dart:convert';
-import 'dart:developer' as developer;
 
 /// A class similar to http.Response but instead of a String describing the body
 /// it already contains the parsed Dart-Object
@@ -396,7 +393,7 @@ class ServerApiClient {
     return true;
   }
 
-  Future<bool> deleteOperatorsChat(Server server, User chat, {list: "active"}) async {
+  Future<bool> deleteOperatorsChat(Server server, User chat, {list = "active"}) async {
     /*ParsedResponse response =
     await makeRequest(server, "/xml/deletechat/${chat.id}", null);
 
@@ -406,7 +403,7 @@ class ServerApiClient {
     return true;
   }
 
-  Future<bool> deleteChat(Server server, Chat chat, {list: "active"}) async {
+  Future<bool> deleteChat(Server server, Chat chat, {list = "active"}) async {
     ParsedResponse response =
     await makeRequest(server, "/xml/deletechat/${chat.id}", null);
 

@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_html/html_parser.dart';
 import 'package:livehelp/model/model.dart';
 import 'package:intl/intl.dart';
 
 import 'package:flutter_html/flutter_html.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:flutter_linkify/flutter_linkify.dart';
 
 class Bubble extends StatelessWidget {
   Bubble({required this.message});
@@ -72,7 +70,7 @@ class Bubble extends StatelessWidget {
                 padding: const EdgeInsets.only(right: 4.0, bottom: 4.0),
                 child: Html(
                     data: message.msg,
-                    onLinkTap: (url,context,attributes,element) {
+                    onLinkTap: (url, _, __) {
                       _launchURL(url);
                     }
                   /*data: "<main>${message.msg}</main>",
