@@ -1,8 +1,7 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
-
 import 'package:http/http.dart' as http;
-
 import 'package:livehelp/data/database.dart';
 import 'package:livehelp/model/model.dart';
 import 'package:livehelp/services/server_api_client.dart';
@@ -51,14 +50,14 @@ class _DepartmentHoursState extends State<DepartmentHours> {
     _localServer = widget.server;
 
     _syncServerData();
-    _myInitState=_initAsyncloader();
+    _myInitState = _initAsyncloader();
   }
 
   @override
   Widget build(BuildContext context) {
     Widget loadingIndicator =
         _isLoading ? const CircularProgressIndicator() : Container();
-    var scaff =  Scaffold(
+    var scaff = Scaffold(
         backgroundColor: Colors.white,
         key: _scaffoldKey,
         appBar: AppBar(
@@ -73,17 +72,18 @@ class _DepartmentHoursState extends State<DepartmentHours> {
                     icon: new CircularProgressIndicator(
                       backgroundColor: Colors.white,
                       ),onPressed: null,)),  */
-
             TextButton(
-                //shape: const CircleBorder(side: BorderSide(color: Colors.transparent)),
-                // textColor: Colors.white,
-                style: TextButton.styleFrom(
-                                    primary: Colors.white, // Text Color
-                                  ),
-                child: const Text("Refresh"),
-                onPressed: () {
-                  _initAsyncloader();
-                }),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white,
+                shape: const CircleBorder(
+                  side: BorderSide(color: Colors.transparent),
+                ), // This replaces `textColor` in FlatButton
+              ),
+              child: const Text("Refresh"),
+              onPressed: () {
+                _initAsyncloader();
+              },
+            )
           ],
         ),
         body: Stack(children: <Widget>[
@@ -152,8 +152,12 @@ class _DepartmentHoursState extends State<DepartmentHours> {
                                       _sundayHoursActive || _department != null
                                           ? _department!.sundayActive
                                           : false,
-                                  startTime: _department != null ? _department!.sud_start_hour! : '',
-                                  endTime: _department != null ? _department!.sud_end_hour! : '',
+                                  startTime: _department != null
+                                      ? _department!.sud_start_hour!
+                                      : '',
+                                  endTime: _department != null
+                                      ? _department!.sud_end_hour!
+                                      : '',
                                   startTimeChanged: (time) {
                                     setState(() {
                                       _department?.sud_start_hour = time;
@@ -196,8 +200,12 @@ class _DepartmentHoursState extends State<DepartmentHours> {
                                       _mondayHoursActive || _department != null
                                           ? _department!.mondayActive
                                           : false,
-                                  startTime:_department != null ? _department!.mod_start_hour! : '',
-                                  endTime:_department != null ? _department!.mod_end_hour! : '',
+                                  startTime: _department != null
+                                      ? _department!.mod_start_hour!
+                                      : '',
+                                  endTime: _department != null
+                                      ? _department!.mod_end_hour!
+                                      : '',
                                   startTimeChanged: (time) {
                                     setState(() {
                                       _department?.mod_start_hour = time;
@@ -240,8 +248,12 @@ class _DepartmentHoursState extends State<DepartmentHours> {
                                       _tuesdayHoursActive || _department != null
                                           ? _department!.tuesdayActive
                                           : false,
-                                  startTime:_department != null ? _department!.tud_start_hour! : '',
-                                  endTime:_department != null ? _department!.tud_end_hour! : '',
+                                  startTime: _department != null
+                                      ? _department!.tud_start_hour!
+                                      : '',
+                                  endTime: _department != null
+                                      ? _department!.tud_end_hour!
+                                      : '',
                                   startTimeChanged: (time) {
                                     setState(() {
                                       _department?.tud_start_hour = time;
@@ -285,8 +297,12 @@ class _DepartmentHoursState extends State<DepartmentHours> {
                                           _department != null
                                       ? _department!.wednesdayActive
                                       : false,
-                                  startTime:_department != null ? _department!.wed_start_hour! : '',
-                                  endTime:_department != null ? _department!.wed_end_hour! : '',
+                                  startTime: _department != null
+                                      ? _department!.wed_start_hour!
+                                      : '',
+                                  endTime: _department != null
+                                      ? _department!.wed_end_hour!
+                                      : '',
                                   startTimeChanged: (time) {
                                     setState(() {
                                       _department?.wed_start_hour = time;
@@ -330,8 +346,12 @@ class _DepartmentHoursState extends State<DepartmentHours> {
                                           _department != null
                                       ? _department!.thursdayActive
                                       : false,
-                                  startTime:_department != null ? _department!.thd_start_hour! : '',
-                                  endTime:_department != null ? _department!.thd_end_hour! : '',
+                                  startTime: _department != null
+                                      ? _department!.thd_start_hour!
+                                      : '',
+                                  endTime: _department != null
+                                      ? _department!.thd_end_hour!
+                                      : '',
                                   startTimeChanged: (time) {
                                     setState(() {
                                       _department?.thd_start_hour = time;
@@ -375,8 +395,12 @@ class _DepartmentHoursState extends State<DepartmentHours> {
                                       _fridayHoursActive || _department != null
                                           ? _department!.fridayActive
                                           : false,
-                                  startTime:_department != null ? _department!.frd_start_hour! : '',
-                                  endTime:_department != null ? _department!.frd_end_hour! : '',
+                                  startTime: _department != null
+                                      ? _department!.frd_start_hour!
+                                      : '',
+                                  endTime: _department != null
+                                      ? _department!.frd_end_hour!
+                                      : '',
                                   startTimeChanged: (time) {
                                     setState(() {
                                       _department?.frd_start_hour = time;
@@ -419,8 +443,12 @@ class _DepartmentHoursState extends State<DepartmentHours> {
                                           _department != null
                                       ? _department!.saturdayActive
                                       : false,
-                                  startTime:_department != null ? _department!.sad_start_hour! : '',
-                                  endTime:_department != null ? _department!.sad_end_hour! : '',
+                                  startTime: _department != null
+                                      ? _department!.sad_start_hour!
+                                      : '',
+                                  endTime: _department != null
+                                      ? _department!.sad_end_hour!
+                                      : '',
                                   startTimeChanged: (time) {
                                     setState(() {
                                       _department?.sad_start_hour = time;
@@ -460,12 +488,12 @@ class _DepartmentHoursState extends State<DepartmentHours> {
                   ),
                 ),
               ),
-              ElevatedButton (
+              ElevatedButton(
                 onPressed: () {
                   _department?.online_hours_active = _onlineHoursActive;
                   _isLoading = true;
-                  _serverRequest
-                      !.setDepartmentWorkHours(_localServer!, _department)
+                  _serverRequest!
+                      .setDepartmentWorkHours(_localServer!, _department)
                       .then((value) {
                     if (value['error'] == false) {
                       WidgetUtils.creatDialog(
@@ -477,9 +505,7 @@ class _DepartmentHoursState extends State<DepartmentHours> {
                 child: const Text(
                   "Save Data",
                   style: TextStyle(color: Colors.white),
-                ),style: ElevatedButton.styleFrom(
-                  primary: Theme.of(context).primaryColor, // Background color
-                )
+                ),
               ),
             ],
           ),
@@ -490,7 +516,7 @@ class _DepartmentHoursState extends State<DepartmentHours> {
         future: _myInitState,
         builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
           if (snapshot.hasError) {
-            return  const Scaffold(
+            return const Scaffold(
               body: Center(
                 child: Text('Something is wrong'),
               ),
@@ -502,8 +528,7 @@ class _DepartmentHoursState extends State<DepartmentHours> {
               body: Center(child: CircularProgressIndicator()),
             );
           }
-        }
-    );
+        });
   }
 
   Future<dynamic> _initAsyncloader() async {

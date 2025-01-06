@@ -1,15 +1,16 @@
+// ignore_for_file: unused_field
+
 import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
 import 'package:livehelp/bloc/bloc.dart';
-
-import 'package:flutter_bloc/flutter_bloc.dart';
-
 import 'package:livehelp/data/database.dart';
 import 'package:livehelp/model/model.dart';
-import 'package:livehelp/utils/utils.dart';
-import 'package:livehelp/services/server_api_client.dart';
 import 'package:livehelp/pages/token_inherited_widget.dart';
+import 'package:livehelp/services/server_api_client.dart';
+import 'package:livehelp/utils/utils.dart';
 
 import 'department_hours.dart';
 
@@ -21,14 +22,13 @@ class ServerSettings extends StatefulWidget {
 }
 
 class _ServerDetailsState extends State<ServerSettings> {
-
   Future<dynamic>? _myInitState;
 
   DatabaseHelper? _dbHelper;
   ServerApiClient? _serverRequest;
 
   Server? _localServer;
-  List<Server> listServers =List<Server>.empty();
+  List<Server> listServers = List<Server>.empty();
   List<Department> userDepartments = List<Department>.empty();
 
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
@@ -50,7 +50,7 @@ class _ServerDetailsState extends State<ServerSettings> {
     _localServer = widget.server;
 
     _getNotification();
-    _myInitState=_initAsyncloader();
+    _myInitState = _initAsyncloader();
   }
 
   _getNotification() async {
@@ -63,7 +63,7 @@ class _ServerDetailsState extends State<ServerSettings> {
   @override
   Widget build(BuildContext context) {
     _fcmToken = context.read<FcmTokenBloc>().token;
-    
+
     Widget loadingIndicator =
         _isLoading ? const CircularProgressIndicator() : Container();
     var scaff = Scaffold(
@@ -81,25 +81,28 @@ class _ServerDetailsState extends State<ServerSettings> {
                     icon: new CircularProgressIndicator(
                       backgroundColor: Colors.white,
                       ),onPressed: null,)),  */
-
             TextButton(
-                //shape: const CircleBorder(side: BorderSide(color: Colors.transparent)),
-                // textColor: Colors.white,
-                style: TextButton.styleFrom(
-                    primary: Colors.white, // Text Color
-                  ),
-                child: _isLoading
-                    ? const CircularProgressIndicator(
-                        backgroundColor: Colors.white,
-                      )
-                    : const Text("Re-Sync"),
-                onPressed: () {
-                  setState(() {
-                    _isLoading = true;
-                  });
-                  _refreshServerData();
-                  _initAsyncloader();
-                }),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white,
+                shape: const CircleBorder(
+                  side: BorderSide(color: Colors.transparent),
+                ), // This replaces `textColor`
+              ),
+              child: _isLoading
+                  ? const CircularProgressIndicator(
+                      backgroundColor: Colors.white,
+                    )
+                  : const Text("Re-Sync"),
+              onPressed: _isLoading
+                  ? null // Disable the button if loading
+                  : () {
+                      setState(() {
+                        _isLoading = true;
+                      });
+                      _refreshServerData();
+                      _initAsyncloader();
+                    },
+            )
           ],
         ),
         body: Stack(children: <Widget>[
@@ -182,12 +185,12 @@ class _ServerDetailsState extends State<ServerSettings> {
           Center(child: loadingIndicator),
         ]));
     return FutureBuilder<dynamic>(
-      future: _myInitState,
+        future: _myInitState,
         builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
           print(snapshot.hasData);
-        print(snapshot.data);
+          print(snapshot.data);
           if (snapshot.hasError) {
-            return  const Scaffold(
+            return const Scaffold(
               body: Center(
                 child: Text('Something is wrong'),
               ),
@@ -199,8 +202,7 @@ class _ServerDetailsState extends State<ServerSettings> {
               body: Center(child: CircularProgressIndicator()),
             );
           }
-        }
-    );
+        });
   }
 
   Future<dynamic> _initAsyncloader() async {
@@ -237,12 +239,16 @@ class _ServerDetailsState extends State<ServerSettings> {
   }
 
   void _refreshServerData() async {
-    Server server = await _serverRequest!.fetchInstallationId(
-        _localServer!, _fcmToken!, "add");
+    Server server = await _serverRequest!
+        .fetchInstallationId(_localServer!, _fcmToken!, "add");
 
-    var twilioEnabled =
-        await _serverRequest!.isExtensionInstalled(server, "twilio");
+    var twilioEnabled = await _serverRequest!.isExtensionInstalled(server, "twilio");
     server.twilioInstalled = twilioEnabled;
+
+    var fbEnabled = await _serverRequest!.isExtensionInstalled(server, "fbmessenger");
+    server.fbInstalled = fbEnabled;
+
+
     await _dbHelper!.upsertServer(
         server, "${Server.columns['db_id']} = ?", ['${server.id}']);
 
@@ -252,9 +258,9 @@ class _ServerDetailsState extends State<ServerSettings> {
     });
   }
 
-  Future<bool> _toggleNotification() async {
-    return _serverRequest!.togglePushNotification(_localServer!);
-  }
+  // Future<bool> _toggleNotification() async {
+  //   return _serverRequest!.togglePushNotification(_localServer!);
+  // }
 
   Future<bool> _notificationStatus() async {
     return _serverRequest!.pushNotificationStatus(_localServer!);

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:livehelp/main.dart';
 import 'package:meta/meta.dart';
 
 import 'package:bloc/bloc.dart';
@@ -11,9 +12,10 @@ part 'server_state.dart';
 
 class ServerBloc extends Bloc<ServerEvent, ServerState> {
   final ServerRepository? serverRepository;
-  ServerBloc({@required this.serverRepository})
-      : assert(serverRepository != null),
-        super(ServerInitial()){
+  ServerBloc({
+    @required this.serverRepository,
+  })  : assert(serverRepository != null),
+        super(ServerInitial()) {
     on<InitServers>(_onInitServers);
     on<GetServerListFromDB>(_onGetServerListFromDB);
     on<SelectServer>(_onSelectServer);
@@ -22,13 +24,14 @@ class ServerBloc extends Bloc<ServerEvent, ServerState> {
     on<LogoutServer>(_onLogoutServer);
   }
 
-  _onInitServers(InitServers event,Emitter<ServerState> emit){
+  _onInitServers(InitServers event, Emitter<ServerState> emit) {
     emit(ServerInitial());
   }
 
-  Future<void> _onGetServerListFromDB(GetServerListFromDB event,Emitter<ServerState> emit) async {
-    var servers = await serverRepository!.getServersFromDB(
-        onlyLoggedIn: event.onlyLoggedIn);
+  Future<void> _onGetServerListFromDB(
+      GetServerListFromDB event, Emitter<ServerState> emit) async {
+    var servers = await serverRepository!
+        .getServersFromDB(onlyLoggedIn: event.onlyLoggedIn);
     if (servers.isNotEmpty) {
       emit(ServerListFromDBLoaded(
           serverList: servers, selectedServer: servers.elementAt(0)));
@@ -37,19 +40,21 @@ class ServerBloc extends Bloc<ServerEvent, ServerState> {
     }
   }
 
-  _onSelectServer(SelectServer event,Emitter<ServerState> emit){
+  _onSelectServer(SelectServer event, Emitter<ServerState> emit) {
     final currentState = state;
     if (currentState is ServerListFromDBLoaded) {
       emit(currentState.copyWith(selectedServer: event.server));
     }
   }
 
-  Future<void> _onSetUserOnlineStatus(SetUserOnlineStatus event,Emitter<ServerState> emit) async{
+  Future<void> _onSetUserOnlineStatus(
+      SetUserOnlineStatus event, Emitter<ServerState> emit) async {
     if (state is ServerListFromDBLoaded) {
       if (state is ServerListFromDBLoaded) {
         emit((state as ServerListFromDBLoaded).copyWith(isActionLoading: true));
         try {
-          var server = await serverRepository!.setUserOnlineStatus(event.server);
+          var server =
+              await serverRepository!.setUserOnlineStatus(event.server);
           emit((state as ServerListFromDBLoaded)
               .copyWith(selectedServer: server, isActionLoading: false));
         } catch (ex) {
@@ -59,8 +64,9 @@ class ServerBloc extends Bloc<ServerEvent, ServerState> {
     }
   }
 
-  Future<void> _onGetUserOnlineStatus(GetUserOnlineStatus event,Emitter<ServerState> emit) async{
-    final currentState=state;
+  Future<void> _onGetUserOnlineStatus(
+      GetUserOnlineStatus event, Emitter<ServerState> emit) async {
+    final currentState = state;
     if (currentState is ServerListFromDBLoaded) {
       if (event.isActionLoading) {
         emit(currentState.copyWith(isActionLoading: true));
@@ -72,7 +78,7 @@ class ServerBloc extends Bloc<ServerEvent, ServerState> {
             selectedServer: server, isActionLoading: false));
       } else {
         List<Server> listServer =
-        await Future.wait(currentState.serverList.map((server) async {
+            await Future.wait(currentState.serverList.map((server) async {
           if (server.isLoggedIn) {
             return await serverRepository!.getUserOnlineStatus(server);
           } else {
@@ -80,7 +86,7 @@ class ServerBloc extends Bloc<ServerEvent, ServerState> {
           }
         }).toList());
 
-        if (listServer.isEmpty){
+        if (listServer.isEmpty) {
           return;
         }
 
@@ -88,20 +94,18 @@ class ServerBloc extends Bloc<ServerEvent, ServerState> {
             serverList: listServer,
             isActionLoading: false,
             selectedServer: listServer.elementAt(0)));
-
-
       }
     }
   }
 
-  _onLogoutServer(LogoutServer event,Emitter<ServerState> emit) async {
+  _onLogoutServer(LogoutServer event, Emitter<ServerState> emit) async {
     var servr = await _logout(event.server, event.fcmToken!);
     if (event.deleteServer) {
       await _deleteServer(servr);
     }
+    sharedPreferences?.setBool("isLoggedIn", false);
     emit(ServerLoggedOut(server: servr));
   }
-
 
   Future<Server> _logout(Server server, String fcmToken) async {
     await serverRepository!.fetchInstallationId(server, fcmToken, "logout");
@@ -112,6 +116,4 @@ class ServerBloc extends Bloc<ServerEvent, ServerState> {
   Future<bool> _deleteServer(Server server) async {
     return serverRepository!.deleteServer(server);
   }
-
-
 }

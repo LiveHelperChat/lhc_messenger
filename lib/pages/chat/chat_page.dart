@@ -1,38 +1,39 @@
-import 'dart:async';
-import 'package:after_layout/after_layout.dart';
-import 'package:http/http.dart' as http;
+// ignore_for_file: must_be_immutable, unused_field
 
+import 'dart:async';
+import 'dart:developer';
+import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:http/http.dart' as http;
 import 'package:livehelp/bloc/bloc.dart';
-
+import 'package:livehelp/globals.dart' as globals;
+import 'package:livehelp/model/model.dart';
 import 'package:livehelp/services/server_api_client.dart';
 import 'package:livehelp/services/server_repository.dart';
-
-import 'package:rxdart/rxdart.dart';
-
-import 'package:livehelp/model/model.dart';
-import 'package:livehelp/widget/widget.dart';
-
+import 'package:livehelp/utils/function_utils.dart';
 import 'package:livehelp/utils/utils.dart';
-
-import 'package:livehelp/globals.dart' as globals;
+import 'package:livehelp/widget/chat_bubble_experiment.dart';
+import 'package:livehelp/widget/sendMessageRowWidget.dart';
+import 'package:rxdart/rxdart.dart';
 
 /// place: "/chats/chat"
 class ChatPage extends StatefulWidget {
-  ChatPage(
-      {Key? key,
-        this.server,
-        this.chat,
-        this.refreshList,
-        required this.isNewChat})
-      : super(key: key);
+  ChatPage({
+    Key? key,
+    this.server,
+    this.chat,
+    this.refreshList,
+    required this.isNewChat,
+  }) : super(
+          key: key,
+        );
 
   Chat? chat; // not final because we will update it
   Server? server;
   bool? isNewChat; // used to determine pending or other chats
-
   VoidCallback? refreshList;
+  Key key = ValueKey("audioRecordingWidget");
 
   @override
   ChatPageState createState() => ChatPageState();
@@ -45,7 +46,6 @@ class ChatPageState extends State<ChatPage>
         AfterLayoutMixin<ChatPage>,
         RouteAware {
   final _writingSubject = PublishSubject<String>();
-
   // used to track application lifecycle
   AppLifecycleState? _lastLifecyleState;
 
@@ -63,7 +63,6 @@ class ChatPageState extends State<ChatPage>
   List<dynamic> _cannedMsgs = <dynamic>[];
 
   List<MsgHandler> _msgsHandlerList = <MsgHandler>[];
-  TextEditingController _textController = TextEditingController();
   ServerApiClient? _serverApiClient;
 
   List<PopupMenuEntry<ChatItemMenuOption>>? menuBuilder;
@@ -74,36 +73,37 @@ class ChatPageState extends State<ChatPage>
 
   BehaviorSubject<bool> _isWritingSubject = BehaviorSubject<bool>.seeded(false);
   BehaviorSubject<bool> _isActionLoadingSubject =
-  BehaviorSubject<bool>.seeded(false);
+      BehaviorSubject<bool>.seeded(false);
 
   set _isWriting(bool value) => _isWritingSubject.add(value);
   bool get _isWriting => _isWritingSubject.value;
-
   set _isActionLoading(bool value) => _isActionLoadingSubject.add(value);
   bool get _isActionLoading => _isActionLoadingSubject.value;
+  String? departmentName;
+  bool isChatAccepted = false;
 
+  bool isChatLoaded = false;
+  bool isAcceptingChat = false;
   @override
   initState() {
     super.initState();
-
     WidgetsBinding.instance.addObserver(this);
     _chatCopy = widget.chat; // copy chat so that we can update it later
     _isNewChat = widget.isNewChat;
     _serverApiClient = ServerApiClient(httpClient: http.Client());
-
     //subject.stream.debounce(new Duration(milliseconds: 300)).listen(_textChanged);
     _writingSubject.stream.listen(_textChanged);
-
-
     // stop sending notifications for this chat
     _fcmTokenBloc = context.read<FcmTokenBloc>()
       ..add(ChatOpenedEvent(chat: _chatCopy!));
-
     _syncMessages();
     _msgsTimer = _syncMsgsTimer(5);
-    if (!_isNewChat!) {
-      _acceptChat();
+    if(widget.chat?.owner==widget.server?.username){
+       _isOwnerOfChat=true;
     }
+    // if (!_isNewChat!) {
+    //   _acceptChat();
+    // }
   }
 
   @override
@@ -158,14 +158,14 @@ class ChatPageState extends State<ChatPage>
   void _checkState() {
     switch (_lastLifecyleState) {
       case AppLifecycleState.resumed:
-      // stop sending notifications for this chat
+        // stop sending notifications for this chat
         _fcmTokenBloc?.add(ChatOpenedEvent(chat: _chatCopy!));
         _syncMessages();
         _msgsTimer = _syncMsgsTimer(5);
         break;
       case AppLifecycleState.paused:
       case AppLifecycleState.inactive:
-      //allow showing notifications for this chat
+        //allow showing notifications for this chat
         _fcmTokenBloc?.add(ChatPausedEvent(chat: _chatCopy!));
         if (_msgsTimer!.isActive) _msgsTimer!.cancel();
         if (_operatorTimer != null && _operatorTimer!.isActive) {
@@ -215,6 +215,7 @@ class ChatPageState extends State<ChatPage>
           }
           if (state is ChatMessagesLoaded) {
             _addMessages(state.messages);
+        
             return ListView.builder(
               scrollDirection: Axis.vertical,
               reverse: true,
@@ -230,155 +231,161 @@ class ChatPageState extends State<ChatPage>
 
     var popupMenuBtn = PopupMenuButton<ChatItemMenuOption>(
         onSelected: (ChatItemMenuOption result) {
-          onMenuOptionChanged(result);
-        }, itemBuilder: (BuildContext context) {
+      onMenuOptionChanged(result);
+    }, itemBuilder: (BuildContext context) {
       return _itemMenuBuilder();
     });
 
     Widget loadingIndicator =
-    _isActionLoading ? const CircularProgressIndicator() : Container();
+        _isActionLoading ? const CircularProgressIndicator() : Container();
 
     var mainScaffold = BlocProvider<ChatMessagesBloc>(
-        create: (context) => _chatPageBloc!,
-        child: Scaffold(
-            backgroundColor: Colors.blueGrey.shade50,
-            appBar: AppBar(
-              key: _scaffoldState,
-              title: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                // mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  RichText(
-                    text: TextSpan(
-                      children: [
-                        WidgetSpan(
-                            style: const TextStyle(height: 1, fontSize: 17),
-                            child: BlocBuilder<ChatMessagesBloc,
-                                ChatMessagesState>(
-                              bloc: _chatPageBloc,
-                                builder: (context, state) {
-                              if (state is ChatMessagesLoaded) {
-                                return Icon(Icons.person,
-                                    size: 14,
-                                    color: state.chatStatusCode == 0
-                                        ? Colors.green.shade400
-                                        : (state.chatStatusCode == 2
+      create: (context) => _chatPageBloc!,
+      child: Scaffold(
+        backgroundColor: Colors.blueGrey.shade50,
+        appBar: AppBar(
+          key: _scaffoldState,
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            // mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Center(
+                child: RichText(
+                  text: TextSpan(
+                    children: [
+                      WidgetSpan(
+                        style: const TextStyle(height: 1, fontSize: 17),
+                        child: BlocBuilder<ChatMessagesBloc, ChatMessagesState>(
+                          bloc: _chatPageBloc,
+                          builder: (context, state) {
+                            if (state is ChatMessagesLoaded) {
+                              isChatLoaded = true;
+                              return Icon(
+                                Icons.person,
+                                size: 17,
+                                color: state.chatStatusCode == 0
+                                    ? Colors.green.shade400
+                                    : (state.chatStatusCode == 2
                                         ? Colors.yellow.shade400
-                                        : Colors.red.shade400));
-                              }
-                              return Icon(Icons.person,
-                                  size: 14, color: Colors.green.shade400);
-                            })),
-                        TextSpan(
-                          style: const TextStyle(height: 2, fontSize: 15),
-                          text: ' ${_chatCopy!.nick}',
+                                        : Colors.red.shade400),
+                              );
+                            }
+                            return Icon(Icons.person,
+                                size: 17, color: Colors.green.shade400);
+                          },
                         ),
-                      ],
-                    ),
-                  ),
-                  Row(
-                    children: <Widget>[
-                      const Icon(
-                        Icons.people,
-                        size: 17,
-                        color: Colors.white,
                       ),
-                      Text(
-                        ' ${_chatCopy!.owner}',
-                        style: headerbottom,
+                      TextSpan(
+                        style: const TextStyle(
+                          height: 2,
+                          fontSize: 15,
+                          color: Colors.white,
+                        ),
+                        text: ' ${_chatCopy!.nick}',
                       ),
                     ],
                   ),
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  const Icon(
+                    Icons.people,
+                    size: 17,
+                    color: Colors.white,
+                  ),
+                  Padding(
+                    padding: EdgeInsets.only(top: 2),
+                    child: Text(
+                      _chatCopy!.owner != null
+                          ? ' ${_chatCopy!.owner}'
+                          : " Pending",
+                      style: headerbottom,
+                    ),
+                  ),
                 ],
               ),
-              elevation: Theme.of(context).platform == TargetPlatform.android
-                  ? 6.0
-                  : 0.0,
-              actions: <Widget>[
-                Offstage(
-                    offstage: !_isNewChat!,
-                    child: MaterialButton(
-                      child: _isActionLoading
-                          ? const CircularProgressIndicator(
-                        valueColor:
-                        AlwaysStoppedAnimation<Color>(Colors.white),
-                      )
-                          : const Text("ACCEPT"),
-                      textColor: Colors.white,
-                      onPressed: () {
-                        _isActionLoading = true;
-                        _acceptChat();
-                      },
-                    )),
-                IconButton(
-                    icon: const Icon(Icons.info_outline),
-                    onPressed: () => _showChatInfo(context)),
-                popupMenuBtn
-              ],
-              bottom: PreferredSize(
-                  preferredSize: const Size.fromHeight(25.0),
-                  child: Container(
-                      height: 28.0,
-                      padding: const EdgeInsets.only(
-                          top: 0.0, left: 73.0, right: 8.0),
-                      alignment: Alignment.centerLeft,
-                      child: BlocBuilder<ChatMessagesBloc, ChatMessagesState>(
-                        bloc: _chatPageBloc,
-                        builder: (context, state) {
-                          if (state is ChatMessagesLoaded) {
-                            return Text(
-                              state.chatStatus,
-                              softWrap: true,
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontStyle: FontStyle.italic,
-                                  fontSize: 12.0,
-                                  fontWeight: FontWeight.w300),
-                            );
-                          }
-                          return Text("");
-                        },
-                      ))),
+            ],
+          ),
+          elevation:
+              Theme.of(context).platform == TargetPlatform.android ? 6.0 : 0.0,
+          actions: <Widget>[
+            IconButton(
+              icon: const Icon(Icons.info_outline),
+              onPressed: () => _showChatInfo(context),
             ),
-            body: BlocConsumer<ChatMessagesBloc, ChatMessagesState>(
-              listener: (context, state) {
-                print("sdfsdfsd");
-                if (state is ChatMessagesLoaded) {
-                  if (state.isChatClosed) {
-                    widget.refreshList!();
-                    Navigator.of(context).pop();
-                  }
-                }
-              },
-              builder: (context, state) {
-                return Stack(children: <Widget>[
-                  Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: <Widget>[
-                        Flexible(
-                            child: Padding(
-                              padding: const EdgeInsets.only(left: 8.0, right: 8.0),
-                              child: msgsStreamBuilder,
-                            )),
-                        const Divider(
-                          height: 1.0,
-                        ),
-                        Container(
-                          child: _buildComposer(),
-                          decoration: BoxDecoration(
-                              color: Theme.of(context).cardColor),
-                        )
-                      ]),
-                  if (state is ChatMessagesLoaded && state.isLoading)
-                    Center(child: loadingIndicator)
-                ]);
-              },
-            )));
+            popupMenuBtn
+          ],
+          bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(25.0),
+              child: Container(
+                  height: 28.0,
+                  // padding: const EdgeInsets.only(
+                  //     top: 0.0, left: 73.0, right: 8.0),
+                  alignment: Alignment.centerLeft,
+                  child: BlocBuilder<ChatMessagesBloc, ChatMessagesState>(
+                    bloc: _chatPageBloc,
+                    builder: (context, state) {
+                      if (state is ChatMessagesLoaded) {
+                        return Center(
+                          child: Text(
+                            state.chatStatus,
+                            softWrap: true,
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontStyle: FontStyle.italic,
+                                fontSize: 12.0,
+                                fontWeight: FontWeight.w300),
+                          ),
+                        );
+                      }
+                      return Text("");
+                    },
+                  ))),
+        ),
+        body: BlocConsumer<ChatMessagesBloc, ChatMessagesState>(
+          listener: (context, state) {
+            if (state is ChatMessagesLoaded) {
+              if (state.isChatClosed) {
+                widget.refreshList!();
+                Navigator.of(context).pop();
+              }
+            }
+          },
+          builder: (context, state) {
+            return Stack(
+              children: <Widget>[
+                Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      Flexible(
+                          child: Padding(
+                        padding: const EdgeInsets.only(left: 8.0, right: 8.0),
+                        child: msgsStreamBuilder,
+                      )),
+                      const Divider(
+                        height: 1.0,
+                      ),
+                      Container(
+                        child: _buildComposer(),
+                        decoration:
+                            BoxDecoration(color: Theme.of(context).cardColor),
+                      )
+                    ]),
+                if (state is ChatMessagesLoaded && state.isLoading)
+                  Center(child: loadingIndicator),
+              ],
+            );
+          },
+        ),
+      ),
+    );
 
     return GestureDetector(
         onTap: () {
-          FocusScope.of(context).unfocus();
+          // FocusScope.of(context).unfocus();
         },
         child: mainScaffold);
   }
@@ -388,6 +395,7 @@ class ChatPageState extends State<ChatPage>
       if (!_msgsHandlerList
           .any((msghandle) => msghandle.msg!.id == message.id)) {
         MsgHandler msgHandle = MsgHandler(
+          server: widget.server,
           chat: _chatCopy!,
           msg: message,
           animationController: AnimationController(
@@ -427,14 +435,14 @@ class ChatPageState extends State<ChatPage>
   void onMenuOptionChanged(ChatItemMenuOption result) {
     switch (result) {
       case ChatItemMenuOption.CLOSE:
-      //     widget.loadingState(true);
+        //     widget.loadingState(true);
         _closeChat();
         break;
       case ChatItemMenuOption.REJECT:
-      //   widget.loadingState(true);
+        //   widget.loadingState(true);
         _deleteChat();
         break;
-    /*   case ChatItemMenuOption.TRANSFER:
+      /*   case ChatItemMenuOption.TRANSFER:
       // widget.loadingState(true);
       // _showOperatorList(context,srv,chat);
         //_getOperatorList(ctx,srv,chat);
@@ -451,6 +459,7 @@ class ChatPageState extends State<ChatPage>
 
   void _deleteChat() async {
     _chatPageBloc!.add(DeleteChat(server: widget.server!, chat: _chatCopy!));
+    Navigator.pop(context);
   }
 
   void _showChatInfo(context) {
@@ -461,49 +470,49 @@ class ChatPageState extends State<ChatPage>
         builder: (BuildContext context) {
           return SingleChildScrollView(
               child: Column(
-                children: <Widget>[
-                  ListTile(
-                    leading: Text("Server", style: styling),
-                    title: Text("${widget.server!.servername}"),
-                    onTap: () {},
-                  ),
-                  ListTile(
-                    leading: Text("ID", style: styling),
-                    title: Text(_chatCopy!.id.toString()),
-                    onTap: () {},
-                  ),
-                  ListTile(
-                    leading: Text("Email", style: styling),
-                    title: Text(_chatCopy!.email ?? ""),
-                    onTap: () {},
-                  ),
-                  ListTile(
-                    leading: Text("Phone", style: styling),
-                    title: Text(_chatCopy!.phone ?? ""),
-                    onTap: () {},
-                  ),
-                  ListTile(
-                    leading: Text("IP", style: styling),
-                    title: new Text(_chatCopy!.ip ?? ""),
-                    onTap: () {},
-                  ),
-                  ListTile(
-                    leading: new Text("Country", style: styling),
-                    title: new Text(_chatCopy!.country_name ?? ""),
-                    onTap: () {},
-                  ),
-                  ListTile(
-                    leading: new Text("From", style: styling),
-                    title: new Text(_chatCopy!.referrer ?? ""),
-                    onTap: () {},
-                  ),
-                  ListTile(
-                    leading: new Text("User Agent", style: styling),
-                    title: new Text(_chatCopy!.uagent ?? ""),
-                    onTap: () {},
-                  ),
-                ],
-              ));
+            children: <Widget>[
+              ListTile(
+                leading: Text("Server", style: styling),
+                title: Text("${widget.server!.servername}"),
+                onTap: () {},
+              ),
+              ListTile(
+                leading: Text("ID", style: styling),
+                title: Text(_chatCopy!.id.toString()),
+                onTap: () {},
+              ),
+              ListTile(
+                leading: Text("Email", style: styling),
+                title: Text(_chatCopy!.email ?? ""),
+                onTap: () {},
+              ),
+              ListTile(
+                leading: Text("Phone", style: styling),
+                title: Text(_chatCopy!.phone ?? ""),
+                onTap: () {},
+              ),
+              ListTile(
+                leading: Text("IP", style: styling),
+                title: new Text(_chatCopy!.ip ?? ""),
+                onTap: () {},
+              ),
+              ListTile(
+                leading: new Text("Country", style: styling),
+                title: new Text(_chatCopy!.country_name ?? ""),
+                onTap: () {},
+              ),
+              ListTile(
+                leading: new Text("From", style: styling),
+                title: new Text(_chatCopy!.referrer ?? ""),
+                onTap: () {},
+              ),
+              ListTile(
+                leading: new Text("User Agent", style: styling),
+                title: new Text(_chatCopy!.uagent ?? ""),
+                onTap: () {},
+              ),
+            ],
+          ));
         });
   }
 
@@ -512,83 +521,90 @@ class ChatPageState extends State<ChatPage>
         child: Text("Send"),
         onPressed: _isWriting ? () => _submitMsg(_textController.text) : null);*/
 
-    var iconButton = IconButton(
-        icon: const Icon(Icons.send),
-        onPressed: () {
-          if (_textController.text.isNotEmpty) _submitMsg(_textController.text);
-        });
-
     return IconTheme(
       data: IconThemeData(color: Theme.of(context).colorScheme.secondary),
       child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 0.0),
-          child: Row(
-            children: <Widget>[
-              IconButton(
-                  icon: const Icon(Icons.list),
-                  onPressed: () {
-                    showModalBottomSheet<void>(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return Padding(
-                              padding: const EdgeInsets.all(4.0),
-                              child: ListView.builder(
-                                reverse: false,
-                                padding: const EdgeInsets.all(6.0),
-                                itemCount: _cannedMsgs.length,
-                                itemBuilder: (_, int index) {
-                                  Map canMsg = _cannedMsgs[index];
-                                  return ListTile(
-                                    title: Text(canMsg["title"]),
-                                    isThreeLine: true,
-                                    subtitle: Text(canMsg["msg"]),
-                                    onTap: () {
-                                      _textController.text = canMsg["msg"];
-                                      Navigator.pop(context);
-                                    },
-                                  );
-                                },
-                              ));
+          child: isAcceptingChat
+              ? LinearProgressIndicator()
+              : _isNewChat!
+                  ? InkWell(
+                      onTap: () {
+                        setState(() {
+                          isAcceptingChat = true;
                         });
-                  }),
-              Flexible(
-                  child: TextField(
-                    controller: _textController,
-                    keyboardType: TextInputType.multiline,
-                    textInputAction: TextInputAction.newline,
-                    maxLines: null,
-                    enableInteractiveSelection: true,
-                    onChanged: (txt) => (_writingSubject.add(txt)),
-                    onSubmitted: _submitMsg,
-                    decoration: _isOwnerOfChat
-                        ? const InputDecoration(
-                        hintText: "Enter a message to send",
-                        border: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        errorBorder: InputBorder.none,
-                        disabledBorder: InputBorder.none)
-                        : const InputDecoration(
-                        border: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        errorBorder: InputBorder.none,
-                        disabledBorder: InputBorder.none,
-                        hintText: "You are not the owner of this chat"),
-                  )),
-              Container(
-                margin: EdgeInsets.symmetric(horizontal: 0.0),
-                child:
-                iconButton /*Theme.of(context).platform == TargetPlatform.iOS
-                    ? cupertinoButton
-                    : iconButton*/
-                ,
-              )
-            ],
-          ),
+                        _acceptChat();
+                      },
+                      child: Container(
+                        color: Colors.green,
+                        padding: EdgeInsets.symmetric(vertical: 15),
+                        alignment: Alignment.center,
+                        child: Text(
+                          "Accept Chat",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    )
+                  : SendMessageRowWidget(
+                      key: widget.key,
+                      server: widget.server!,
+                      chat: _chatCopy,
+                      isOwnerOfChat: _isOwnerOfChat,
+                      submitMessage: submitMsg,
+                    ),
+          // : Row(
+          //     children: <Widget>[
+          //       IconButton(
+          //           icon: const Icon(Icons.list),
+          //           onPressed: () {
+          //             // showModalBottomSheet<void>(
+          //             //     context: context,
+          //             //     builder: (BuildContext context) {
+          //             //       return Padding(
+          //             //           padding: const EdgeInsets.all(4.0),
+          //             //           child: ListView.builder(
+          //             //             reverse: false,
+          //             //             padding: const EdgeInsets.all(6.0),
+          //             //             itemCount: _cannedMsgs.length,
+          //             //             itemBuilder: (_, int index) {
+          //             //               Map canMsg = _cannedMsgs[index];
+          //             //               return ListTile(
+          //             //                 title: Text(canMsg["title"]),
+          //             //                 isThreeLine: true,
+          //             //                 subtitle: Text(canMsg["msg"]),
+          //             //                 onTap: () {
+          //             //                   _textController.text =
+          //             //                       canMsg["msg"];
+          //             //                   Navigator.pop(context);
+          //             //                 },
+          //             //               );
+          //             //             },
+          //             //           ));
+          //             //     });
+          //           }),
+          //       //Bottom Row With TextField, Attach File, Audio Record and SendMessageButton
+          //       Expanded(
+          //         child: SendMessageRowWidget(
+          //           key: widget.key,
+          //           server: widget.server!,
+          //           chat: _chatCopy,
+          //           isOwnerOfChat: _isOwnerOfChat,
+          //           submitMessage: submitMsg,
+          //         ),
+          //       )
+          //     ],
+          //   ),
           decoration: Theme.of(context).platform == TargetPlatform.iOS
               ? const BoxDecoration(
-              border: Border(top: BorderSide(color: Colors.brown)))
+                  border: Border(
+                    top: BorderSide(
+                      color: Colors.brown,
+                    ),
+                  ),
+                )
               : null),
     );
   }
@@ -599,14 +615,14 @@ class ChatPageState extends State<ChatPage>
         var newChat = Chat.fromJson(chatData["chat"]);
         // update chat with new data
         _chatCopy = newChat.copyWith(owner: chatData["ownerstring"]);
-
         _cannedMsgs = List<dynamic>.from(chatData["canned_messages"]);
-
         _isNewChat = false;
         _isOwnerOfChat =
             _chatCopy!.user_id.toString() == widget.server!.userid.toString();
-
         _cancelAccept();
+        isChatAccepted = true;
+        isAcceptingChat = false;
+        
       });
       _isLoading(false);
     });
@@ -616,12 +632,17 @@ class ChatPageState extends State<ChatPage>
     _isActionLoading = loading;
   }
 
-  void _submitMsg(String msg) {
-    _textController.clear();
+  void submitMsg(String msg,{String? sender}) {
+    // _textController.clear();
     _isWriting = false;
+    if (_isNewChat! == true) {
+      FunctionUtils.showErrorMessage(
+          message: "Pending chat! Please accept first");
+      return;
+    }
     //post message to server and update messages instantly
     _chatPageBloc!.add(
-        PostMessage(server: widget.server!, chat: widget.chat!, message: msg));
+        PostMessage(server: widget.server!, chat: widget.chat!, message: msg,sender: sender,));
   }
 
   void _textChanged(String text) {
@@ -644,8 +665,8 @@ class ChatPageState extends State<ChatPage>
   }
 
   void _operatorTyping() async {
-    await _serverApiClient!.setOperatorTyping(
-        widget.server!, _chatCopy!.id!, _isWriting);
+    await _serverApiClient!
+        .setOperatorTyping(widget.server!, _chatCopy!.id!, _isWriting);
   }
 
   Future<Null> _syncMessages() async {
@@ -660,32 +681,30 @@ class ChatPageState extends State<ChatPage>
 }
 
 class MsgHandler extends StatelessWidget {
-  MsgHandler({this.chat, this.msg, this.animationController});
+  MsgHandler({required this.server,required this.chat, this.msg, this.animationController});
+  final Server? server;
   final Message? msg;
   final Chat? chat;
-  final AnimationController? animationController;
 
+  final AnimationController? animationController;
   @override
   Widget build(BuildContext context) {
     return Container(
-        margin: const EdgeInsets.symmetric(vertical: 8.0),
-        child: new Row(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              new Expanded(
-                child: new Bubble(
-                  message: msg!,
-                ),
-              )
-            ]));
-
-    /*new SizeTransition(
-        sizeFactor: new CurvedAnimation(
-            parent: animationController, curve: Curves.bounceOut),
-        axisAlignment: 0.0,
-        child:
-                ); */
+      margin: const EdgeInsets.symmetric(vertical: 8.0),
+      child: new Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          new Expanded(
+            child: new ChatBubbleExperiment(
+              server:server,
+              chat: chat,
+              message: msg!,
+            ),
+          )
+        ],
+      ),
+    );
   }
 }
 
@@ -709,10 +728,12 @@ class ChatDetailTile extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  new Text(info!,
-                      textAlign: TextAlign.left,
-                      style: Theme.of(context).textTheme.subtitle2),
-                ]))
+              new Text(
+                info!,
+                textAlign: TextAlign.left,
+                style: Theme.of(context).textTheme.titleSmall,
+              )
+            ]))
       ],
     );
   }

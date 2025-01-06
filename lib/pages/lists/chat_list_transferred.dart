@@ -2,13 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
 import 'package:livehelp/bloc/bloc.dart';
-
 import 'package:livehelp/model/model.dart';
-import 'package:livehelp/widget/widget.dart';
-import 'package:livehelp/utils/utils.dart';
 import 'package:livehelp/services/server_api_client.dart';
-
 import 'package:livehelp/utils/routes.dart' as LHCRouter;
+import 'package:livehelp/utils/utils.dart';
+import 'package:livehelp/widget/widget.dart';
 
 class TransferredListWidget extends StatefulWidget {
   const TransferredListWidget({
@@ -21,8 +19,7 @@ class TransferredListWidget extends StatefulWidget {
   final VoidCallback? refreshList;
 
   @override
-  _TransferredListWidgetState createState() =>
-      _TransferredListWidgetState();
+  _TransferredListWidgetState createState() => _TransferredListWidgetState();
 }
 
 class _TransferredListWidgetState extends State<TransferredListWidget> {
@@ -35,8 +32,7 @@ class _TransferredListWidgetState extends State<TransferredListWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<ChatslistBloc, ChatListState>(
-        builder: (context, state) {
+    return BlocBuilder<ChatslistBloc, ChatListState>(builder: (context, state) {
       if (state is ChatslistInitial) {
         return const Center(child: CircularProgressIndicator());
       }

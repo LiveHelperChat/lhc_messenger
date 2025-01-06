@@ -10,18 +10,24 @@ abstract class ChatMessagesEvent extends Equatable {
 }
 
 class FetchChatMessages extends ChatMessagesEvent {
-  const FetchChatMessages({required Server server, required Chat chat})
-      : super(server: server, chat: chat);
+  const FetchChatMessages({
+    required Server server,
+    required Chat chat,
+  }) : super(server: server, chat: chat);
 }
 
 class PostMessage extends ChatMessagesEvent {
   final String? message;
-  const PostMessage(
-      {required Server server, required Chat chat, this.message})
-      : super(server: server, chat: chat);
+  final String? sender;
+  const PostMessage({
+    required Server server,
+    required Chat chat,
+    this.message,
+    this.sender,
+  }) : super(server: server, chat: chat);
 
   @override
-  List<Object> get props => [server, chat, message!];
+  List<Object> get props => [server, chat, message ?? ''];
 }
 
 class CloseChat extends ChatMessagesEvent {

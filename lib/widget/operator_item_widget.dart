@@ -1,17 +1,17 @@
-import 'package:intl/intl.dart';
+// ignore_for_file: unused_local_variable
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:livehelp/model/model.dart';
 import 'package:livehelp/utils/utils.dart';
-
 
 class OperatorItemWidget extends StatelessWidget {
   OperatorItemWidget(
       {Key? key,
-        this.server,
-        this.chat,
-        required this.onMenuSelected,
-        required this.menuBuilder})
+      this.server,
+      this.chat,
+      required this.onMenuSelected,
+      required this.menuBuilder})
       : super(key: key);
 
   final User? chat;
@@ -20,7 +20,7 @@ class OperatorItemWidget extends StatelessWidget {
   final ValueChanged<ChatItemMenuOption> onMenuSelected;
 
   final List<PopupMenuEntry<ChatItemMenuOption>>
-  menuBuilder; // for populating the menu
+      menuBuilder; // for populating the menu
 
   @override
   Widget build(BuildContext context) {
@@ -32,8 +32,8 @@ class OperatorItemWidget extends StatelessWidget {
 
     var popupMenuBtn = new PopupMenuButton<ChatItemMenuOption>(
         onSelected: (ChatItemMenuOption result) {
-          onMenuSelected(result);
-        }, itemBuilder: (BuildContext context) {
+      onMenuSelected(result);
+    }, itemBuilder: (BuildContext context) {
       return menuBuilder;
     });
 
@@ -61,8 +61,12 @@ class OperatorItemWidget extends StatelessWidget {
                           margin: const EdgeInsetsDirectional.only(end: 16.0),
                           width: 40.0,
                           child: new Icon(
-                            (chat?.hide_online == 1 ? Icons.flash_off : Icons.flash_on),
-                            color: chat?.hide_online == 1 ? Colors.red : Colors.green,
+                            (chat?.hide_online == 1
+                                ? Icons.flash_off
+                                : Icons.flash_on),
+                            color: chat?.hide_online == 1
+                                ? Colors.red
+                                : Colors.green,
                           ),
                         ),
                         Expanded(
@@ -70,25 +74,26 @@ class OperatorItemWidget extends StatelessWidget {
                                 mainAxisSize: MainAxisSize.min,
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: <Widget>[
-                                  new AnimatedDefaultTextStyle(
-                                    style: styling,
-                                    duration: kThemeChangeDuration,
-                                    child: new Text(chat!.name_official!,
-                                        textAlign: TextAlign.left,
-                                        style: styling.copyWith(
-                                            color: Colors.black,
-                                            fontSize: 18.0,
-                                            fontWeight: FontWeight.bold)),
-                                  ),
-                                  new AnimatedDefaultTextStyle(
-                                      duration: kThemeChangeDuration,
-                                      child: Text(chat!.last_msg!), // 'last  asd message asd ${chat.user_id ?? "-"}'
-                                      textAlign: TextAlign.left,
-                                      style: styling.copyWith(
-                                        color: Colors.indigo.shade400,
-                                        fontSize: 14.0,
-                                      )),
-                                ])),
+                              new AnimatedDefaultTextStyle(
+                                style: styling,
+                                duration: kThemeChangeDuration,
+                                child: new Text(chat!.name_official!,
+                                    textAlign: TextAlign.left,
+                                    style: styling.copyWith(
+                                        color: Colors.black,
+                                        fontSize: 18.0,
+                                        fontWeight: FontWeight.bold)),
+                              ),
+                              new AnimatedDefaultTextStyle(
+                                  duration: kThemeChangeDuration,
+                                  child: Text(chat!
+                                      .last_msg!), // 'last  asd message asd ${chat.user_id ?? "-"}'
+                                  textAlign: TextAlign.left,
+                                  style: styling.copyWith(
+                                    color: Colors.indigo.shade400,
+                                    fontSize: 14.0,
+                                  )),
+                            ])),
                         Align(
                           alignment: Alignment.topRight,
                           child: popupMenuBtn,

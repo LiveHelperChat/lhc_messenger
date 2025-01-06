@@ -1,14 +1,15 @@
+// ignore_for_file: unnecessary_null_comparison
+
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:livehelp/bloc/bloc.dart';
-
 import 'package:livehelp/model/model.dart';
 import 'package:livehelp/services/server_repository.dart';
-import 'package:livehelp/widget/widget.dart';
-import 'package:livehelp/utils/utils.dart';
-
 import 'package:livehelp/utils/routes.dart' as LHCRouter;
+import 'package:livehelp/utils/utils.dart';
+import 'package:livehelp/widget/widget.dart';
 
 class TwilioListWidget extends StatefulWidget {
   final List<Server>? listOfServers;
@@ -38,8 +39,7 @@ class _TwilioListWidgetState extends State<TwilioListWidget> {
   @override
   Widget build(BuildContext context) {
     _serverRepository = context.watch<ServerRepository>();
-    return BlocBuilder<ChatslistBloc, ChatListState>(
-        builder: (context, state) {
+    return BlocBuilder<ChatslistBloc, ChatListState>(builder: (context, state) {
       if (state is ChatslistInitial) {
         return const Center(child: CircularProgressIndicator());
       }

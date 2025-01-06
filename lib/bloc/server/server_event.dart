@@ -26,7 +26,7 @@ class GetServerListFromDB extends ServerEvent {
 class SelectServer extends ServerEvent {
   final Server server;
 
-  const SelectServer({required this.server}) : assert(server != null);
+  const SelectServer({required this.server});
 
   @override
   List<Object> get props => [server];
@@ -58,8 +58,7 @@ class LogoutServer extends ServerEvent {
   final bool deleteServer;
 
   const LogoutServer(
-      {required this.server, this.fcmToken, this.deleteServer = false})
-      : assert(server != null);
+      {required this.server, this.fcmToken, this.deleteServer = false});
 
   @override
   List<Object> get props => [server, fcmToken!, deleteServer];
