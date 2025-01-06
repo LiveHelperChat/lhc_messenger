@@ -1,23 +1,24 @@
 # Uncomment this line to define a global platform for your project
-platform :ios, '10.0' # Specify the minimum supported iOS version
+platform :ios, '10.0'  # Specify the minimum supported iOS version
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
 
-# Prevent Cocoapods from using frameworks
-install! 'cocoapods', :integrate_targets => false
+# Load Flutter CocoaPods helper
+require File.expand_path('../flutter_export_environment', __FILE__)
 
-# Add this section to fix plugin conflicts when upgrading Flutter
+target 'Runner' do
+  # Use frameworks instead of static libraries
+  use_frameworks!
+  use_modular_headers!
+
+  # Install Flutter and plugin pods
+  flutter_install_all_ios_pods(File.dirname(File.realpath(__FILE__)))
+end
+
+# Prevent Cocoapods from using frameworks for compatibility
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
   end
-end
-
-target 'Runner' do
-  # Flutter Podspec to handle dependencies
-  use_frameworks!
-  use_modular_headers!
-
-  flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
 end
