@@ -1,24 +1,32 @@
-# Uncomment this line to define a global platform for your project
-platform :ios, '10.0'  # Specify the minimum supported iOS version
+# Uncomment the next line to define a global platform for your project
+platform :ios, '10.0'
 
-# CocoaPods analytics sends network stats synchronously affecting flutter build latency.
+# CocoaPods analytics sends network stats synchronously affecting Flutter build speed.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
 
-# Load Flutter CocoaPods helper
-require File.expand_path('../flutter_export_environment', __FILE__)
+project 'Runner', {
+  'Debug' => :debug,
+  'Profile' => :release,
+  'Release' => :release,
+}
 
-target 'Runner' do
-  # Use frameworks instead of static libraries
-  use_frameworks!
-  use_modular_headers!
-
-  # Install Flutter and plugin pods
-  flutter_install_all_ios_pods(File.dirname(File.realpath(__FILE__)))
-end
-
-# Prevent Cocoapods from using frameworks for compatibility
+# Prevent CocoaPods from embedding unused architectures
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
   end
 end
+
+# Workaround for Xcode 14
+post_install do |installer|
+  installer.pods_project.build_configurations.each do |config|
+    config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64'
+  end
+end
+
+# Flutter dependencies
+flutter_application_path = '../'
+load File.join(flutter_application_path, '.ios', 'Flutter', 'podhelper.rb')
+
+# Integrate Flutter framework
+flutter_ios_podfile_setup
