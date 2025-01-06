@@ -60,7 +60,7 @@ android {
         applicationId "com.livehelperchat.chat"
         minSdkVersion 24
         targetSdkVersion 34
-        versionCode 44
+        versionCode 45
         versionName "4.52"
         multiDexEnabled true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"

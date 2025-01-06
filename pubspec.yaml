@@ -1,6 +1,6 @@
 name: livehelp
 description: A messenger for Live Helper Chat
-version: 1.0.17+17
+version: 1.0.18+18
 
 environment:
   sdk: ">=2.19.0 <3.0.0"
@@ -54,6 +54,8 @@ flutter_icons:
   image_path: "graphics/icon.png"
   android: true
   ios: false
+  adaptive_icon_background: "#FFFFFF" # Background color or path to background image
+  adaptive_icon_foreground: "assets/images/icon.png"
 # For information on the generic Dart part of this file, see the
 # following page: https://www.dartlang.org/tools/pub/pubspec
 
