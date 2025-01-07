@@ -1,9 +1,11 @@
 scripts:
   - name: Install dependencies
     script: |
+      cd ios
       flutter clean
       flutter pub get
-      cd ios
+      flutter pub add audio_session
+      flutter pub add just_audio
       gem uninstall ffi
       gem install ffi
       pod install
