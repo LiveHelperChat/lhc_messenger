@@ -4,4 +4,7 @@ scripts:
       flutter clean
       flutter pub get
       cd ios
+      gem uninstall ffi
+      gem install ffi
       pod install
+      flutter build ios
