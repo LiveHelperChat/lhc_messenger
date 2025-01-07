@@ -41,7 +41,6 @@ dependencies:
   open_file: ^3.5.8
   webview_flutter: ^4.10.0
   shared_preferences: ^2.3.2
-  audio_session: ^0.1.23
 dev_dependencies:
   flutter_test:
     sdk: flutter
