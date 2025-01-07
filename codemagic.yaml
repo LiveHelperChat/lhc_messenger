@@ -1,6 +1,7 @@
 scripts:
   - name: Install dependencies
     script: |
+      flutter clean
       flutter pub get
       cd ios
       pod install
