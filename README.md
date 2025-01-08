@@ -1,8 +1,6 @@
 ### IOS
 
-I could not build new IOS app because of this https://codemagic.io/app/5f50c50be2db272d7690ae45/build/677c554c58a6ef3fe8fb6406
-
-If someone knows how to fix this let me know :)
+IOS app can't be updated. Because it just stuck after compiling. Anyone with mac is free to make a fix and craete a pull request :)
 
 [![Apple store](https://livehelperchat.com/design/defaulttheme/images/apps/apple.svg)](https://apps.apple.com/us/app/id1530399116) [![Google Play](https://livehelperchat.com/design/defaulttheme/images/apps/google-play.png?v2)](https://play.google.com/store/apps/details?id=com.livehelperchat.chat)
 
