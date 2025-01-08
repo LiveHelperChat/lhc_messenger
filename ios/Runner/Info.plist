@@ -23,7 +23,7 @@
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>NSMicrophoneUsageDescription</key>
-    <string>Live Helper Chat needs access to your microphone so you can send voice messages.</string>
+	<string>Live Helper Chat needs access to your microphone so you can send voice messages.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Live Helper Chat needs access to your photo library so you can send photos.</string>
 	<key>LSRequiresIPhoneOS</key>
