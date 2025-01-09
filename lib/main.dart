@@ -18,8 +18,19 @@ import 'bloc/simple_bloc_observer.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
-  await FlutterDownloader.initialize(debug: true, ignoreSsl: true);
+
+  try {
+      await Firebase.initializeApp();
+    } catch (e) {
+      print("Error initializing Firebase: $e");
+    }
+
+  try {
+        await FlutterDownloader.initialize(debug: true, ignoreSsl: true);
+  } catch (e) {
+        print("Error initializing FlutterDownloader: $e");
+  }
+
   // Setting up the Bloc observer
   Bloc.observer = SimpleBlocObserver();
   // Initialize your database helper and server repository
