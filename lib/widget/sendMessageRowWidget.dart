@@ -228,44 +228,74 @@ class _SendMessageRowWidgetState extends State<SendMessageRowWidget> {
     try {
       if (isRecording) {
         // Stop the recording using the audio controller
-        final path = await _audioConrtoller
-            .stopRecording(); // This path will now directly be an MP3 file
+        final path = await _audioConrtoller.stopRecording();
         dummyValue++;
+
         // Check if the recorded file exists before proceeding
         if (path != null) {
-          final recordedFile = File(path); // Ensure the path is not null
+          final recordedFile = File(path);
           if (await recordedFile.exists()) {
-            log('Recorded WAV file saved at: ${recordedFile.path}');
+            log('Recorded file saved at: ${recordedFile.path}');
             setState(() {
-              recordedFilePath =
-                  recordedFile.path; // Update the recorded file path to MP3
-              isRecording = false; // Update recording status
+              recordedFilePath = recordedFile.path;
+              isRecording = false;
               isUploading = true;
             });
 
-            var uploadedFile = await serverRepository!.uploadFile(
-                widget.server, recordedFile,
-                chatId: widget.chat?.id,);
+            // Check file size before uploading
+            int fileSize = await recordedFile.length();
+            if (fileSize == 0) {
+              setState(() {
+                isUploading = false;
+              });
+              FunctionUtils.showErrorMessage(message: "Recording failed: empty file created");
+              return;
+            }
 
-            //uploaded file will be null if uploading failed
-            if (uploadedFile != null) {
-              log(
-                uploadedFile.toString(),
+            try {
+              var uploadedFile = await serverRepository!.uploadFile(
+                widget.server,
+                recordedFile,
+                chatId: widget.chat?.id,
               );
-              String fileMessage = FunctionUtils.buildFileMessage(
-                  updateFileResponse: uploadedFile);
-              log(widget.chat?.department_name ?? "Null Depart");
-              widget.submitMessage(fileMessage);
-            } else {}
+
+              if (uploadedFile != null) {
+                log(uploadedFile.toString());
+                String fileMessage = FunctionUtils.buildFileMessage(
+                  updateFileResponse: uploadedFile
+                );
+                widget.submitMessage(fileMessage);
+              } else {
+                FunctionUtils.showErrorMessage(message: "Failed to upload audio file");
+              }
+            } catch (e) {
+              log("Upload error: ${e.toString()}");
+              FunctionUtils.showErrorMessage(message: "Error uploading audio: ${e.toString()}");
+            } finally {
+              setState(() {
+                isUploading = false;
+              });
+              // Try to delete the temporary file regardless of success
+              try {
+                await recordedFile.delete();
+              } catch (e) {
+                log("Error deleting temporary file: ${e.toString()}");
+              }
+            }
+          } else {
+            log('Recorded file does not exist: $path');
             setState(() {
               isUploading = false;
             });
-            recordedFile.delete();
+            FunctionUtils.showErrorMessage(message: "Recorded file not saved! Try again");
           }
         } else {
-          log('Recorded file does not exist: $path');
-          FunctionUtils.showErrorMessage(
-              message: "Recorded file not saved! Try again");
+          setState(() {
+            isUploading = false;
+            isRecording = false;
+          });
+          log('No path returned from recording');
+          FunctionUtils.showErrorMessage(message: "Recording failed! No path returned");
         }
       }
 
@@ -273,11 +303,12 @@ class _SendMessageRowWidgetState extends State<SendMessageRowWidget> {
     } catch (e) {
       setState(() {
         isUploading = false;
+        isRecording = false;
       });
-      FunctionUtils.showErrorMessage(message: "Error:${e.toString()}");
-      // widget.onUploadCompleted();
+      log("Error stopping recording: ${e.toString()}");
+      FunctionUtils.showErrorMessage(message: "Error: ${e.toString()}");
     }
-  } //cancel the recordings and set isRecording false
+  }
 
   Future<void> cancelRecording() async {
     _timer?.cancel(); // Cancel the timer
