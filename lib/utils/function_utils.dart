@@ -10,6 +10,7 @@ import 'package:mime/mime.dart';
 import 'package:toastification/toastification.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:http/http.dart' as http;
 
 class FunctionUtils {
   static void showSuccessMessage(
