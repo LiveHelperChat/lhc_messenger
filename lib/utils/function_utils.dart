@@ -266,9 +266,57 @@ class FunctionUtils {
     try {
       String downloadLink = extractMediaLink(msgContent)!;
       String fileName = extractFileName(msgContent)!;
-      log(fileName);
-      //You can download a single file
-      return await FileDownloader.downloadFile(
+      log("Downloading file: $fileName from $downloadLink");
+
+      if (isiOS) {
+        // For iOS, download file directly using http
+        final directory = await getApplicationDocumentsDirectory();
+        final filePath = '${directory.path}/$fileName';
+        final file = File(filePath);
+
+        // Create http client for file download
+        final httpClient = http.Client();
+        final request = http.Request('GET', Uri.parse(downloadLink));
+        final response = await httpClient.send(request);
+
+        final contentLength = response.contentLength ?? 0;
+        int receivedBytes = 0;
+
+        final sink = file.openWrite();
+
+        await response.stream.listen(
+          (List<int> chunk) {
+            receivedBytes += chunk.length;
+            sink.add(chunk);
+
+            if (contentLength > 0 && onProgress != null) {
+              final progress = receivedBytes / contentLength;
+              onProgress(fileName, progress);
+            }
+          },
+          onDone: () async {
+            await sink.flush();
+            await sink.close();
+            httpClient.close();
+
+            if (onComplete != null) {
+              onComplete(filePath);
+            }
+          },
+          onError: (error) {
+            sink.close();
+            httpClient.close();
+            if (onDownloadError != null) {
+              onDownloadError(error.toString());
+            }
+          },
+          cancelOnError: true,
+        );
+
+        return file;
+      } else {
+        // Use flutter_file_downloader for Android
+        return await FileDownloader.downloadFile(
           url: downloadLink,
           name: fileName,
           subPath: "LiveHelperChat/",
@@ -278,7 +326,7 @@ class FunctionUtils {
             }
           },
           onDownloadCompleted: (String path) {
-            print('FILE DOWNLOADED TO PATH: $path');
+            log('FILE DOWNLOADED TO PATH: $path');
             if (onComplete != null) {
               onComplete(path);
             }
@@ -287,12 +335,19 @@ class FunctionUtils {
             if (onDownloadError != null) {
               onDownloadError(error);
             }
-          });
+          }
+        );
+      }
     } catch (e) {
+      log("Error downloading file: $e");
       showErrorMessage(message: e.toString());
+      if (onDownloadError != null) {
+        onDownloadError(e.toString());
+      }
       return null;
     }
   }
+
 //Function to append /fbmessenger/index at end of given url
  static String modifyUrl(String url) {
   // Remove trailing slashes from the URL to standardize it
