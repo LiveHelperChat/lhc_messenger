@@ -31,7 +31,7 @@ keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 
 android {
     namespace "com.livehelperchat.chat"
-    compileSdkVersion 34
+    compileSdkVersion 35
 
     compileOptions {
         // sourceCompatibility JavaVersion.VERSION_17 // Set Java source compatibility
@@ -60,8 +60,8 @@ android {
         applicationId "com.livehelperchat.chat"
         minSdkVersion 24
         targetSdkVersion 34
-        versionCode 45
-        versionName "4.52"
+        versionCode 46
+        versionName "4.53"
         multiDexEnabled true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
