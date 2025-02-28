@@ -17,6 +17,18 @@ class AudioRecorderController {
     }
   }
 
+  // Check if Opus encoding is supported
+  Future<bool> _isOpusSupported() async {
+    try {
+      final isSupported = await _audioRecorder.isEncoderSupported(AudioEncoder.opus);
+      return isSupported;
+    } catch (e) {
+      log("Error requesting permission: ${e.toString()}");
+      // If checking support throws an error, assume it's not supported
+      return false;
+    }
+  }
+
   // Get temporary file path for the recording
   Future<String> _getTempFilePath(String fileName) async {
     String fileExtension = Platform.isIOS ? ".m4a" : ".ogg";
@@ -47,7 +59,7 @@ class AudioRecorderController {
         encoder = AudioEncoder.aacLc;
         numChannels = 1;
       } else {
-        encoder = isDepartmentWhatsapp ? AudioEncoder.opus : AudioEncoder.wav;
+        encoder = isDepartmentWhatsapp &&  await _isOpusSupported() ? AudioEncoder.opus : AudioEncoder.wav;
         numChannels = isDepartmentWhatsapp ? 1 : 2;
       }
 

@@ -30,10 +30,10 @@ class ChatBubbleExperiment extends StatelessWidget {
     var dateFormatter = new DateFormat("HH:mm, dd/MM/yy");
 
     final bg = message.user_id == 0 || (message.is_owner == 2)
-        ? Colors.black12
+        ? Colors.grey[300]
         : message.user_id! > 0
-        ? Colors.white
-        : Colors.greenAccent;
+        ? Colors.blue[100]
+        : Colors.grey[100];
 
 
     final align = message.user_id == 0 || (message.is_owner == 2)

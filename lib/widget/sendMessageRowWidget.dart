@@ -72,130 +72,133 @@ class _SendMessageRowWidgetState extends State<SendMessageRowWidget> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Visibility(visible: isUploading, child: UploadingWidget()),
-        Row(
-          children: [
-            IconButton(onPressed: () {
-              setState(() {
-                isWhisperModeOn=!isWhisperModeOn;
-              });
-            },icon: Icon(isWhisperModeOn?Icons.hearing:Icons.hearing_disabled,),
-             color: isWhisperModeOn? Colors.blue:Colors.black54,),
-            SizedBox(
-              width: 5,
-            ),
-            Flexible(
-              child: TextField(
-                controller: textController,
-                keyboardType: TextInputType.multiline,
-                textInputAction: TextInputAction.newline,
-                maxLines: null,
-                enableInteractiveSelection: true,
-                onChanged: (txt) => (_writingSubject.add(txt)),
-                onSubmitted: (value) {
-                  widget.submitMessage(value,sender: isWhisperModeOn?"system":"operator");
-                },
-                decoration: widget.isOwnerOfChat
-                    ? const InputDecoration(
-                        hintText: "Enter a message to send",
-                        border: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        errorBorder: InputBorder.none,
-                        disabledBorder: InputBorder.none)
-                    : const InputDecoration(
-                        border: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        errorBorder: InputBorder.none,
-                        disabledBorder: InputBorder.none,
-                        hintMaxLines: 1,
-                        hintText: "You are not the owner of this chat",
-                        hintStyle: 
-                        TextStyle(fontSize: 14)
-                      ),
-              ),
-            ),
-            //Functionality to send documents in chat
-            Container(
-              child: IconButton(
-                icon: Icon(
-                  isRecording ? Icons.cancel : Icons.attach_file,
-                  color: isRecording ? Colors.red : Colors.black,
+        Container(  // Add this Container to wrap the Row
+            color: Colors.white, // Set your desired background color here
+            child: Row(
+              children: [
+                IconButton(onPressed: () {
+                  setState(() {
+                    isWhisperModeOn=!isWhisperModeOn;
+                  });
+                },icon: Icon(isWhisperModeOn?Icons.hearing:Icons.hearing_disabled,),
+                 color: isWhisperModeOn? Colors.blue:Colors.black54,),
+                SizedBox(
+                  width: 5,
                 ),
-                onPressed: () async {
-                  try {
-                    if (isRecording) {
-                      await cancelRecording();
-                    } else {
-                      FilePickerResult? result =
-                          await FilePicker.platform.pickFiles();
-                      if (result != null) {
-                        File file = File(result.files.single.path!);
-                        log(file.path);
-                        setState(() {
-                          isUploading = true;
-                        });
-                        final uploadedFileResult = await serverRepository!
-                            .uploadFile(widget.server, file);
+                Flexible(
+                  child: TextField(
+                    controller: textController,
+                    keyboardType: TextInputType.multiline,
+                    textInputAction: TextInputAction.newline,
+                    maxLines: null,
+                    enableInteractiveSelection: true,
+                    onChanged: (txt) => (_writingSubject.add(txt)),
+                    onSubmitted: (value) {
+                      widget.submitMessage(value,sender: isWhisperModeOn?"system":"operator");
+                    },
+                    decoration: widget.isOwnerOfChat
+                        ? const InputDecoration(
+                            hintText: "Enter a message to send",
+                            border: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            errorBorder: InputBorder.none,
+                            disabledBorder: InputBorder.none)
+                        : const InputDecoration(
+                            border: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            errorBorder: InputBorder.none,
+                            disabledBorder: InputBorder.none,
+                            hintMaxLines: 1,
+                            hintText: "You are not the owner of this chat",
+                            hintStyle:
+                            TextStyle(fontSize: 14)
+                          ),
+                  ),
+                ),
+                //Functionality to send documents in chat
+                Container(
+                  child: IconButton(
+                    icon: Icon(
+                      isRecording ? Icons.cancel : Icons.attach_file,
+                      color: isRecording ? Colors.red : Colors.black,
+                    ),
+                    onPressed: () async {
+                      try {
+                        if (isRecording) {
+                          await cancelRecording();
+                        } else {
+                          FilePickerResult? result =
+                              await FilePicker.platform.pickFiles();
+                          if (result != null) {
+                            File file = File(result.files.single.path!);
+                            log(file.path);
+                            setState(() {
+                              isUploading = true;
+                            });
+                            final uploadedFileResult = await serverRepository!
+                                .uploadFile(widget.server, file);
 
-                        if (uploadedFileResult != null) {
-                          log(uploadedFileResult.toString());
-                          //send file to user
-                          widget.submitMessage(FunctionUtils.buildFileMessage(
-                              updateFileResponse: uploadedFileResult));
+                            if (uploadedFileResult != null) {
+                              log(uploadedFileResult.toString());
+                              //send file to user
+                              widget.submitMessage(FunctionUtils.buildFileMessage(
+                                  updateFileResponse: uploadedFileResult));
+                            }
+                            setState(() {
+                              isUploading = false;
+                            });
+                            // widget.onUploadCompleted();
+                          } else {
+                            //file pick operation cancelled
+                          }
                         }
+                      } catch (e) {
                         setState(() {
                           isUploading = false;
                         });
+                        FunctionUtils.showErrorMessage(
+                            message: "Error:${e.toString()}");
                         // widget.onUploadCompleted();
-                      } else {
-                        //file pick operation cancelled
                       }
-                    }
-                  } catch (e) {
-                    setState(() {
-                      isUploading = false;
-                    });
-                    FunctionUtils.showErrorMessage(
-                        message: "Error:${e.toString()}");
-                    // widget.onUploadCompleted();
-                  }
-                },
-              ),
-            ),
-            //Mic Functionality for sending voice messages
-            Container(
-              child: IconButton(
-                icon: Icon(
-                  isRecording ? Icons.stop : Icons.mic,
-                  color: isRecording ? Colors.red : Colors.black,
+                    },
+                  ),
                 ),
-                onPressed: () {
-                  if (isRecording) {
-                    stopRecording();
-                  } else {
-                    startRecording();
-                  }
-                },
-              ),
+                //Mic Functionality for sending voice messages
+                Container(
+                  child: IconButton(
+                    icon: Icon(
+                      isRecording ? Icons.stop : Icons.mic,
+                      color: isRecording ? Colors.red : Colors.black,
+                    ),
+                    onPressed: () {
+                      if (isRecording) {
+                        stopRecording();
+                      } else {
+                        startRecording();
+                      }
+                    },
+                  ),
+                ),
+                Container(
+                  child: isRecording
+                      ? Padding(
+                          padding: EdgeInsets.only(right: 8),
+                          child: UpdatingTextWidget(),
+                        )
+                      : IconButton(
+                          icon: const Icon(Icons.send),
+                          onPressed: () {
+                            if (textController.text.isNotEmpty) {
+                            widget.submitMessage(textController.text,sender: isWhisperModeOn?"system":"operator");
+                              textController.clear();
+                            }
+                          }),
+                ),
+              ],
             ),
-            Container(
-              child: isRecording
-                  ? Padding(
-                      padding: EdgeInsets.only(right: 8),
-                      child: UpdatingTextWidget(),
-                    )
-                  : IconButton(
-                      icon: const Icon(Icons.send),
-                      onPressed: () {
-                        if (textController.text.isNotEmpty) {
-                        widget.submitMessage(textController.text,sender: isWhisperModeOn?"system":"operator");
-                          textController.clear();
-                        }
-                      }),
-            ),
-          ],
-        ),
+        )
       ],
     );
   }

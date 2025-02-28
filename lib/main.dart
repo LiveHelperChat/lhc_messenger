@@ -85,10 +85,11 @@ class App extends StatelessWidget {
         title: 'Live Helper Chat',
         navigatorObservers: [globals.routeObserver],
         theme: ThemeData(
-          primarySwatch: Colors.blue,
+          primaryColor: Colors.indigo,
+          primarySwatch: Colors.indigo,
           scaffoldBackgroundColor: Colors.white,
           appBarTheme: AppBarTheme(
-            backgroundColor: Colors.blue, // Set AppBar background color to green
+            backgroundColor: Colors.indigo, // Set AppBar background color to green
             foregroundColor: Colors.white, // Set text/icon color in AppBar
           ),
         ),
