@@ -1,13 +1,6 @@
 ### IOS
 
-IOS app can't be updated with file uploads, voice messages because of those known issues
-
-* ~~Device token is not registered anymore or send to the lhc server~~
-* ~~File download from chat does not work~~
-* ~~Voice messages does not work from the app~~
-
 IOS App fixes being implemented using purely https://claude.ai 3.7 Sonnet
-
 
 [![Apple store](https://livehelperchat.com/design/defaulttheme/images/apps/apple.svg)](https://apps.apple.com/us/app/id1530399116) [![Google Play](https://livehelperchat.com/design/defaulttheme/images/apps/google-play.png?v2)](https://play.google.com/store/apps/details?id=com.livehelperchat.chat)
 
