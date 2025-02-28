@@ -90,7 +90,7 @@ class OperatorItemWidget extends StatelessWidget {
                                       .last_msg!), // 'last  asd message asd ${chat.user_id ?? "-"}'
                                   textAlign: TextAlign.left,
                                   style: styling.copyWith(
-                                    color: Colors.indigo.shade400,
+                                    color: Colors.blue.shade400,
                                     fontSize: 14.0,
                                   )),
                             ])),
