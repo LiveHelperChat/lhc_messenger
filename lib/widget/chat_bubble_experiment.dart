@@ -8,6 +8,7 @@ import 'package:livehelp/utils/function_utils.dart';
 import 'package:livehelp/widget/file_message_widget.dart';
 import 'package:livehelp/widget/image_message_widget.dart';
 import 'package:livehelp/widget/my_audio_message_widget.dart';
+import 'package:flutter/services.dart';
 
 //class which returns the widget depending on message type, like AudioMessageWidget for audio message type
 class ChatBubbleExperiment extends StatelessWidget {
@@ -21,6 +22,7 @@ class ChatBubbleExperiment extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
     if (messageMediaType == null) {
       messageMediaType = FunctionUtils.determineMessageMediaType(message.msg);
     }
@@ -80,7 +82,7 @@ class ChatBubbleExperiment extends StatelessWidget {
             children: <Widget>[
               Padding(
                 padding: const EdgeInsets.only(right: 4.0, bottom: 4.0),
-                child: _buildMessageContent(),
+                child: _buildMessageContent(context),
               ),
               Padding(
                 padding: const EdgeInsets.only(left: 20.0),
@@ -100,17 +102,16 @@ class ChatBubbleExperiment extends StatelessWidget {
     );
   }
 
-  Widget _buildMessageContent() {
-    // For regular text messages, use SelectableHtml or provide a way to copy message content
+  Widget _buildMessageContent(BuildContext context) {
+    // For regular text messages, use a custom approach to make HTML content selectable
     if (messageMediaType == MessageMediaType.Text) {
-      return SelectableHtml(
-        data: message.msg ?? '',
-        style: {
-          "body": Style(
-            margin: EdgeInsets.zero,
-            padding: EdgeInsets.zero,
-          ),
+      return GestureDetector(
+        onLongPress: () {
+          _showCopyDialog(context, message.msg);
         },
+        child: Html(
+          data: message.msg ?? '',
+        ),
       );
     } else if (messageMediaType == MessageMediaType.Audio) {
       return MyAudioMessageWidget(
@@ -129,15 +130,89 @@ class ChatBubbleExperiment extends StatelessWidget {
       );
     } else {
       // For other types of messages that don't have dedicated widgets
-      return SelectableHtml(
-        data: message.msg ?? '',
-        style: {
-          "body": Style(
-            margin: EdgeInsets.zero,
-            padding: EdgeInsets.zero,
-          ),
+      return GestureDetector(
+        onLongPress: () {
+          _showCopyDialog(context, message.msg);
         },
+        child: Html(
+          data: message.msg ?? '',
+        ),
       );
     }
+  }
+
+  void _showCopyDialog(String? htmlMessage) {
+    final String plainText = FunctionUtils.stripHtmlTags(htmlMessage ?? '');
+
+    showDialog(
+      context: globalContext,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Message Text'),
+          content: SingleChildScrollView(
+            child: SelectableText(plainText),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Close'),
+            ),
+            TextButton(
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: plainText));
+                Navigator.of(context).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Message copied to clipboard'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              },
+              child: const Text('Copy'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Use the provided BuildContext for showing dialog
+  void _showCopyDialog(BuildContext context, String? htmlMessage) {
+    final String plainText = FunctionUtils.stripHtmlTags(htmlMessage ?? '');
+
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Message Text'),
+          content: SingleChildScrollView(
+            child: SelectableText(plainText),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+              },
+              child: const Text('Close'),
+            ),
+            TextButton(
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: plainText));
+                Navigator.of(dialogContext).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Message copied to clipboard'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              },
+              child: const Text('Copy'),
+            ),
+          ],
+        );
+      },
+    );
   }
 }
