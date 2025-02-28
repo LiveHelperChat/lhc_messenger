@@ -261,6 +261,7 @@ class FunctionUtils {
     )?,
     void onComplete(String filePath)?,
     void onDownloadError(String error)?,
+    bool isiOS = false,
   }) async {
     try {
       String downloadLink = extractMediaLink(msgContent)!;
