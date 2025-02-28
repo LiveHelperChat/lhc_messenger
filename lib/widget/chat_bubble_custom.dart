@@ -66,22 +66,21 @@ class ChatBubbleCustom extends StatelessWidget {
             children: <Widget>[
               Padding(
                 padding: const EdgeInsets.only(right: 4.0, bottom: 4.0),
-                child: Html(
-                  selectable: true,
-                  data: message.msg,
-                  onLinkTap: (url, attributes, element) {
-                    _launchURL(url);
-                  },
-
-                  /*data: "<main>${message.msg}</main>",
-                  customRender: {
-                    "main": (RenderContext ctx, Widget child, attributes, e) {
-                      return SelectableLinkify(
-                          onOpen: (l) => _launchURL(l.url),
-                          text: e.text,
-                          style: TextStyle(fontSize: 16));
-                    },
-                  },*/
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Html(
+                      data: message.msg,
+                      onLinkTap: (url, attributes, element) {
+                        _launchURL(url);
+                      },
+                    ),
+                    SelectableText(
+                      // Strip HTML tags for selectable plain text
+                      message.msg?.replaceAll(RegExp(r'<[^>]*>'), '') ?? '',
+                      style: TextStyle(height: 0, fontSize: 0, color: Colors.transparent),
+                    ),
+                  ],
                 ),
               ),
               // positioned at bottom but object renderer needs it to calculate

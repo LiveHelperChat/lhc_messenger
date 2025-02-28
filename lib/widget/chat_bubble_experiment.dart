@@ -81,8 +81,21 @@ class ChatBubbleExperiment extends StatelessWidget {
             children: <Widget>[
               Padding(
                 padding: const EdgeInsets.only(right: 4.0, bottom: 4.0),
+
                 child: messageMediaType == MessageMediaType.Text
-                    ? Html(data: message.msg, selectable: true)
+                    ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Html(
+                      data: message.msg,
+                    ),
+                    SelectableText(
+                      // Strip HTML tags for selectable plain text
+                      message.msg?.replaceAll(RegExp(r'<[^>]*>'), '') ?? '',
+                      style: TextStyle(height: 0, fontSize: 0, color: Colors.transparent),
+                    ),
+                  ],
+                )
                     : messageMediaType == MessageMediaType.Audio
                     ? MyAudioMessageWidget(
                   message: message, link: link,
@@ -96,7 +109,18 @@ class ChatBubbleExperiment extends StatelessWidget {
                   key: ValueKey(message.id.toString()),
                   message: message,
                 )
-                    : Html(data: message.msg, selectable: true),
+                    : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Html(data: message.msg),
+                    SelectableText(
+                      // Strip HTML tags for selectable plain text
+                      message.msg?.replaceAll(RegExp(r'<[^>]*>'), '') ?? '',
+                      style: TextStyle(height: 0, fontSize: 0, color: Colors.transparent),
+                    ),
+                  ],
+                ),
+
               ),
               Padding(
                 padding: const EdgeInsets.only(left: 20.0),
