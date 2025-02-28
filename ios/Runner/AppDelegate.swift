@@ -100,6 +100,7 @@ extension AppDelegate: MessagingDelegate {
 }
 
 private func registerPlugins(registry: FlutterPluginRegistry) {
+    // Only register FlutterDownloaderPlugin for testing - we'll handle downloads differently
     if (!registry.hasPlugin("FlutterDownloaderPlugin")) {
        FlutterDownloaderPlugin.register(with: registry.registrar(forPlugin: "FlutterDownloaderPlugin")!)
     }
