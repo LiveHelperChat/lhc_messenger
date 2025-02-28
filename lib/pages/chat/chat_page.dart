@@ -222,14 +222,21 @@ class ChatPageState extends State<ChatPage>
               _addMessages(state.messages);
             }
 
-            return ListView.builder(
-              scrollDirection: Axis.vertical,
-              reverse: true,
-              padding: const EdgeInsets.all(6.0),
-              itemBuilder: (BuildContext context, int index) {
-                return _msgsHandlerList[index];
+            return GestureDetector(
+              behavior: HitTestBehavior.opaque, // Important to capture all taps
+              onTap: () {
+                // Hide keyboard when tapping on the message list
+                FocusScope.of(context).unfocus();
               },
-              itemCount: _msgsHandlerList.length,
+              child: ListView.builder(
+                scrollDirection: Axis.vertical,
+                reverse: true,
+                padding: const EdgeInsets.all(6.0),
+                itemBuilder: (BuildContext context, int index) {
+                  return _msgsHandlerList[index];
+                },
+                itemCount: _msgsHandlerList.length,
+              ),
             );
           }
           return Text("No messages");
@@ -362,27 +369,35 @@ class ChatPageState extends State<ChatPage>
           },
           builder: (context, state) {
             return Stack(
-              children: <Widget>[
-                Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: <Widget>[
-                      Flexible(
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 8.0, right: 8.0),
-                            child: msgsStreamBuilder,
-                          )),
-                      const Divider(
-                        height: 1.0,
-                      ),
-                      Container(
-                        child: _buildComposer(),
-                        decoration:
-                        BoxDecoration(color: Theme.of(context).cardColor),
-                      )
-                    ]),
-                if (state is ChatMessagesLoaded && state.isLoading)
-                  Center(child: loadingIndicator),
-              ],
+                children: <Widget>[
+                  GestureDetector(
+                    behavior: HitTestBehavior.translucent, // Important for capturing taps
+                    onTap: () {
+                      // This will hide the keyboard when tapping anywhere on the screen
+                      FocusScope.of(context).unfocus();
+                    },
+                    child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: <Widget>[
+                          Flexible(
+                            child: Padding(
+                              padding: const EdgeInsets.only(left: 8.0, right: 8.0),
+                              child: msgsStreamBuilder,
+                            ),
+                          ),
+                          const Divider(
+                            height: 1.0,
+                          ),
+                          Container(
+                            child: _buildComposer(),
+                            decoration: BoxDecoration(color: Theme.of(context).cardColor),
+                          )
+                        ]
+                    ),
+                  ),
+                  if (state is ChatMessagesLoaded && state.isLoading)
+                    Center(child: loadingIndicator),
+                ]
             );
           },
         ),
@@ -391,7 +406,7 @@ class ChatPageState extends State<ChatPage>
 
     return GestureDetector(
         onTap: () {
-          // FocusScope.of(context).unfocus();
+           FocusScope.of(context).unfocus();
         },
         child: mainScaffold);
   }
