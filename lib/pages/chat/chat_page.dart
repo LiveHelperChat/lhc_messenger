@@ -1,4 +1,4 @@
-// ignore_for_file: must_be_immutable, unused_field
+// In lib/pages/chat/chat_page.dart
 
 import 'dart:async';
 import 'dart:developer';
@@ -26,8 +26,8 @@ class ChatPage extends StatefulWidget {
     this.refreshList,
     required this.isNewChat,
   }) : super(
-          key: key,
-        );
+    key: key,
+  );
 
   Chat? chat; // not final because we will update it
   Server? server;
@@ -49,7 +49,7 @@ class ChatPageState extends State<ChatPage>
   // used to track application lifecycle
   AppLifecycleState? _lastLifecyleState;
 
-  GlobalKey<ScaffoldState> _scaffoldState = new GlobalKey<ScaffoldState>();
+  final GlobalKey<ScaffoldState> _scaffoldState = new GlobalKey<ScaffoldState>();
 
   bool? _isNewChat; // is pending chat or not
   bool _isOwnerOfChat = false;
@@ -70,10 +70,11 @@ class ChatPageState extends State<ChatPage>
   Timer? _msgsTimer;
   Timer? _acceptTimer;
   Timer? _operatorTimer;
+  bool _showingChatInfo = false;
 
   BehaviorSubject<bool> _isWritingSubject = BehaviorSubject<bool>.seeded(false);
   BehaviorSubject<bool> _isActionLoadingSubject =
-      BehaviorSubject<bool>.seeded(false);
+  BehaviorSubject<bool>.seeded(false);
 
   set _isWriting(bool value) => _isWritingSubject.add(value);
   bool get _isWriting => _isWritingSubject.value;
@@ -99,7 +100,7 @@ class ChatPageState extends State<ChatPage>
     _syncMessages();
     _msgsTimer = _syncMsgsTimer(5);
     if(widget.chat?.owner==widget.server?.username){
-       _isOwnerOfChat=true;
+      _isOwnerOfChat=true;
     }
     // if (!_isNewChat!) {
     //   _acceptChat();
@@ -158,14 +159,14 @@ class ChatPageState extends State<ChatPage>
   void _checkState() {
     switch (_lastLifecyleState) {
       case AppLifecycleState.resumed:
-        // stop sending notifications for this chat
+      // stop sending notifications for this chat
         _fcmTokenBloc?.add(ChatOpenedEvent(chat: _chatCopy!));
         _syncMessages();
         _msgsTimer = _syncMsgsTimer(5);
         break;
       case AppLifecycleState.paused:
       case AppLifecycleState.inactive:
-        //allow showing notifications for this chat
+      //allow showing notifications for this chat
         _fcmTokenBloc?.add(ChatPausedEvent(chat: _chatCopy!));
         if (_msgsTimer!.isActive) _msgsTimer!.cancel();
         if (_operatorTimer != null && _operatorTimer!.isActive) {
@@ -192,7 +193,9 @@ class ChatPageState extends State<ChatPage>
     _serverRepository = context.watch<ServerRepository>();
 
     // Chat page creates and manages it's own bloc.
-    _chatPageBloc = ChatMessagesBloc(serverRepository: _serverRepository!);
+    if (_chatPageBloc == null) {
+      _chatPageBloc = ChatMessagesBloc(serverRepository: _serverRepository!);
+    }
 
     TextStyle headerbottom = const TextStyle(
       fontSize: 12.0,
@@ -214,8 +217,11 @@ class ChatPageState extends State<ChatPage>
             return Center(child: Text('Error: ${state.message}'));
           }
           if (state is ChatMessagesLoaded) {
-            _addMessages(state.messages);
-        
+            // Only add messages if not showing info dialog to prevent reload
+            if (!_showingChatInfo) {
+              _addMessages(state.messages);
+            }
+
             return ListView.builder(
               scrollDirection: Axis.vertical,
               reverse: true,
@@ -231,13 +237,13 @@ class ChatPageState extends State<ChatPage>
 
     var popupMenuBtn = PopupMenuButton<ChatItemMenuOption>(
         onSelected: (ChatItemMenuOption result) {
-      onMenuOptionChanged(result);
-    }, itemBuilder: (BuildContext context) {
+          onMenuOptionChanged(result);
+        }, itemBuilder: (BuildContext context) {
       return _itemMenuBuilder();
     });
 
     Widget loadingIndicator =
-        _isActionLoading ? const CircularProgressIndicator() : Container();
+    _isActionLoading ? const CircularProgressIndicator() : Container();
 
     var mainScaffold = BlocProvider<ChatMessagesBloc>(
       create: (context) => _chatPageBloc!,
@@ -267,8 +273,8 @@ class ChatPageState extends State<ChatPage>
                                 color: state.chatStatusCode == 0
                                     ? Colors.green.shade400
                                     : (state.chatStatusCode == 2
-                                        ? Colors.yellow.shade400
-                                        : Colors.red.shade400),
+                                    ? Colors.yellow.shade400
+                                    : Colors.red.shade400),
                               );
                             }
                             return Icon(Icons.person,
@@ -310,7 +316,7 @@ class ChatPageState extends State<ChatPage>
             ],
           ),
           elevation:
-              Theme.of(context).platform == TargetPlatform.android ? 6.0 : 0.0,
+          Theme.of(context).platform == TargetPlatform.android ? 6.0 : 0.0,
           actions: <Widget>[
             IconButton(
               icon: const Icon(Icons.info_outline),
@@ -362,16 +368,16 @@ class ChatPageState extends State<ChatPage>
                     children: <Widget>[
                       Flexible(
                           child: Padding(
-                        padding: const EdgeInsets.only(left: 8.0, right: 8.0),
-                        child: msgsStreamBuilder,
-                      )),
+                            padding: const EdgeInsets.only(left: 8.0, right: 8.0),
+                            child: msgsStreamBuilder,
+                          )),
                       const Divider(
                         height: 1.0,
                       ),
                       Container(
                         child: _buildComposer(),
                         decoration:
-                            BoxDecoration(color: Theme.of(context).cardColor),
+                        BoxDecoration(color: Theme.of(context).cardColor),
                       )
                     ]),
                 if (state is ChatMessagesLoaded && state.isLoading)
@@ -435,14 +441,14 @@ class ChatPageState extends State<ChatPage>
   void onMenuOptionChanged(ChatItemMenuOption result) {
     switch (result) {
       case ChatItemMenuOption.CLOSE:
-        //     widget.loadingState(true);
+      //     widget.loadingState(true);
         _closeChat();
         break;
       case ChatItemMenuOption.REJECT:
-        //   widget.loadingState(true);
+      //   widget.loadingState(true);
         _deleteChat();
         break;
-      /*   case ChatItemMenuOption.TRANSFER:
+    /*   case ChatItemMenuOption.TRANSFER:
       // widget.loadingState(true);
       // _showOperatorList(context,srv,chat);
         //_getOperatorList(ctx,srv,chat);
@@ -463,6 +469,11 @@ class ChatPageState extends State<ChatPage>
   }
 
   void _showChatInfo(context) {
+    // Set flag to prevent messages reload
+    setState(() {
+      _showingChatInfo = true;
+    });
+
     TextStyle styling = const TextStyle(
         fontFamily: 'Roboto', fontSize: 16.0, fontWeight: FontWeight.bold);
     showModalBottomSheet<void>(
@@ -470,50 +481,55 @@ class ChatPageState extends State<ChatPage>
         builder: (BuildContext context) {
           return SingleChildScrollView(
               child: Column(
-            children: <Widget>[
-              ListTile(
-                leading: Text("Server", style: styling),
-                title: Text("${widget.server!.servername}"),
-                onTap: () {},
-              ),
-              ListTile(
-                leading: Text("ID", style: styling),
-                title: Text(_chatCopy!.id.toString()),
-                onTap: () {},
-              ),
-              ListTile(
-                leading: Text("Email", style: styling),
-                title: Text(_chatCopy!.email ?? ""),
-                onTap: () {},
-              ),
-              ListTile(
-                leading: Text("Phone", style: styling),
-                title: Text(_chatCopy!.phone ?? ""),
-                onTap: () {},
-              ),
-              ListTile(
-                leading: Text("IP", style: styling),
-                title: new Text(_chatCopy!.ip ?? ""),
-                onTap: () {},
-              ),
-              ListTile(
-                leading: new Text("Country", style: styling),
-                title: new Text(_chatCopy!.country_name ?? ""),
-                onTap: () {},
-              ),
-              ListTile(
-                leading: new Text("From", style: styling),
-                title: new Text(_chatCopy!.referrer ?? ""),
-                onTap: () {},
-              ),
-              ListTile(
-                leading: new Text("User Agent", style: styling),
-                title: new Text(_chatCopy!.uagent ?? ""),
-                onTap: () {},
-              ),
-            ],
-          ));
-        });
+                children: <Widget>[
+                  ListTile(
+                    leading: Text("Server", style: styling),
+                    title: Text("${widget.server!.servername}"),
+                    onTap: () {},
+                  ),
+                  ListTile(
+                    leading: Text("ID", style: styling),
+                    title: Text(_chatCopy!.id.toString()),
+                    onTap: () {},
+                  ),
+                  ListTile(
+                    leading: Text("Email", style: styling),
+                    title: Text(_chatCopy!.email ?? ""),
+                    onTap: () {},
+                  ),
+                  ListTile(
+                    leading: Text("Phone", style: styling),
+                    title: Text(_chatCopy!.phone ?? ""),
+                    onTap: () {},
+                  ),
+                  ListTile(
+                    leading: Text("IP", style: styling),
+                    title: new Text(_chatCopy!.ip ?? ""),
+                    onTap: () {},
+                  ),
+                  ListTile(
+                    leading: new Text("Country", style: styling),
+                    title: new Text(_chatCopy!.country_name ?? ""),
+                    onTap: () {},
+                  ),
+                  ListTile(
+                    leading: new Text("From", style: styling),
+                    title: new Text(_chatCopy!.referrer ?? ""),
+                    onTap: () {},
+                  ),
+                  ListTile(
+                    leading: new Text("User Agent", style: styling),
+                    title: new Text(_chatCopy!.uagent ?? ""),
+                    onTap: () {},
+                  ),
+                ],
+              ));
+        }).then((_) {
+      // Reset flag after modal is closed
+      setState(() {
+        _showingChatInfo = false;
+      });
+    });
   }
 
   Widget _buildComposer() {
@@ -528,83 +544,41 @@ class ChatPageState extends State<ChatPage>
           child: isAcceptingChat
               ? LinearProgressIndicator()
               : _isNewChat!
-                  ? InkWell(
-                      onTap: () {
-                        setState(() {
-                          isAcceptingChat = true;
-                        });
-                        _acceptChat();
-                      },
-                      child: Container(
-                        color: Colors.green,
-                        padding: EdgeInsets.symmetric(vertical: 15),
-                        alignment: Alignment.center,
-                        child: Text(
-                          "Accept Chat",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    )
-                  : SendMessageRowWidget(
-                      key: widget.key,
-                      server: widget.server!,
-                      chat: _chatCopy,
-                      isOwnerOfChat: _isOwnerOfChat,
-                      submitMessage: submitMsg,
-                    ),
-          // : Row(
-          //     children: <Widget>[
-          //       IconButton(
-          //           icon: const Icon(Icons.list),
-          //           onPressed: () {
-          //             // showModalBottomSheet<void>(
-          //             //     context: context,
-          //             //     builder: (BuildContext context) {
-          //             //       return Padding(
-          //             //           padding: const EdgeInsets.all(4.0),
-          //             //           child: ListView.builder(
-          //             //             reverse: false,
-          //             //             padding: const EdgeInsets.all(6.0),
-          //             //             itemCount: _cannedMsgs.length,
-          //             //             itemBuilder: (_, int index) {
-          //             //               Map canMsg = _cannedMsgs[index];
-          //             //               return ListTile(
-          //             //                 title: Text(canMsg["title"]),
-          //             //                 isThreeLine: true,
-          //             //                 subtitle: Text(canMsg["msg"]),
-          //             //                 onTap: () {
-          //             //                   _textController.text =
-          //             //                       canMsg["msg"];
-          //             //                   Navigator.pop(context);
-          //             //                 },
-          //             //               );
-          //             //             },
-          //             //           ));
-          //             //     });
-          //           }),
-          //       //Bottom Row With TextField, Attach File, Audio Record and SendMessageButton
-          //       Expanded(
-          //         child: SendMessageRowWidget(
-          //           key: widget.key,
-          //           server: widget.server!,
-          //           chat: _chatCopy,
-          //           isOwnerOfChat: _isOwnerOfChat,
-          //           submitMessage: submitMsg,
-          //         ),
-          //       )
-          //     ],
-          //   ),
+              ? InkWell(
+            onTap: () {
+              setState(() {
+                isAcceptingChat = true;
+              });
+              _acceptChat();
+            },
+            child: Container(
+              color: Colors.green,
+              padding: EdgeInsets.symmetric(vertical: 15),
+              alignment: Alignment.center,
+              child: Text(
+                "Accept Chat",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          )
+              : SendMessageRowWidget(
+            key: widget.key,
+            server: widget.server!,
+            chat: _chatCopy,
+            isOwnerOfChat: _isOwnerOfChat,
+            submitMessage: submitMsg,
+          ),
           decoration: Theme.of(context).platform == TargetPlatform.iOS
               ? const BoxDecoration(
-                  border: Border(
-                    top: BorderSide(
-                      color: Colors.brown,
-                    ),
-                  ),
-                )
+            border: Border(
+              top: BorderSide(
+                color: Colors.brown,
+              ),
+            ),
+          )
               : null),
     );
   }
@@ -622,7 +596,7 @@ class ChatPageState extends State<ChatPage>
         _cancelAccept();
         isChatAccepted = true;
         isAcceptingChat = false;
-        
+
       });
       _isLoading(false);
     });
@@ -670,8 +644,11 @@ class ChatPageState extends State<ChatPage>
   }
 
   Future<Null> _syncMessages() async {
-    _chatPageBloc
-        ?.add(FetchChatMessages(server: widget.server!, chat: _chatCopy!));
+    // Skip syncing messages while showing info modal to prevent reload
+    if (!_showingChatInfo) {
+      _chatPageBloc
+          ?.add(FetchChatMessages(server: widget.server!, chat: _chatCopy!));
+    }
   }
 
   @override
@@ -704,37 +681,6 @@ class MsgHandler extends StatelessWidget {
           )
         ],
       ),
-    );
-  }
-}
-
-class ChatDetailTile extends StatelessWidget {
-  const ChatDetailTile({this.leading, this.info});
-
-  final String? leading;
-  final String? info;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Container(
-            margin: const EdgeInsetsDirectional.only(end: 16.0),
-            width: 40.0,
-            child: new Text(leading!)),
-        Expanded(
-            child: new Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-              new Text(
-                info!,
-                textAlign: TextAlign.left,
-                style: Theme.of(context).textTheme.titleSmall,
-              )
-            ]))
-      ],
     );
   }
 }
