@@ -67,6 +67,7 @@ class ChatBubbleCustom extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(right: 4.0, bottom: 4.0),
                 child: Html(
+                  selectable: true,
                   data: message.msg,
                   onLinkTap: (url, attributes, element) {
                     _launchURL(url);
