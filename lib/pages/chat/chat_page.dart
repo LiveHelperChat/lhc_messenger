@@ -98,10 +98,18 @@ class ChatPageState extends State<ChatPage>
     _fcmTokenBloc = context.read<FcmTokenBloc>()
       ..add(ChatOpenedEvent(chat: _chatCopy!));
     _syncMessages();
+    _fetchCannedResponses();
     _msgsTimer = _syncMsgsTimer(5);
-    if(widget.chat?.owner==widget.server?.username){
+
+    if(widget.chat?.user_id.toString()==widget.server!.userid.toString()){
       _isOwnerOfChat=true;
     }
+
+    /*if(widget.chat?.owner==widget.server?.username){
+      _isOwnerOfChat=true;
+    }*/
+
+
     // if (!_isNewChat!) {
     //   _acceptChat();
     // }
@@ -585,6 +593,7 @@ class ChatPageState extends State<ChatPage>
             chat: _chatCopy,
             isOwnerOfChat: _isOwnerOfChat,
             submitMessage: submitMsg,
+            cannedMsgs: _cannedMsgs,
           ),
           decoration: Theme.of(context).platform == TargetPlatform.iOS
               ? const BoxDecoration(
@@ -598,13 +607,20 @@ class ChatPageState extends State<ChatPage>
     );
   }
 
+  void _fetchCannedResponses() async {
+    _serverApiClient!.cannedResponses(widget.server!, _chatCopy!).then((chatData) {
+      setState(() {
+        _cannedMsgs = List<dynamic>.from(chatData["canned_messages"]);
+      });
+    });
+  }
+
   void _acceptChat() async {
     _serverApiClient!.chatData(widget.server!, _chatCopy!).then((chatData) {
       setState(() {
         var newChat = Chat.fromJson(chatData["chat"]);
         // update chat with new data
         _chatCopy = newChat.copyWith(owner: chatData["ownerstring"]);
-        _cannedMsgs = List<dynamic>.from(chatData["canned_messages"]);
         _isNewChat = false;
         _isOwnerOfChat =
             _chatCopy!.user_id.toString() == widget.server!.userid.toString();

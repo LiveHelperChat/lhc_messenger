@@ -21,11 +21,13 @@ class SendMessageRowWidget extends StatefulWidget {
     required this.server,
     required this.isOwnerOfChat,
     required this.submitMessage,
+    this.cannedMsgs = const [],
   }) : super(key: key);
   final Chat? chat;
   final Server server;
   final bool isOwnerOfChat;
   final Function(String messaage,{String? sender,}) submitMessage;
+  final List<dynamic> cannedMsgs;
   @override
   State<SendMessageRowWidget> createState() => _SendMessageRowWidgetState();
 }
@@ -76,12 +78,83 @@ class _SendMessageRowWidgetState extends State<SendMessageRowWidget> {
             color: Colors.white, // Set your desired background color here
             child: Row(
               children: [
-                IconButton(onPressed: () {
-                  setState(() {
-                    isWhisperModeOn=!isWhisperModeOn;
-                  });
-                },icon: Icon(isWhisperModeOn?Icons.hearing:Icons.hearing_disabled,),
-                 color: isWhisperModeOn? Colors.blue:Colors.black54,),
+                PopupMenuButton<String>(
+                  icon: Icon(Icons.more_vert),
+                  onSelected: (String choice) {
+                  if (choice == 'canned_messages') {
+                    showModalBottomSheet<void>(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return Container(
+                      child: Padding(
+                        padding: const EdgeInsets.all(4.0),
+                        child: ListView.builder(
+                        reverse: false,
+                        padding: EdgeInsets.all(6.0),
+                        itemCount: widget.cannedMsgs.length,
+                        itemBuilder: (_, int index) {
+                          Map canMsg = widget.cannedMsgs[index];
+                          return Container(
+                          child: ListTile(
+                            title: Text(canMsg["title"]),
+                            isThreeLine: true,
+                            subtitle: Text(canMsg["msg"]),
+                            onTap: () {
+                            textController.text = canMsg["msg"];
+                            Navigator.pop(context);
+                            },
+                          ),
+                          );
+                        },
+                        ),
+                      ),
+                      );
+                    },
+                    );
+                  } else if (choice == 'whisper_mode') {
+                    setState(() {
+                    isWhisperModeOn = !isWhisperModeOn;
+                    });
+                  } else if (choice == 'attach_file') {
+                    _attachFile();
+                  }
+                  },
+                  itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                  PopupMenuItem<String>(
+                    value: 'canned_messages',
+                    child: Row(
+                    children: [
+                      Icon(Icons.list, color: Colors.black54),
+                      SizedBox(width: 8),
+                      Text('Canned Messages'),
+                    ],
+                    ),
+                  ),
+                  PopupMenuItem<String>(
+                    value: 'whisper_mode',
+                    child: Row(
+                    children: [
+                      Icon(
+                      isWhisperModeOn ? Icons.hearing : Icons.hearing_disabled,
+                      color: isWhisperModeOn ? Colors.blue : Colors.black54,
+                      ),
+                      SizedBox(width: 8),
+                      Text(isWhisperModeOn ? 'Disable Whisper Mode' : 'Enable Whisper Mode'),
+                    ],
+                    ),
+                  ),
+                  PopupMenuItem<String>(
+                    value: 'attach_file',
+                    child: Row(
+                    children: [
+                      Icon(Icons.attach_file, color: Colors.black54),
+                      SizedBox(width: 8),
+                      Text('Attach File'),
+                    ],
+                    ),
+                  ),
+                  ],
+                ),
                 SizedBox(
                   width: 5,
                 ),
@@ -117,52 +190,19 @@ class _SendMessageRowWidgetState extends State<SendMessageRowWidget> {
                           ),
                   ),
                 ),
-                //Functionality to send documents in chat
-                Container(
-                  child: IconButton(
-                    icon: Icon(
-                      isRecording ? Icons.cancel : Icons.attach_file,
-                      color: isRecording ? Colors.red : Colors.black,
+                // Cancel recording button - only visible during recording
+                Visibility(
+                  visible: isRecording,
+                  child: Container(
+                    child: IconButton(
+                      icon: Icon(
+                        Icons.cancel,
+                        color: Colors.red,
+                      ),
+                      onPressed: () async {
+                        await cancelRecording();
+                      },
                     ),
-                    onPressed: () async {
-                      try {
-                        if (isRecording) {
-                          await cancelRecording();
-                        } else {
-                          FilePickerResult? result =
-                              await FilePicker.platform.pickFiles();
-                          if (result != null) {
-                            File file = File(result.files.single.path!);
-                            log(file.path);
-                            setState(() {
-                              isUploading = true;
-                            });
-                            final uploadedFileResult = await serverRepository!
-                                .uploadFile(widget.server, file);
-
-                            if (uploadedFileResult != null) {
-                              log(uploadedFileResult.toString());
-                              //send file to user
-                              widget.submitMessage(FunctionUtils.buildFileMessage(
-                                  updateFileResponse: uploadedFileResult));
-                            }
-                            setState(() {
-                              isUploading = false;
-                            });
-                            // widget.onUploadCompleted();
-                          } else {
-                            //file pick operation cancelled
-                          }
-                        }
-                      } catch (e) {
-                        setState(() {
-                          isUploading = false;
-                        });
-                        FunctionUtils.showErrorMessage(
-                            message: "Error:${e.toString()}");
-                        // widget.onUploadCompleted();
-                      }
-                    },
                   ),
                 ),
                 //Mic Functionality for sending voice messages
@@ -319,6 +359,36 @@ class _SendMessageRowWidgetState extends State<SendMessageRowWidget> {
     setState(() {
       isRecording = false;
     });
+  }
+
+  Future<void> _attachFile() async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles();
+      if (result != null) {
+        File file = File(result.files.single.path!);
+        log(file.path);
+        setState(() {
+          isUploading = true;
+        });
+        final uploadedFileResult = await serverRepository!.uploadFile(widget.server, file);
+
+        if (uploadedFileResult != null) {
+          log(uploadedFileResult.toString());
+          //send file to user
+          widget.submitMessage(FunctionUtils.buildFileMessage(
+              updateFileResponse: uploadedFileResult));
+        }
+        setState(() {
+          isUploading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        isUploading = false;
+      });
+      FunctionUtils.showErrorMessage(
+          message: "Error:${e.toString()}");
+    }
   }
 }
 

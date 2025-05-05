@@ -653,11 +653,13 @@ class ServerApiClient {
       params["msg"] = msg;
       params["chat_id"] = chat.id.toString();
       params["sender"] = sender ?? "operator"; //to enable whispering messages
+      /*
+      * We want alias to kick in back office itself
       if (sender == "system" && chat.owner == null ||
           chat.owner != server.username) {
         params["operator_name"] = server.username ?? "System Assistant";
       }
-      log("OperatorName: ${params["operator_name"]}");
+      log("OperatorName: ${params["operator_name"]}");*/
       ParsedResponse response =
           await makeRequest(server, "/restapi/addmsgadmin", params);
       log(response.body.toString());
@@ -730,6 +732,18 @@ class ServerApiClient {
   Future<Map<String, dynamic>> chatData(Server server, Chat chat) async {
     ParsedResponse response =
         await makeRequest(server, "/xml/chatdata/${chat.id}", null);
+
+    Map<String, dynamic> chatData = {};
+
+    if (response.isOk() && response.body["error"].toString() == "false") {
+      chatData = Map.castFrom(response.body);
+    }
+    return chatData;
+  }
+
+  Future<Map<String, dynamic>> cannedResponses(Server server, Chat chat) async {
+    ParsedResponse response =
+        await makeRequest(server, "/xml/cannedresponses/${chat.id}", null);
 
     Map<String, dynamic> chatData = {};
 
