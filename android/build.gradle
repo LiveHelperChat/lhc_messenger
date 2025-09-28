@@ -1,46 +1,20 @@
-buildscript {
-    ext.kotlin_version = '1.9.24' // Updated to a more recent version
-    repositories {
-        google()
-        mavenCentral() 
-    }
-
-    dependencies {
-        classpath 'com.android.tools.build:gradle:8.7.0'
-        classpath 'com.google.gms:google-services:4.4.2'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        // classpath 'androidx.lifecycle:lifecycle-viewmodel-savedstate:2.5.1'
-    }
+plugins {
+    id 'com.android.application' version '8.7.0' apply false
+    id 'org.jetbrains.kotlin.android' version '1.9.24' apply false
+    id 'dev.flutter.flutter-plugin-loader' version '1.0.0' apply false
+    id 'com.google.gms.google-services' version '4.4.2' apply false
 }
 
-allprojects {
-    repositories {
-        google()
-        mavenCentral() // Updated to use mavenCentral()
-    }
- // This code is where all the magic happens and fixes the error.
-    subprojects {
-        afterEvaluate { project ->
-            if (project.hasProperty('android')) {
-                project.android {
-                    if (namespace == null) {
-                        namespace project.group
-                    }
+subprojects {
+    afterEvaluate { project ->
+        if (project.hasProperty('android')) {
+            project.android {
+                if (namespace == null) {
+                    namespace project.group
                 }
             }
         }
     }
-    // This code is where all the magic happens and fixes the error.
-    // subprojects {
-    //     project.configurations.configureEach {
-    //         resolutionStrategy.eachDependency { details ->
-    //             if (details.requested.group == 'androidx.lifecycle' && 
-    //                 !details.requested.name.contains('multidex')) {
-    //                 details.useVersion "2.5.1" // Use androidx.lifecycle instead
-    //             }
-    //         }
-    //     }
-    // }
 }
 
 rootProject.buildDir = '../build'
