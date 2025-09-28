@@ -1,14 +1,16 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+    id 'dev.flutter.flutter-gradle-plugin'
+    id 'com.google.gms.google-services'
+}
+
 def localProperties = new Properties()
 def localPropertiesFile = rootProject.file('local.properties')
 if (localPropertiesFile.exists()) {
     localPropertiesFile.withReader('UTF-8') { reader ->
         localProperties.load(reader)
     }
-}
-
-def flutterRoot = localProperties.getProperty('flutter.sdk')
-if (flutterRoot == null) {
-    throw new GradleException("Flutter SDK not found. Define location with flutter.sdk in the local.properties file.")
 }
 
 def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
@@ -22,10 +24,6 @@ if (flutterVersionName == null) {
 }
 
 def kotlinVersion = '1.9.24'
-
-apply plugin: 'com.android.application'
-apply plugin: 'org.jetbrains.kotlin.android'
-apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
 
 def keystorePropertiesFile = rootProject.file("key.properties")
 def keystoreProperties = new Properties()
@@ -89,10 +87,6 @@ android {
     }
 }
 
-flutter {
-    source '../..'
-}
-
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlinVersion"
     implementation 'com.google.firebase:firebase-core:21.1.1'
@@ -105,8 +99,6 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.2.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
 }
-
-apply plugin: 'com.google.gms.google-services'
 
 // Work around required for removing play-services-measurement
 //com.google.gms.googleservices.GoogleServicesPlugin.config.disableVersionCheck = true
