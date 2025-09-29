@@ -48,6 +48,9 @@ class ChatBubbleExperiment extends StatelessWidget {
         ? Colors.blue[100]
         : Colors.grey[100];
 
+    final del_st = message.user_id == 0 || (message.is_owner == 2)
+        ? "0"
+        : message.del_st;
 
     final align = message.user_id == 0 || (message.is_owner == 2)
         ? CrossAxisAlignment.start
@@ -119,13 +122,25 @@ class ChatBubbleExperiment extends StatelessWidget {
                       : Html(data: message.msg),
                 ),
                 Padding(
-                  padding: const EdgeInsets.only(left: 20.0),
-                  child: Text(
-                    formattedTimestamp,
-                    style: const TextStyle(
-                      color: Colors.black38,
-                      fontSize: 10.0,
-                    ),
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            formattedTimestamp,
+                            style: const TextStyle(color: Colors.black38, fontSize: 10),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: statusChecks(del_st),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -134,6 +149,21 @@ class ChatBubbleExperiment extends StatelessWidget {
         )
       ],
     );
+  }
+
+  Widget statusChecks(String? s) {
+    final st = int.tryParse(s ?? '');
+    const sz = 14.0;
+    switch (st) {
+      case 1:
+        return const Icon(Icons.done, size: sz, color: Colors.grey);
+      case 2:
+        return const Icon(Icons.done_all, size: sz, color: Colors.grey);
+      case 3:
+        return const Icon(Icons.done_all, size: sz, color: Colors.blue);
+      default:
+        return const Text('', style: TextStyle(color: Colors.black38, fontSize: 10));
+    }
   }
 
   void _showCopyDialog(BuildContext context, String text) {
