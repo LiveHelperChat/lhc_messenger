@@ -27,7 +27,20 @@ class ChatBubbleExperiment extends StatelessWidget {
 
     }
     link=FunctionUtils.extractMediaLink(message.msg)??'';
-    var dateFormatter = new DateFormat("HH:mm, dd/MM/yy");
+    final messageDateTime =
+        DateTime.fromMillisecondsSinceEpoch(message.time! * 1000);
+    final now = DateTime.now();
+
+    final String formattedTimestamp;
+    if (DateUtils.isSameDay(messageDateTime, now)) {
+      formattedTimestamp = DateFormat('HH:mm').format(messageDateTime);
+    } else if (messageDateTime.year == now.year) {
+      formattedTimestamp =
+          DateFormat('HH:mm, dd/MM').format(messageDateTime);
+    } else {
+      formattedTimestamp =
+          DateFormat('HH:mm, dd/MM/yy').format(messageDateTime);
+    }
 
     final bg = message.user_id == 0 || (message.is_owner == 2)
         ? Colors.grey[300]
@@ -108,8 +121,7 @@ class ChatBubbleExperiment extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.only(left: 20.0),
                   child: Text(
-                    dateFormatter.format(DateTime.fromMillisecondsSinceEpoch(
-                        message.time! * 1000)),
+                    formattedTimestamp,
                     style: const TextStyle(
                       color: Colors.black38,
                       fontSize: 10.0,
