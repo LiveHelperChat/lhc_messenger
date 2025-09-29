@@ -353,6 +353,16 @@ class _MainPageState extends State<MainPage>
             ),
           ];
 
+          var tabTitles = <String>[
+            "Lista de chats",
+            "Chats bot",
+            "Asuntos",
+            "Pendientes",
+            "Transferencias",
+            "Cerrados",
+            "Operadores"
+          ];
+
           if (state is ServerListFromDBLoaded) {
             //Add twilio Tabs
             if (state.selectedServer != null &&
@@ -386,13 +396,16 @@ class _MainPageState extends State<MainPage>
                       .add(DeleteChatMainPage(server: server, chat: chat));
                 },
               ));
+              tabTitles.add("SMS");
             }
           }
 
           return DefaultTabController(
               length: tabs.length,
-              child: BlocBuilder<ServerBloc, ServerState>(
-                  builder: (context, state) {
+              child: Builder(builder: (context) {
+                final tabController = DefaultTabController.of(context)!;
+                return BlocBuilder<ServerBloc, ServerState>(
+                    builder: (context, state) {
                 if (state is ServerListFromDBLoaded) {
                   if (state.serverList.isNotEmpty) {
                     listServers = state.serverList;
@@ -403,7 +416,19 @@ class _MainPageState extends State<MainPage>
                     backgroundColor: Colors.white,
                     key: _scaffoldKey,
                     appBar: AppBar(
-                      title: Text("Lista de chats"),
+                      title: AnimatedBuilder(
+                        animation: tabController.animation!,
+                        builder: (context, _) {
+                          final value = tabController.animation!.value;
+                          final index = value.round();
+                          final safeIndex =
+                              (index >= 0 && index < tabTitles.length)
+                                  ? index
+                                  : 0;
+                          final title = tabTitles[safeIndex];
+                          return Text(title);
+                        },
+                      ),
                       bottom: TabBar(tabs: tabs),
                     ),
                     drawer: Drawer(
@@ -641,6 +666,7 @@ class _MainPageState extends State<MainPage>
                       },
                       actionText: 'Refrescar'),
                 );
+                });
               }));
         }));
     return mainScaffold;
