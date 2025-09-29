@@ -354,19 +354,19 @@ class _MainPageState extends State<MainPage>
           ];
 
           var tabTitles = <String>[
-            "Lista de chats",
-            "Chats bot",
+            "Chats activos",
+            "Chats en bot",
             "Asuntos",
-            "Pendientes",
+            "Chats pendientes",
             "Transferencias",
-            "Cerrados",
+            "Chats cerrados",
             "Operadores"
           ];
 
           if (state is ServerListFromDBLoaded) {
             //Add twilio Tabs
             if (state.selectedServer != null &&
-                state.selectedServer!.twilioInstalled == true) {
+                state.selectedServer!.twilioInstalled == true && false) {
               tabs.add(Tab(child: BlocBuilder<ChatslistBloc, ChatListState>(
                   builder: (context, state) {
                 if (state is ChatListLoaded) {
