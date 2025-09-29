@@ -69,7 +69,7 @@ class _TransferredListWidgetState extends State<TransferredListWidget> {
       if (state is ChatListLoadError) {
         return ErrorReloadButton(
           child: Text("An error occurred: ${state.message}"),
-          actionText: 'Reload',
+          actionText: 'Refrescar',
           onButtonPress: () {
             context.read<ChatslistBloc>().add(ChatListInitialise());
           },
@@ -92,7 +92,7 @@ class _TransferredListWidgetState extends State<TransferredListWidget> {
     ),  */
       const PopupMenuItem<ChatItemMenuOption>(
         value: ChatItemMenuOption.ACCEPT,
-        child: const Text('Accept Chat'),
+        child: const Text('Accetar Chat'),
       ),
     ];
   }

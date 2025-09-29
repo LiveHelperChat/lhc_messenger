@@ -79,7 +79,7 @@ class _ClosedListWidgetState extends State<ClosedListWidget> {
       if (state is ChatListLoadError) {
         return ErrorReloadButton(
           child: Text("An error occurred: ${state.message}"),
-          actionText: 'Reload',
+          actionText: 'Refrescar',
           onButtonPress: () {
             context.read<ChatslistBloc>().add(ChatListInitialise());
           },
@@ -98,11 +98,11 @@ class _ClosedListWidgetState extends State<ClosedListWidget> {
     return <PopupMenuEntry<ChatItemMenuOption>>[
       const PopupMenuItem<ChatItemMenuOption>(
         value: ChatItemMenuOption.PREVIEW,
-        child: const Text('Preview'),
+        child: const Text('Vista previa'),
       ),
       const PopupMenuItem<ChatItemMenuOption>(
         value: ChatItemMenuOption.REJECT,
-        child: const Text('Delete permanently'),
+        child: const Text('Borrar'),
       ),
     ];
   }

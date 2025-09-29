@@ -76,7 +76,7 @@ class _OperatorsListWidgetState extends State<OperatorsListWidget> {
       if (state is ChatListLoadError) {
         return ErrorReloadButton(
           child: Text("An error occurred: ${state.message}"),
-          actionText: 'Reload',
+          actionText: 'Refrescar',
           onButtonPress: () {
             context.read<ChatslistBloc>().add(ChatListInitialise());
           },
@@ -95,7 +95,7 @@ class _OperatorsListWidgetState extends State<OperatorsListWidget> {
     return <PopupMenuEntry<ChatItemMenuOption>>[
       const PopupMenuItem<ChatItemMenuOption>(
         value: ChatItemMenuOption.PREVIEW,
-        child: const Text('Start chat'),
+        child: const Text('Iniciar chat'),
       )
     ];
   }

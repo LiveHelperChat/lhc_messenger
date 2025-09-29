@@ -123,15 +123,15 @@ class _BotListWidgetState extends State<BotListWidget> {
     return <PopupMenuEntry<ChatItemMenuOption>>[
       const PopupMenuItem<ChatItemMenuOption>(
         value: ChatItemMenuOption.CLOSE,
-        child: const Text('Close'),
+        child: const Text('Cerrar'),
       ),
       const PopupMenuItem<ChatItemMenuOption>(
         value: ChatItemMenuOption.REJECT,
-        child: const Text('Delete'),
+        child: const Text('Borrar'),
       ),
       const PopupMenuItem<ChatItemMenuOption>(
         value: ChatItemMenuOption.TRANSFER,
-        child: const Text('Transfer'),
+        child: const Text('Transferir'),
       ),
     ];
   }
@@ -167,7 +167,7 @@ class _BotListWidgetState extends State<BotListWidget> {
         switch (snapshot.connectionState) {
           case ConnectionState.none:
           case ConnectionState.waiting:
-            return new Text('loading...');
+            return new Text('cargando...');
           default:
             if (snapshot.hasError)
               return new Text('Error: ${snapshot.error}');
@@ -187,7 +187,7 @@ class _BotListWidgetState extends State<BotListWidget> {
                   mainAxisSize: MainAxisSize.max,
                   children: <Widget>[
                     new Text(
-                      "Select online operator",
+                      "Seleccione operador conectado",
                       style: new TextStyle(
                           fontWeight: FontWeight.bold, fontSize: 16.0),
                     ),
@@ -227,6 +227,6 @@ class _BotListWidgetState extends State<BotListWidget> {
         );
       },
     )
-        : new Text('No online operator found!');
+        : new Text('No hay operadores conectados');
   }
 }

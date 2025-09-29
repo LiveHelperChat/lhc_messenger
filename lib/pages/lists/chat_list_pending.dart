@@ -88,7 +88,7 @@ class _PendingListWidgetState extends State<PendingListWidget> {
       if (state is ChatListLoadError) {
         return ErrorReloadButton(
           child: Text("An error occurred: ${state.message}"),
-          actionText: 'Reload',
+          actionText: 'Refrescar',
           onButtonPress: () {
             context.read<ChatslistBloc>().add(ChatListInitialise());
           },
@@ -107,11 +107,11 @@ class _PendingListWidgetState extends State<PendingListWidget> {
     return <PopupMenuEntry<ChatItemMenuOption>>[
       const PopupMenuItem<ChatItemMenuOption>(
         value: ChatItemMenuOption.PREVIEW,
-        child: const Text('Preview'),
+        child: const Text('Vista previa'),
       ),
       const PopupMenuItem<ChatItemMenuOption>(
         value: ChatItemMenuOption.REJECT,
-        child: const Text('Reject Chat'),
+        child: const Text('Rechazar Chat'),
       ),
     ];
   }

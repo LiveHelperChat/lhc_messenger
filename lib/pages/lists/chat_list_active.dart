@@ -106,9 +106,9 @@ class _ActiveListWidgetState extends State<ActiveListWidget> {
       if (state is ChatListLoadError) {
         return ErrorReloadButton(
           child: Text("An error occurred: ${state.message}"),
-          actionText: 'Reload',
+          actionText: 'Refrescar',
           onButtonPress: () {
-            print("Reload");
+            print("Refrescar");
             context.read<ChatslistBloc>().add(ChatListInitialise());
           },
         );
@@ -125,15 +125,15 @@ class _ActiveListWidgetState extends State<ActiveListWidget> {
     return <PopupMenuEntry<ChatItemMenuOption>>[
       const PopupMenuItem<ChatItemMenuOption>(
         value: ChatItemMenuOption.CLOSE,
-        child: const Text('Close'),
+        child: const Text('Cerrar'),
       ),
       const PopupMenuItem<ChatItemMenuOption>(
         value: ChatItemMenuOption.REJECT,
-        child: const Text('Delete'),
+        child: const Text('Borrar'),
       ),
       const PopupMenuItem<ChatItemMenuOption>(
         value: ChatItemMenuOption.TRANSFER,
-        child: const Text('Transfer'),
+        child: const Text('Transferir'),
       ),
     ];
   }
@@ -169,7 +169,7 @@ class _ActiveListWidgetState extends State<ActiveListWidget> {
         switch (snapshot.connectionState) {
           case ConnectionState.none:
           case ConnectionState.waiting:
-            return const Text('loading...');
+            return const Text('cargando...');
           default:
             if (snapshot.hasError) {
               return Text('Error: ${snapshot.error}');
@@ -190,7 +190,7 @@ class _ActiveListWidgetState extends State<ActiveListWidget> {
               mainAxisSize: MainAxisSize.max,
               children: <Widget>[
                 new Text(
-                  "Select online operator",
+                  "Seleccione operador conectado",
                   style: new TextStyle(
                       fontWeight: FontWeight.bold, fontSize: 16.0),
                 ),
@@ -221,8 +221,8 @@ class _ActiveListWidgetState extends State<ActiveListWidget> {
               Map operator = listOP[index];
               return new ListTile(
                 title: new Text(
-                    'Name: ${operator["name"]} ${operator["surname"]}'),
-                subtitle: new Text('Title: ${operator["job_title"]}'),
+                    'Nombre: ${operator["name"]} ${operator["surname"]}'),
+                subtitle: new Text('Título: ${operator["job_title"]}'),
                 onTap: () async {
                   await _transferToUser(srvr, chat, int.parse(operator['id']));
                   Navigator.of(context).pop();
@@ -230,6 +230,6 @@ class _ActiveListWidgetState extends State<ActiveListWidget> {
               );
             },
           )
-        : const Text('No online operator found!');
+        : const Text('No hay operadores conectados');
   }
 }

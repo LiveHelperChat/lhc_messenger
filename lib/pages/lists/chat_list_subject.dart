@@ -105,7 +105,7 @@ class _SubjectListWidgetState extends State<SubjectListWidget> {
       if (state is ChatListLoadError) {
         return ErrorReloadButton(
           child: Text("An error occurred: ${state.message}"),
-          actionText: 'Reload',
+          actionText: 'Refrescar',
           onButtonPress: () {
             context.read<ChatslistBloc>().add(ChatListInitialise());
           },
@@ -123,15 +123,15 @@ class _SubjectListWidgetState extends State<SubjectListWidget> {
     return <PopupMenuEntry<ChatItemMenuOption>>[
       const PopupMenuItem<ChatItemMenuOption>(
         value: ChatItemMenuOption.CLOSE,
-        child: const Text('Close'),
+        child: const Text('Cerrar'),
       ),
       const PopupMenuItem<ChatItemMenuOption>(
         value: ChatItemMenuOption.REJECT,
-        child: const Text('Delete'),
+        child: const Text('Borrar'),
       ),
       const PopupMenuItem<ChatItemMenuOption>(
         value: ChatItemMenuOption.TRANSFER,
-        child: const Text('Transfer'),
+        child: const Text('Transferir'),
       ),
     ];
   }
