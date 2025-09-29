@@ -82,7 +82,7 @@ class App extends StatelessWidget {
     return ToastificationWrapper(
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        title: 'Live Helper Chat',
+        title: 'Pbx-Vtec Chat',
         navigatorObservers: [globals.routeObserver],
         theme: ThemeData(
           primaryColor: Colors.indigo,
@@ -172,7 +172,7 @@ class _SplashScreenState extends State<SplashScreen> {
               SizedBox(height: 10),
               // App Name
               Text(
-                'Live Helper Chat',
+                'Pbx-Vtec Chat',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
