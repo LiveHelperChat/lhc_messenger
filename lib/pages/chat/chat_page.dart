@@ -450,13 +450,13 @@ class ChatPageState extends State<ChatPage>
 */
       menuItems.add(const PopupMenuItem<ChatItemMenuOption>(
         value: ChatItemMenuOption.CLOSE,
-        child: const Text('Close'),
+        child: const Text('Cerrar'),
       ));
     }
 
     menuItems.add(const PopupMenuItem<ChatItemMenuOption>(
       value: ChatItemMenuOption.REJECT,
-      child: const Text('Delete'),
+      child: const Text('Borrar'),
     ));
     return menuItems;
   }
@@ -521,7 +521,7 @@ class ChatPageState extends State<ChatPage>
                     onTap: () {},
                   ),
                   ListTile(
-                    leading: Text("Phone", style: styling),
+                    leading: Text("Teléfono", style: styling),
                     title: Text(_chatCopy!.phone ?? ""),
                     onTap: () {},
                   ),
@@ -531,7 +531,7 @@ class ChatPageState extends State<ChatPage>
                     onTap: () {},
                   ),
                   ListTile(
-                    leading: new Text("Country", style: styling),
+                    leading: new Text("País", style: styling),
                     title: new Text(_chatCopy!.country_name ?? ""),
                     onTap: () {},
                   ),
@@ -579,7 +579,7 @@ class ChatPageState extends State<ChatPage>
               padding: EdgeInsets.symmetric(vertical: 15),
               alignment: Alignment.center,
               child: Text(
-                "Accept Chat",
+                "Aceptar Chat",
                 style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -642,7 +642,7 @@ class ChatPageState extends State<ChatPage>
     _isWriting = false;
     if (_isNewChat! == true) {
       FunctionUtils.showErrorMessage(
-          message: "Pending chat! Please accept first");
+          message: "Chat pendiente! Aceptar primero");
       return;
     }
     //post message to server and update messages instantly
