@@ -31,40 +31,26 @@ class ChatNumberIndcator extends StatelessWidget{
     Color? colorIcon = colors.containsKey(title) ? colors[title] : Colors.green.shade400;
 
     return
-      Stack(
-        children: <Widget>[
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: new Icon(
-                icon,
-                size: 14,
-                color: colorIcon
-            ),
+      Badge(
+        alignment: AlignmentDirectional.topEnd, // corner, not over center
+        backgroundColor: Colors.white,
+        isLabelVisible: number != '0',          // hide when 0
+        label: Text(
+          number,
+          style: TextStyle(
+            fontSize: 10,
+            height: 1,
+            color: Theme.of(context).primaryColorDark,
           ),
-          Offstage(
-            offstage: offstage,
-            child: Align(
-              alignment: Alignment.center,
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 4.0,horizontal: 6.0),
-                margin: const EdgeInsets.only(bottom: 8.0),
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white,
-                ),
-                child: Text(
-                  number,
-                  style: TextStyle(
-                    fontSize: 9.0,
-                    color: Theme.of(context).primaryColorDark,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ),
-          ),
-        ],
-      );
+          softWrap: false,
+        ),
+        child: Padding(                              // move icon down
+          padding: const EdgeInsets.only(top: 20,left:2),
+          child: Icon(icon, size: 14, color: colorIcon),
+        ),
+      )
+    ;
+
   }
 
 }
