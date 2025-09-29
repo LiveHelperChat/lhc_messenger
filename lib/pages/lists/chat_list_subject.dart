@@ -187,7 +187,7 @@ class _SubjectListWidgetState extends State<SubjectListWidget> {
                   mainAxisSize: MainAxisSize.max,
                   children: <Widget>[
                     new Text(
-                      "Select online operator",
+                      "Seleccione operador conectado",
                       style: new TextStyle(
                           fontWeight: FontWeight.bold, fontSize: 16.0),
                     ),
@@ -227,6 +227,6 @@ class _SubjectListWidgetState extends State<SubjectListWidget> {
         );
       },
     )
-        : new Text('No online operator found!');
+        : new Text('No hay operadores conectados');
   }
 }

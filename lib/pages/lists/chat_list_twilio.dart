@@ -188,7 +188,7 @@ class _TwilioListWidgetState extends State<TwilioListWidget> {
               mainAxisSize: MainAxisSize.max,
               children: <Widget>[
                 new Text(
-                  "Select online operator",
+                  "Seleccione operador conectado",
                   style: new TextStyle(
                       fontWeight: FontWeight.bold, fontSize: 16.0),
                 ),
@@ -228,6 +228,6 @@ class _TwilioListWidgetState extends State<TwilioListWidget> {
               );
             },
           )
-        : new Text('No online operator found!');
+        : new Text('No hay operadores conectados');
   }
 }
