@@ -237,7 +237,7 @@ class ChatItemWidget extends StatelessWidget {
                                 )
                               ],
                             ),
-                            Align(
+                            /*Align(
                               alignment: Alignment.bottomLeft,
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.start,
@@ -254,7 +254,7 @@ class ChatItemWidget extends StatelessWidget {
                                           fontWeight: FontWeight.bold)),
                                 ],
                               ),
-                            )
+                            )*/
                           ],
                         ),
                         Spacer(),
