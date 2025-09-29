@@ -714,12 +714,12 @@ class _MainPageState extends State<MainPage>
   void _showAlert(BuildContext context, Server server) {
     AlertDialog dialog = AlertDialog(
       content: const Text(
-        "Do you want to logout of the server? \n\nYou will not receive notifications for chats.",
+        "Desea desconectarse del servidor y no recibir más notificaciones?",
         style: TextStyle(fontSize: 14.0),
       ),
       actions: <Widget>[
         MaterialButton(
-            child: Text("Yes"),
+            child: Text("Sí"),
             onPressed: () {
               _serverBloc!.add(LogoutServer(
                   server: server,
@@ -784,7 +784,7 @@ class _MainPageState extends State<MainPage>
       SpeedDialChild(
         child: const Icon(Icons.refresh),
         backgroundColor: Theme.of(context).primaryColor,
-        label: 'Reload list',
+        label: 'Refrescar lista',
         labelStyle: const TextStyle(fontSize: 18.0),
         onTap: () => _loadChatList(),
       )
