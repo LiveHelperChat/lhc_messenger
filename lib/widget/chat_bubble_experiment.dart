@@ -174,20 +174,20 @@ class ChatBubbleExperiment extends StatelessWidget {
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          title: Text("Message Options"),
+          title: Text("Opciones"),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               ListTile(
                 leading: Icon(Icons.copy),
-                title: Text("Copy Text"),
+                title: Text("Copiar Texto"),
                 onTap: () {
                   Clipboard.setData(ClipboardData(text: cleanText));
                   Navigator.of(dialogContext).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text("Message copied to clipboard"),
+                      content: Text("Mensaje copiado"),
                       duration: Duration(seconds: 2),
                     ),
                   );
@@ -200,7 +200,7 @@ class ChatBubbleExperiment extends StatelessWidget {
               onPressed: () {
                 Navigator.of(dialogContext).pop();
               },
-              child: Text("Cancel"),
+              child: Text("Cancelar"),
             ),
           ],
         );
