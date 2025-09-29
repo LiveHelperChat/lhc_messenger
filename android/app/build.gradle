@@ -1,3 +1,10 @@
+plugins {
+    id 'com.android.application'
+    id 'dev.flutter.flutter-gradle-plugin'
+    id 'org.jetbrains.kotlin.android'
+    id 'com.google.gms.google-services'
+}
+
 def localProperties = new Properties()
 def localPropertiesFile = rootProject.file('local.properties')
 if (localPropertiesFile.exists()) {
@@ -21,10 +28,6 @@ if (flutterVersionName == null) {
     flutterVersionName = '1.0'
 }
 
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
-
 def keystorePropertiesFile = rootProject.file("key.properties")
 def keystoreProperties = new Properties()
 keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
@@ -34,15 +37,12 @@ android {
     compileSdkVersion 35
 
     compileOptions {
-        // sourceCompatibility JavaVersion.VERSION_17 // Set Java source compatibility
-        // targetCompatibility JavaVersion.VERSION_17 // Set Java target compatibility
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
         coreLibraryDesugaringEnabled true
     }
 
     kotlinOptions {
-        // jvmTarget = '17' // Set Kotlin JVM target
         jvmTarget = '1.8'
     }
 
@@ -60,8 +60,8 @@ android {
         applicationId "com.livehelperchat.chat"
         minSdkVersion 24
         targetSdkVersion 34
-        versionCode 47
-        versionName "4.58"
+        versionCode 48
+        versionName "4.71"
         multiDexEnabled true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -92,7 +92,6 @@ flutter {
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation 'com.google.firebase:firebase-core:21.1.1'
     implementation 'com.google.firebase:firebase-messaging:24.0.1'
     implementation 'androidx.arch.core:core-runtime:2.2.0'
@@ -103,9 +102,3 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.2.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
 }
-
-apply plugin: 'com.google.gms.google-services'
-
-// Work around required for removing play-services-measurement
-//com.google.gms.googleservices.GoogleServicesPlugin.config.disableVersionCheck = true
-

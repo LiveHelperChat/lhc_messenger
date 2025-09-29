@@ -8,7 +8,6 @@ import 'package:http_parser/http_parser.dart';
 import 'package:livehelp/model/file_upload_response.dart';
 import 'package:mime/mime.dart';
 import 'package:toastification/toastification.dart';
-import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
 

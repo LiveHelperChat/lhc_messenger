@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Allows flutter_downloader (DownloadedFileProvider) to grant URI access to downloaded files -->
+    <!-- Grant access to the app's external files dir (Download/ or root) as needed -->
+    <external-path name="download_root" path="." />
+    <external-path name="downloads" path="Download/" />
+    <!-- (Optional) Add other specific subdirectories here if you want finer-grained exposure -->
+</paths>
+
