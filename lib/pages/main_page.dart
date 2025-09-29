@@ -403,7 +403,7 @@ class _MainPageState extends State<MainPage>
                     backgroundColor: Colors.white,
                     key: _scaffoldKey,
                     appBar: AppBar(
-                      title: Text("Chats List"),
+                      title: Text("Lista de chats"),
                       bottom: TabBar(tabs: tabs),
                     ),
                     drawer: Drawer(
@@ -484,10 +484,10 @@ class _MainPageState extends State<MainPage>
                                         subtitle: state.selectedServer
                                                     ?.isLoggedIn ??
                                                 false
-                                            ? const Text("Logged In",
+                                            ? const Text("Conectado",
                                                 style: TextStyle(
                                                     color: Colors.green))
-                                            : Text("Logged Out",
+                                            : Text("Desconectado",
                                                 style: TextStyle(
                                                     color: Colors.redAccent)),
                                       ),
@@ -501,11 +501,11 @@ class _MainPageState extends State<MainPage>
                                                       ?.userOnline ??
                                                   false
                                               ? Text(
-                                                  "Operator Online",
+                                                  "Operador Conectado",
                                                   style: new TextStyle(
                                                       fontSize: 10.0),
                                                 )
-                                              : Text("Operator Offline",
+                                              : Text("Operador Desconectado",
                                                   style: new TextStyle(
                                                       fontSize: 10.0)),
                                           trailing: state.isActionLoading
@@ -545,7 +545,7 @@ class _MainPageState extends State<MainPage>
                                 ),
                               ),
                               ListTile(
-                                  title: const Text("Server Settings"),
+                                  title: const Text("Configurar servidor"),
                                   leading: Icon(Icons.settings),
                                   onTap: () {
                                     if (state.selectedServer!.isLoggedIn) {
@@ -569,7 +569,7 @@ class _MainPageState extends State<MainPage>
                                   }),
                               state.selectedServer?.isLoggedIn ?? false
                                   ? ListTile(
-                                      title: const Text("Logout Server"),
+                                      title: const Text("Cerrar sesión"),
                                       leading: const Icon(Icons.exit_to_app),
                                       onTap: () {
                                         if (state.selectedServer!.isLoggedIn) {
@@ -584,7 +584,7 @@ class _MainPageState extends State<MainPage>
                                       },
                                     )
                                   : ListTile(
-                                      title: const Text("Login"),
+                                      title: const Text("Ingresar"),
                                       leading: const Icon(Icons.exit_to_app),
                                       onTap: () {
                                         Navigator.pop(context);
@@ -596,7 +596,7 @@ class _MainPageState extends State<MainPage>
                           ),
                           const Divider(),
                           ListTile(
-                            title: const Text("Manage Servers"),
+                            title: const Text("Servidores"),
                             leading: const Icon(Icons.add),
                             onTap: () {
                               Navigator.of(context).pop();
@@ -631,7 +631,7 @@ class _MainPageState extends State<MainPage>
                       onButtonPress: () {
                         _serverBloc!.add(const InitServers());
                       },
-                      actionText: 'Reload');
+                      actionText: 'Refrescar');
                 }
                 return Scaffold(
                   body: ErrorReloadButton(
@@ -639,7 +639,7 @@ class _MainPageState extends State<MainPage>
                       onButtonPress: () {
                         _serverBloc!.add(const InitServers());
                       },
-                      actionText: 'Reload'),
+                      actionText: 'Refrescar'),
                 );
               }));
         }));
@@ -793,7 +793,7 @@ class _MainPageState extends State<MainPage>
     if (_serverBloc?.state is ServerListFromDBLoaded) {
       final currentState = _serverBloc?.state as ServerListFromDBLoaded;
       if (currentState.selectedServer != null &&
-          currentState.selectedServer?.twilioInstalled == true) {
+          currentState.selectedServer?.twilioInstalled == true && false) { //alonso
         children.add(SpeedDialChild(
           child: Icon(Icons.sms),
           backgroundColor: Theme.of(context).primaryColor,
@@ -820,7 +820,7 @@ class _MainPageState extends State<MainPage>
     if (_serverBloc?.state is ServerListFromDBLoaded) {
       final currentState = _serverBloc?.state as ServerListFromDBLoaded;
       if (currentState.selectedServer != null &&
-          currentState.selectedServer?.fbInstalled == true) {
+          currentState.selectedServer?.fbInstalled == true && false) { //alonso
         children.add(SpeedDialChild(
           child: const Icon(Icons.message),
           backgroundColor: Theme.of(context).primaryColor,
