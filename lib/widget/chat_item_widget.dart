@@ -55,10 +55,10 @@ class ChatItemWidget extends StatelessWidget {
                     bottomLeft: const Radius.circular(5.0),
                   )),
               child: Container(
-                  margin: const EdgeInsets.all(4.0),
+                  margin: const EdgeInsets.all(2.0),
                   child: new Center(
                     child: new Text(element,
-                        style: TextStyle(fontSize: 12.0, color: Colors.white)),
+                        style: TextStyle(fontSize: 11.0, color: Colors.white)),
                   ))),
         ));
       });
