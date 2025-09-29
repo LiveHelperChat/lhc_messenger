@@ -8,11 +8,12 @@ class Message {
     "db_user_id": "user_id",
     "db_msg": "msg",
     "db_name_support": "name_support",
-    "db_is_owner": "is_owner"
+    "db_is_owner": "is_owner",
+    "db_del_st": "del_st"
   };
 
   int? id, chat_id, user_id, time, is_owner;
-  String? msg, name_support;
+  String? msg, name_support, del_st;
 
   Message({
     this.id,
@@ -21,6 +22,7 @@ class Message {
     this.time,
     this.msg,
     this.name_support,
+    this.del_st,
     this.is_owner,
   });
 
@@ -38,6 +40,7 @@ class Message {
             user_id: checkInt(map[columns['db_user_id']]),
             msg: map[columns['db_msg']],
             name_support: map[columns['db_name_support']],
+            del_st: map[columns['db_del_st']],
             is_owner: map[columns['db_is_owner']] ?? 0);
 
   Map<String?, dynamic> toMap() {
@@ -48,12 +51,13 @@ class Message {
       columns['db_user_id']: user_id,
       columns['db_msg']: msg,
       columns['db_name_support']: name_support,
+      columns['db_del_st']: del_st,
       columns['db_is_owner']: is_owner
     };
   }
 
   @override
   String toString() {
-    return 'Message{id: $id, chat_id: $chat_id, user_id: $user_id, time: $time, msg: $msg, name_support: $name_support, is_owner: $is_owner}';
+    return 'Message{id: $id, chat_id: $chat_id, user_id: $user_id, time: $time, msg: $msg, name_support: $name_support, del_st: $del_st, is_owner: $is_owner}';
   }
 }
