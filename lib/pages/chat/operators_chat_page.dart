@@ -470,7 +470,7 @@ class OperatorsChatPageState extends State<OperatorsChatPage>
                       onChanged: (txt) => (_writingSubject.add(txt)),
                       onSubmitted: _submitMsg,
                       decoration: new InputDecoration(
-                          hintText: "Enter a message to send",
+                          hintText: "Escriba aquí",
                           border: InputBorder.none,
                           focusedBorder: InputBorder.none,
                           enabledBorder: InputBorder.none,
