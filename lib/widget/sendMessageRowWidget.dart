@@ -126,7 +126,7 @@ class _SendMessageRowWidgetState extends State<SendMessageRowWidget> {
                     children: [
                       Icon(Icons.list, color: Colors.black54),
                       SizedBox(width: 8),
-                      Text('Canned Messages'),
+                      Text('Mensajes predefinidos'),
                     ],
                     ),
                   ),
@@ -139,7 +139,7 @@ class _SendMessageRowWidgetState extends State<SendMessageRowWidget> {
                       color: isWhisperModeOn ? Colors.blue : Colors.black54,
                       ),
                       SizedBox(width: 8),
-                      Text(isWhisperModeOn ? 'Disable Whisper Mode' : 'Enable Whisper Mode'),
+                      Text(isWhisperModeOn ? 'Desactivar susurro' : 'Activar susurro'),
                     ],
                     ),
                   ),
@@ -149,7 +149,7 @@ class _SendMessageRowWidgetState extends State<SendMessageRowWidget> {
                     children: [
                       Icon(Icons.attach_file, color: Colors.black54),
                       SizedBox(width: 8),
-                      Text('Attach File'),
+                      Text('Adjuntar archivo'),
                     ],
                     ),
                   ),
@@ -171,7 +171,7 @@ class _SendMessageRowWidgetState extends State<SendMessageRowWidget> {
                     },
                     decoration: widget.isOwnerOfChat
                         ? const InputDecoration(
-                            hintText: "Enter a message to send",
+                            hintText: "Escriba aquí",
                             border: InputBorder.none,
                             focusedBorder: InputBorder.none,
                             enabledBorder: InputBorder.none,
@@ -184,7 +184,7 @@ class _SendMessageRowWidgetState extends State<SendMessageRowWidget> {
                             errorBorder: InputBorder.none,
                             disabledBorder: InputBorder.none,
                             hintMaxLines: 1,
-                            hintText: "You are not the owner of this chat",
+                            hintText: "Usted no es dueño del chat",
                             hintStyle:
                             TextStyle(fontSize: 14)
                           ),
@@ -262,7 +262,7 @@ class _SendMessageRowWidgetState extends State<SendMessageRowWidget> {
       });
     } else {
       FunctionUtils.showErrorMessage(
-          message: "Please grant mic permission front settings to continue");
+          message: "Debe autorizar el permiso de micrófono");
     }
   }
 
@@ -278,7 +278,7 @@ class _SendMessageRowWidgetState extends State<SendMessageRowWidget> {
         if (path != null) {
           final recordedFile = File(path);
           if (await recordedFile.exists()) {
-            log('Recorded file saved at: ${recordedFile.path}');
+            log('Grabación guardada en: ${recordedFile.path}');
             setState(() {
               recordedFilePath = recordedFile.path;
               isRecording = false;
@@ -291,7 +291,7 @@ class _SendMessageRowWidgetState extends State<SendMessageRowWidget> {
               setState(() {
                 isUploading = false;
               });
-              FunctionUtils.showErrorMessage(message: "Recording failed: empty file created");
+              FunctionUtils.showErrorMessage(message: "Grabación fallida");
               return;
             }
 
@@ -309,11 +309,11 @@ class _SendMessageRowWidgetState extends State<SendMessageRowWidget> {
                 );
                 widget.submitMessage(fileMessage);
               } else {
-                FunctionUtils.showErrorMessage(message: "Failed to upload audio file");
+                FunctionUtils.showErrorMessage(message: "No se pudo enviar el audio");
               }
             } catch (e) {
               log("Upload error: ${e.toString()}");
-              FunctionUtils.showErrorMessage(message: "Error uploading audio: ${e.toString()}");
+              FunctionUtils.showErrorMessage(message: "No se pudo enviar el audio: ${e.toString()}");
             } finally {
               setState(() {
                 isUploading = false;
@@ -403,7 +403,7 @@ class UploadingWidget extends StatelessWidget {
     return Align(
       alignment: Alignment.centerRight,
       child: Text(
-        "Uploading ......",
+        "Enviando ......",
         style: TextStyle(
           color: Colors.blue,
           fontWeight: FontWeight.bold,
