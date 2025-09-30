@@ -167,7 +167,7 @@ class _SendMessageRowWidgetState extends State<SendMessageRowWidget> {
                     enableInteractiveSelection: true,
                     onChanged: (txt) => (_writingSubject.add(txt)),
                     onSubmitted: (value) {
-                      widget.submitMessage(value,sender: isWhisperModeOn?"system":"operator");
+                      widget.submitMessage(value,sender: isWhisperModeOn?"whisper":"operator");
                     },
                     decoration: widget.isOwnerOfChat
                         ? const InputDecoration(
@@ -231,7 +231,7 @@ class _SendMessageRowWidgetState extends State<SendMessageRowWidget> {
                           icon: const Icon(Icons.send),
                           onPressed: () {
                             if (textController.text.isNotEmpty) {
-                            widget.submitMessage(textController.text,sender: isWhisperModeOn?"system":"operator");
+                            widget.submitMessage(textController.text,sender: isWhisperModeOn?"whisper":"operator");
                               textController.clear();
                             }
                           }),

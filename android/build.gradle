@@ -1,22 +1,8 @@
-buildscript {
-    ext.kotlin_version = '1.9.24' // Updated to a more recent version
-    repositories {
-        google()
-        mavenCentral() 
-    }
-
-    dependencies {
-        classpath 'com.android.tools.build:gradle:8.7.0'
-        classpath 'com.google.gms:google-services:4.4.2'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        // classpath 'androidx.lifecycle:lifecycle-viewmodel-savedstate:2.5.1'
-    }
-}
-
 allprojects {
     repositories {
         google()
         mavenCentral() // Updated to use mavenCentral()
+        maven { url 'https://storage.googleapis.com/download.flutter.io' }
     }
  // This code is where all the magic happens and fixes the error.
     subprojects {

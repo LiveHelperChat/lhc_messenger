@@ -11,7 +11,6 @@ import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:livehelp/bloc/bloc.dart';
 import 'package:livehelp/data/database.dart';
 import 'package:livehelp/globals.dart' as globals;
-import 'package:livehelp/main.dart';
 import 'package:livehelp/model/model.dart';
 import 'package:livehelp/pages/lists/chat_list_operators.dart';
 import 'package:livehelp/pages/lists/chat_list_twilio.dart';

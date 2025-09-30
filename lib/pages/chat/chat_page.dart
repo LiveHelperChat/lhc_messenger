@@ -1,7 +1,6 @@
 // In lib/pages/chat/chat_page.dart
 
 import 'dart:async';
-import 'dart:developer';
 import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
