@@ -4,6 +4,8 @@ import 'package:livehelp/utils/utils.dart';
 import 'package:livehelp/model/model.dart';
 import 'package:livehelp/services/server_repository.dart';
 import 'package:meta/meta.dart';
+import 'dart:io';
+import 'package:flutter/services.dart';
 
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
@@ -14,6 +16,7 @@ part 'fcmtoken_state.dart';
 
 class FcmTokenBloc extends Bloc<FcmTokenEvent, FcmTokenState> {
    final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+   static const MethodChannel _fcmTokenChannel = MethodChannel('fcm_token_channel');
 
   String token = "";
   ServerRepository? serverRepository;
@@ -37,15 +40,71 @@ class FcmTokenBloc extends Bloc<FcmTokenEvent, FcmTokenState> {
     _initFCM();
   }
 
-  // Add method to get token with waiting capability
-  Future<String> getTokenWhenReady() async {
+  // Add method to get token with waiting capability and timeout
+  Future<String> getTokenWhenReady({Duration timeout = const Duration(seconds: 10)}) async {
     if (_tokenReceived && token.isNotEmpty) {
       return token;
     }
-    return await _tokenCompleter.future;
+
+    // For iOS, try to get token from native side first
+    if (Platform.isIOS) {
+      try {
+        final nativeToken = await _fcmTokenChannel.invokeMethod('getFCMToken');
+        if (nativeToken != null && nativeToken.toString().isNotEmpty) {
+          token = nativeToken.toString();
+          _tokenReceived = true;
+          if (!_tokenCompleter.isCompleted) {
+            _tokenCompleter.complete(token);
+          }
+          return token;
+        }
+      } catch (e) {
+        print('Error getting token from native iOS: $e');
+      }
+    }
+
+    try {
+      return await _tokenCompleter.future.timeout(timeout);
+    } catch (e) {
+      // If timeout occurs or token is not available, try to get it directly
+      print('FCM Token timeout or error: $e');
+      try {
+        final directToken = await _firebaseMessaging.getToken();
+        if (directToken != null && directToken.isNotEmpty) {
+          token = directToken;
+          _tokenReceived = true;
+          if (!_tokenCompleter.isCompleted) {
+            _tokenCompleter.complete(directToken);
+          }
+          return directToken;
+        }
+      } catch (directError) {
+        print('Direct FCM token retrieval failed: $directError');
+      }
+
+      // Return empty string if all attempts fail
+      return "";
+    }
   }
 
   Future<void> _initFCM() async {
+    // Set up iOS native channel listener
+    if (Platform.isIOS) {
+      _fcmTokenChannel.setMethodCallHandler((call) async {
+        if (call.method == 'onTokenReceived') {
+          final receivedToken = call.arguments.toString();
+          if (receivedToken.isNotEmpty) {
+            token = receivedToken;
+            _tokenReceived = true;
+            if (!_tokenCompleter.isCompleted) {
+              _tokenCompleter.complete(receivedToken);
+            }
+            add(FcmTokenReceive(fcmToken: receivedToken));
+          }
+        }
+      });
+    }
+
     FirebaseMessaging.onBackgroundMessage(LocalNotificationPlugin.backgroundMessageHandler);
 
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
@@ -69,13 +128,14 @@ class FcmTokenBloc extends Bloc<FcmTokenEvent, FcmTokenState> {
         sound: true, badge: true, alert: true);
 
     _firebaseMessaging.getToken().then((String? fcmtoken) {
-      assert(fcmtoken != null);
-      token = fcmtoken!;
-      _tokenReceived = true;
-      if (!_tokenCompleter.isCompleted) {
-        _tokenCompleter.complete(fcmtoken);
+      if (fcmtoken != null && fcmtoken.isNotEmpty) {
+        token = fcmtoken;
+        _tokenReceived = true;
+        if (!_tokenCompleter.isCompleted) {
+          _tokenCompleter.complete(fcmtoken);
+        }
+        add(FcmTokenReceive(fcmToken: fcmtoken));
       }
-      add(FcmTokenReceive(fcmToken: fcmtoken));
     });
 
     // instantiated in LocalNotificationPlugin

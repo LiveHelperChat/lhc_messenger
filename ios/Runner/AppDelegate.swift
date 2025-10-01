@@ -6,6 +6,9 @@ import flutter_downloader
 
 @UIApplicationMain
 @objc class AppDelegate: FlutterAppDelegate {
+  private var fcmTokenChannel: FlutterMethodChannel?
+  private var pendingFcmToken: String?
+
   override func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
@@ -22,7 +25,12 @@ import flutter_downloader
       let authOptions: UNAuthorizationOptions = [.alert, .badge, .sound]
       UNUserNotificationCenter.current().requestAuthorization(
         options: authOptions,
-        completionHandler: { _, _ in }
+        completionHandler: { granted, error in
+          print("Notification permission granted: \(granted)")
+          if let error = error {
+            print("Notification permission error: \(error)")
+          }
+        }
       )
     } else {
       let settings = UIUserNotificationSettings(types: [.alert, .badge, .sound], categories: nil)
@@ -33,6 +41,34 @@ import flutter_downloader
 
     // Set messaging delegate to receive token
     Messaging.messaging().delegate = self
+
+    // Setup method channel for FCM token communication
+    let controller: FlutterViewController = window?.rootViewController as! FlutterViewController
+    fcmTokenChannel = FlutterMethodChannel(name: "fcm_token_channel", binaryMessenger: controller.binaryMessenger)
+
+    fcmTokenChannel?.setMethodCallHandler { [weak self] (call: FlutterMethodCall, result: @escaping FlutterResult) in
+      if call.method == "getFCMToken" {
+        if let token = self?.pendingFcmToken {
+          result(token)
+        } else {
+          // Try to get the token directly
+          Messaging.messaging().token { token, error in
+            if let error = error {
+              print("Error fetching FCM registration token: \(error)")
+              result(FlutterError(code: "TOKEN_ERROR", message: error.localizedDescription, details: nil))
+            } else if let token = token {
+              print("FCM registration token retrieved: \(token)")
+              self?.pendingFcmToken = token
+              result(token)
+            } else {
+              result(FlutterError(code: "NO_TOKEN", message: "No FCM token available", details: nil))
+            }
+          }
+        }
+      } else {
+        result(FlutterMethodNotImplemented)
+      }
+    }
 
     GeneratedPluginRegistrant.register(with: self)
     FlutterDownloaderPlugin.setPluginRegistrantCallback(registerPlugins)
@@ -86,6 +122,14 @@ extension AppDelegate: MessagingDelegate {
   func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
     print("Firebase registration token: \(String(describing: fcmToken))")
 
+    // Store the token for later use
+    if let token = fcmToken {
+      pendingFcmToken = token
+
+      // Notify Flutter that token is available
+      fcmTokenChannel?.invokeMethod("onTokenReceived", arguments: token)
+    }
+
     // Note: This callback is fired at each app startup and whenever a new token is generated.
     let dataDict: [String: String] = ["token": fcmToken ?? ""]
     NotificationCenter.default.post(
@@ -93,9 +137,6 @@ extension AppDelegate: MessagingDelegate {
       object: nil,
       userInfo: dataDict
     )
-
-    // TODO: If necessary, send token to application server.
-    // Note: This callback is fired at each app startup and whenever a new token is generated.
   }
 }
 
