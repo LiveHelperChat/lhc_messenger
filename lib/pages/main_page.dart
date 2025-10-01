@@ -719,11 +719,12 @@ class _MainPageState extends State<MainPage>
       actions: <Widget>[
         MaterialButton(
             child: Text("Yes"),
-            onPressed: () {
+            onPressed: () async {
+              String fcmToken = await context.read<FcmTokenBloc>().getTokenWhenReady();
               _serverBloc!.add(LogoutServer(
                   server: server,
                   deleteServer: false,
-                  fcmToken: context.read<FcmTokenBloc>().token));
+                  fcmToken: fcmToken));
               Navigator.of(context).pop();
             }),
         MaterialButton(
