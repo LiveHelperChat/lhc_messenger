@@ -18,6 +18,10 @@ class FcmTokenBloc extends Bloc<FcmTokenEvent, FcmTokenState> {
   String token = "";
   ServerRepository? serverRepository;
 
+  // Add a Completer to track when the token is ready
+  final Completer<String> _tokenCompleter = Completer<String>();
+  bool _tokenReceived = false;
+
   FcmTokenBloc({@required this.serverRepository}) : super(FcmTokenInitial()) {
     assert(serverRepository != null);
     on<FcmTokenReceive>(_onFcmTokenReceive);
@@ -33,6 +37,14 @@ class FcmTokenBloc extends Bloc<FcmTokenEvent, FcmTokenState> {
     _initFCM();
   }
 
+  // Add method to get token with waiting capability
+  Future<String> getTokenWhenReady() async {
+    if (_tokenReceived && token.isNotEmpty) {
+      return token;
+    }
+    return await _tokenCompleter.future;
+  }
+
   Future<void> _initFCM() async {
     FirebaseMessaging.onBackgroundMessage(LocalNotificationPlugin.backgroundMessageHandler);
 
@@ -46,6 +58,10 @@ class FcmTokenBloc extends Bloc<FcmTokenEvent, FcmTokenState> {
 
     _firebaseMessaging.onTokenRefresh.listen((String fcmtoken) {
       token = fcmtoken;
+      _tokenReceived = true;
+      if (!_tokenCompleter.isCompleted) {
+        _tokenCompleter.complete(fcmtoken);
+      }
       add(FcmTokenRefresh(fcmToken: fcmtoken));
     });
 
@@ -55,6 +71,10 @@ class FcmTokenBloc extends Bloc<FcmTokenEvent, FcmTokenState> {
     _firebaseMessaging.getToken().then((String? fcmtoken) {
       assert(fcmtoken != null);
       token = fcmtoken!;
+      _tokenReceived = true;
+      if (!_tokenCompleter.isCompleted) {
+        _tokenCompleter.complete(fcmtoken);
+      }
       add(FcmTokenReceive(fcmToken: fcmtoken));
     });
 

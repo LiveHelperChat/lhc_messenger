@@ -273,7 +273,8 @@ class LoginFormState extends State<LoginForm> {
         _currentServer!.username = _userNameController.text;
         _currentServer!.password = _passwordController.text;
 
-        String fcmtoken = context.read<FcmTokenBloc>().token;
+        // Wait for FCM token to be ready before proceeding
+        String fcmtoken = await context.read<FcmTokenBloc>().getTokenWhenReady();
         context
             .read<LoginformBloc>()
             .add(ServerLogin(server: _currentServer!, fcmToken: fcmtoken));

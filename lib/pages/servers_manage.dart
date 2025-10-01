@@ -219,7 +219,7 @@ class ServersManageState extends State<ServersManage> with RouteAware {
         MaterialButton(
             child: Text("Yes"),
             onPressed: () async {
-              String fcmToken = context.read<FcmTokenBloc>().token;
+              String fcmToken = await context.read<FcmTokenBloc>().getTokenWhenReady();
               context.read<ServerBloc>().add(LogoutServer(
                   server: srvr, fcmToken: fcmToken, deleteServer: true));
               Navigator.of(context).pop();
