@@ -322,39 +322,42 @@ class OperatorsChatPageState extends State<OperatorsChatPage>
                         },
                       ))),
             ),
-            body: BlocConsumer<ChatOperatorsMessagesBloc,
-                ChatOperatorsMessagesState>(
-              listener: (context, state) {
-                if (state is ChatOperatorsMessagesLoaded) {
-                  if (state.isChatClosed) {
-                    widget.refreshList!();
-                    Navigator.of(context).pop();
+            body: SafeArea(
+              bottom: true,
+              child: BlocConsumer<ChatOperatorsMessagesBloc,
+                  ChatOperatorsMessagesState>(
+                listener: (context, state) {
+                  if (state is ChatOperatorsMessagesLoaded) {
+                    if (state.isChatClosed) {
+                      widget.refreshList!();
+                      Navigator.of(context).pop();
+                    }
                   }
-                }
-              },
-              builder: (context, state) {
-                return Stack(children: <Widget>[
-                  Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: <Widget>[
-                        Flexible(
-                            child: Padding(
-                          padding: const EdgeInsets.only(left: 8.0, right: 8.0),
-                          child: msgsStreamBuilder,
-                        )),
-                        new Divider(
-                          height: 1.0,
-                        ),
-                        new Container(
-                          child: _buildComposer(),
-                          decoration: new BoxDecoration(
-                              color: Theme.of(context).cardColor),
-                        )
-                      ]),
-                  if (state is ChatOperatorsMessagesLoaded && state.isLoading)
-                    Center(child: loadingIndicator)
-                ]);
-              },
+                },
+                builder: (context, state) {
+                  return Stack(children: <Widget>[
+                    Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: <Widget>[
+                          Flexible(
+                              child: Padding(
+                            padding: const EdgeInsets.only(left: 8.0, right: 8.0),
+                            child: msgsStreamBuilder,
+                          )),
+                          new Divider(
+                            height: 1.0,
+                          ),
+                          new Container(
+                            child: _buildComposer(),
+                            decoration: new BoxDecoration(
+                                color: Theme.of(context).cardColor),
+                          )
+                        ]),
+                    if (state is ChatOperatorsMessagesLoaded && state.isLoading)
+                      Center(child: loadingIndicator)
+                  ]);
+                },
+              ),
             )));
 
     return GestureDetector(

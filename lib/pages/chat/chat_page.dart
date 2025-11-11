@@ -365,48 +365,51 @@ class ChatPageState extends State<ChatPage>
                     },
                   ))),
         ),
-        body: BlocConsumer<ChatMessagesBloc, ChatMessagesState>(
-          listener: (context, state) {
-            if (state is ChatMessagesLoaded) {
-              if (state.isChatClosed) {
-                widget.refreshList!();
-                Navigator.of(context).pop();
+        body: SafeArea(
+          bottom: true,
+          child: BlocConsumer<ChatMessagesBloc, ChatMessagesState>(
+            listener: (context, state) {
+              if (state is ChatMessagesLoaded) {
+                if (state.isChatClosed) {
+                  widget.refreshList!();
+                  Navigator.of(context).pop();
+                }
               }
-            }
-          },
-          builder: (context, state) {
-            return Stack(
-                children: <Widget>[
-                  GestureDetector(
-                    behavior: HitTestBehavior.translucent, // Important for capturing taps
-                    onTap: () {
-                      // This will hide the keyboard when tapping anywhere on the screen
-                      FocusScope.of(context).unfocus();
-                    },
-                    child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: <Widget>[
-                          Flexible(
-                            child: Padding(
-                              padding: const EdgeInsets.only(left: 8.0, right: 8.0),
-                              child: msgsStreamBuilder,
+            },
+            builder: (context, state) {
+              return Stack(
+                  children: <Widget>[
+                    GestureDetector(
+                      behavior: HitTestBehavior.translucent, // Important for capturing taps
+                      onTap: () {
+                        // This will hide the keyboard when tapping anywhere on the screen
+                        FocusScope.of(context).unfocus();
+                      },
+                      child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: <Widget>[
+                            Flexible(
+                              child: Padding(
+                                padding: const EdgeInsets.only(left: 8.0, right: 8.0),
+                                child: msgsStreamBuilder,
+                              ),
                             ),
-                          ),
-                          const Divider(
-                            height: 1.0,
-                          ),
-                          Container(
-                            child: _buildComposer(),
-                            decoration: BoxDecoration(color: Theme.of(context).cardColor),
-                          )
-                        ]
+                            const Divider(
+                              height: 1.0,
+                            ),
+                            Container(
+                              child: _buildComposer(),
+                              decoration: BoxDecoration(color: Theme.of(context).cardColor),
+                            )
+                          ]
+                      ),
                     ),
-                  ),
-                  if (state is ChatMessagesLoaded && state.isLoading)
-                    Center(child: loadingIndicator),
-                ]
-            );
-          },
+                    if (state is ChatMessagesLoaded && state.isLoading)
+                      Center(child: loadingIndicator),
+                  ]
+              );
+            },
+          ),
         ),
       ),
     );
