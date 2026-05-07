@@ -519,7 +519,7 @@ class ChatPageState extends State<ChatPage>
                   ),
                   ListTile(
                     leading: Text("Email", style: styling),
-                    title: Text(_chatCopy!.email ?? ""),
+                    title: SelectableText(_chatCopy!.email ?? ""),
                     onTap: () {},
                   ),
                   ListTile(
@@ -539,7 +539,7 @@ class ChatPageState extends State<ChatPage>
                   ),
                   ListTile(
                     leading: new Text("From", style: styling),
-                    title: new Text(_chatCopy!.referrer ?? ""),
+                    title: new SelectableText(_chatCopy!.referrer ?? ""),
                     onTap: () {},
                   ),
                   ListTile(
